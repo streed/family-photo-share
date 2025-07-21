@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || "Family Photo Share" %></title>
+    <title>Family Memories - Share Your Special Moments</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -17,12 +17,70 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <%# Family-friendly fonts %>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
   <body>
-    <%= yield %>
+    <header class="navbar">
+      <div class="navbar-container">
+        <%= link_to "Family Memories", root_path, class: "navbar-brand" %>
+
+        <nav class="navbar-nav">
+          <% if user_signed_in? %>
+            <%= link_to "My Photos", photos_path, class: "nav-link" %>
+            <%= link_to "Albums", albums_path, class: "nav-link" %>
+            <% if current_user.has_family? %>
+              <%= link_to "My Family", family_path(current_user.family), class: "nav-link" %>
+            <% else %>
+              <%= link_to "Join Family", families_path, class: "nav-link" %>
+            <% end %>
+            <%= link_to "Upload", new_photo_path, class: "nav-link btn-nav-upload" %>
+            <div class="profile-dropdown" data-controller="dropdown">
+              <button class="profile-trigger" data-action="click->dropdown#toggle" type="button">
+                <% if current_user.avatar_url.present? %>
+                  <%= image_tag current_user.avatar_url, class: "avatar-small" %>
+                <% else %>
+                  <span class="avatar-placeholder avatar-small">
+                    <%= current_user.display_name_or_full_name.first.upcase %>
+                  </span>
+                <% end %>
+              </button>
+              <div class="dropdown-menu" data-dropdown-target="menu">
+                <%= link_to "My Profile", profile_path(current_user), class: "dropdown-item" %>
+                <%= link_to "Settings", settings_path, class: "dropdown-item" %>
+                <div class="dropdown-divider"></div>
+                <%= link_to "Sign Out", destroy_user_session_path, method: :delete, class: "dropdown-item", data: { "turbo-method": :delete } %>
+              </div>
+            </div>
+          <% else %>
+            <%= link_to "Sign In", new_user_session_path, class: "nav-link" %>
+          <% end %>
+        </nav>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <% flash.each do |type, message| %>
+        <div class="alert alert-<%= type == 'notice' ? 'success' : 'danger' %> alert-dismissible" 
+             data-controller="alert" 
+             data-alert-auto-dismiss-value="5000">
+          <%= message %>
+          <button type="button" class="alert-close" data-action="click->alert#dismiss">&times;</button>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </main>
+
+    <footer class="footer">
+      <p>Made with love for families everywhere &copy; <%= Date.current.year %> Family Memories</p>
+    </footer>
   </body>
 </html>

@@ -1,0 +1,71 @@
+<div class="welcome-section">
+  <% if user_signed_in? %>
+    <h1>Welcome back, <%= current_user.display_name_or_full_name %>!</h1>
+    
+    <div class="dashboard-stats-compact d-flex flex-wrap gap-3 mt-3">
+      <div class="stat-item">
+        <span class="stat-number"><%= current_user.photo_count %></span>
+        <span class="stat-label">Photos</span>
+        <%= link_to "View", photos_path, class: "stat-link-compact" %>
+      </div>
+      
+      <div class="stat-item">
+        <span class="stat-number"><%= current_user.album_count %></span>
+        <span class="stat-label">Albums</span>
+        <%= link_to "View", albums_path, class: "stat-link-compact" %>
+      </div>
+      
+      <div class="stat-item">
+        <span class="stat-number"><%= current_user.has_family? ? 1 : 0 %></span>
+        <span class="stat-label">Family</span>
+        <% if current_user.has_family? %>
+          <%= link_to "View", family_path(current_user.family), class: "stat-link-compact" %>
+        <% else %>
+          <%= link_to "Join", families_path, class: "stat-link-compact" %>
+        <% end %>
+      </div>
+      
+      <% if current_user.pending_invitations.count > 0 %>
+        <div class="stat-item">
+          <span class="stat-number"><%= current_user.pending_invitations.count %></span>
+          <span class="stat-label">Pending Invites</span>
+          <%= link_to "View", families_path, class: "stat-link-compact" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="quick-actions mt-4">
+      <%= link_to "Upload Photo", new_photo_path, class: "btn btn-primary me-2" %>
+      <%= link_to "Create Album", new_album_path, class: "btn btn-secondary me-2" %>
+      <% if current_user.can_create_family? %>
+        <%= link_to "Create Family", new_family_path, class: "btn btn-secondary" %>
+      <% elsif current_user.has_family? %>
+        <%= link_to "View My Family", family_path(current_user.family), class: "btn btn-secondary" %>
+      <% end %>
+    </div>
+
+    <% if current_user.recent_photos(6).any? %>
+      <div class="recent-photos mt-5">
+        <h3>Recent Photos</h3>
+        <div class="row">
+          <% current_user.recent_photos(6).each do |photo| %>
+            <div class="col-md-2 col-sm-4 col-6 mb-3">
+              <%= link_to photo_path(photo) do %>
+                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                              class: "img-fluid rounded recent-photo" %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <%= link_to "View All Photos →", photos_path, class: "text-decoration-none" %>
+      </div>
+    <% end %>
+
+  <% else %>
+    <h1>📸 Share Your Memories</h1>
+    <p class="lead">A cozy place for your photos</p>
+    <div class="auth-actions">
+      <%= link_to "Sign In", new_user_session_path, class: "btn btn-primary btn-lg" %>
+    </div>
+  <% end %>
+</div>

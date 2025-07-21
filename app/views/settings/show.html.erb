@@ -1,0 +1,171 @@
+<div class="settings-container">
+  <div class="settings-header">
+    <h1>⚙️ Settings</h1>
+    <p class="settings-subtitle">Manage your profile and account preferences</p>
+  </div>
+
+  <!-- Profile Settings Section -->
+  <div class="settings-section">
+    <div class="section-header">
+      <h2>👤 Profile Information</h2>
+      <p>Update your personal information and how others see you</p>
+    </div>
+
+    <div class="settings-content">
+      <%= form_with model: @user, url: update_profile_settings_path, method: :patch, local: true, class: "settings-form" do |f| %>
+        <% if @user.errors.any? %>
+          <div class="error-messages">
+            <h4><%= pluralize(@user.errors.count, "error") %> prohibited your profile from being saved:</h4>
+            <ul>
+              <% @user.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="form-row">
+          <div class="form-group">
+            <%= f.label :first_name, "First Name" %>
+            <%= f.text_field :first_name, class: "form-control", required: true %>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :last_name, "Last Name" %>
+            <%= f.text_field :last_name, class: "form-control", required: true %>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :display_name, "Display Name" %>
+          <%= f.text_field :display_name, class: "form-control", placeholder: "Leave blank to use your full name" %>
+          <small class="form-text">This is how your name appears to other family members.</small>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :bio, "Bio" %>
+          <%= f.text_area :bio, class: "form-control", rows: 4, placeholder: "Tell your family a bit about yourself..." %>
+          <small class="form-text">Share something fun about yourself with your family!</small>
+        </div>
+
+        <div class="form-group">
+          <%= f.label :phone_number, "Phone Number" %>
+          <%= f.telephone_field :phone_number, class: "form-control", placeholder: "+1 (555) 123-4567" %>
+          <small class="form-text">Optional - helps family members contact you.</small>
+        </div>
+
+        <div class="form-actions">
+          <%= f.submit "Save Profile Changes", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Account Settings Section -->
+  <div class="settings-section">
+    <div class="section-header">
+      <h2>🔐 Account Security</h2>
+      <p>Manage your email, password, and account security</p>
+    </div>
+
+    <div class="settings-content">
+      <%= form_with model: @user, url: update_account_settings_path, method: :patch, local: true, class: "settings-form" do |f| %>
+        <% if @user.errors.any? %>
+          <div class="error-messages">
+            <h4><%= pluralize(@user.errors.count, "error") %> prohibited your account from being updated:</h4>
+            <ul>
+              <% @user.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="form-group">
+          <%= f.label :email, "Email Address" %>
+          <%= f.email_field :email, class: "form-control", required: true, autocomplete: "email" %>
+          <% if @user.respond_to?(:pending_reconfirmation?) && @user.pending_reconfirmation? %>
+            <small class="form-text text-warning">
+              Currently waiting confirmation for: <%= @user.unconfirmed_email %>
+            </small>
+          <% end %>
+        </div>
+
+        <div class="password-section">
+          <h3>Change Password</h3>
+          <p class="section-subtitle">Leave password fields blank if you don't want to change your password.</p>
+
+          <div class="form-group">
+            <%= f.label :password, "New Password" %>
+            <%= f.password_field :password, class: "form-control", autocomplete: "new-password" %>
+            <small class="form-text">Minimum 6 characters</small>
+          </div>
+
+          <div class="form-group">
+            <%= f.label :password_confirmation, "Confirm New Password" %>
+            <%= f.password_field :password_confirmation, class: "form-control", autocomplete: "new-password" %>
+          </div>
+        </div>
+
+        <div class="form-group current-password">
+          <%= f.label :current_password, "Current Password" %>
+          <%= f.password_field :current_password, class: "form-control", autocomplete: "current-password", required: true %>
+          <small class="form-text">We need your current password to confirm any changes.</small>
+        </div>
+
+        <div class="form-actions">
+          <%= f.submit "Save Account Changes", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Account Deletion Section -->
+  <div class="settings-section danger-section">
+    <div class="section-header">
+      <h2>⚠️ Danger Zone</h2>
+      <p>Once you delete your account, there is no going back. All your photos and family connections will be permanently removed.</p>
+    </div>
+
+    <div class="settings-content">
+      <button type="button" class="btn btn-danger" onclick="document.getElementById('deleteAccountModal').classList.add('show')">
+        Delete My Account
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div class="modal" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true" data-controller="modal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="deleteAccountModalLabel">⚠️ Delete Account</h5>
+        <button type="button" class="modal-close" data-action="click->modal#close" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>This action cannot be undone!</strong></p>
+        <p>Deleting your account will permanently remove:</p>
+        <ul>
+          <li>All your uploaded photos</li>
+          <li>Your family memberships</li>
+          <li>Your profile information</li>
+          <li>All associated data</li>
+        </ul>
+        
+        <%= form_with url: destroy_account_settings_path, method: :delete, local: true, class: "delete-form" do |f| %>
+          <div class="form-group">
+            <%= f.label :current_password, "Enter your current password to confirm:" %>
+            <%= f.password_field :current_password, class: "form-control", required: true, autocomplete: "current-password" %>
+          </div>
+          
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
+            <%= f.submit "Yes, Delete My Account", class: "btn btn-danger", 
+                         data: { confirm: "Are you absolutely sure? This cannot be undone!" } %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -8,11 +8,13 @@
 
 Create the Family model and FamilyMembership join model to enable users to organize into families with role-based permissions (owner, editor, viewer).
 
+> **⚠️ IMPORTANT ARCHITECTURAL UPDATE**: This application has been modified to enforce a **single family per user** constraint. Unlike the original design below which supports multiple families per user, the current implementation ensures each user can belong to only one family. See `ARCHITECTURE_UPDATE.md` for details on this change.
+
 ## Acceptance Criteria
 
 - [ ] Family model created with necessary attributes
 - [ ] FamilyMembership join model with role-based permissions
-- [ ] User can belong to multiple families
+- [x] ~~User can belong to multiple families~~ **UPDATED**: User can belong to only one family (enforced by unique constraint)
 - [ ] Family owner/editor/viewer roles properly implemented
 - [ ] Family creation and management functionality
 - [ ] Proper validations and constraints

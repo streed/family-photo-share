@@ -1,0 +1,114 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Edit Family</h2>
+          <span class="badge bg-primary">Admin Only</span>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @family, local: true do |form| %>
+            <% if @family.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@family.errors.count, "error") %> prohibited this family from being saved:</h4>
+                <ul class="mb-0">
+                  <% @family.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="form-group mb-3">
+              <%= form.label :name, class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", placeholder: "Enter family name" %>
+              <div class="form-text">This name is displayed to all family members.</div>
+            </div>
+
+            <div class="form-group mb-4">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 4, placeholder: "Describe your family group (optional)" %>
+              <div class="form-text">Help family members understand what this group is for.</div>
+            </div>
+
+            <div class="family-info-section mb-4">
+              <h5>Family Information</h5>
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <small class="text-muted">Created</small>
+                    <p class="mb-2"><%= @family.created_at.strftime("%B %d, %Y") %></p>
+                  </div>
+                  <div class="info-item">
+                    <small class="text-muted">Total Members</small>
+                    <p class="mb-2"><%= pluralize(@family.family_memberships.count, 'member') %></p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item">
+                    <small class="text-muted">Family Creator</small>
+                    <p class="mb-2"><%= @family.created_by.display_name_or_full_name %></p>
+                  </div>
+                  <div class="info-item">
+                    <small class="text-muted">Total Photos</small>
+                    <p class="mb-2"><%= pluralize(@family.shared_photos.count, 'photo') %></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="alert alert-warning">
+              <i class="fas fa-exclamation-triangle"></i>
+              <strong>Note:</strong> Changes to the family name and description will be visible to all family members immediately.
+            </div>
+
+            <div class="form-actions d-flex justify-content-between">
+              <div>
+                <%= form.submit "Update Family", class: "btn btn-primary" %>
+                <%= link_to "Cancel", @family, class: "btn btn-secondary" %>
+              </div>
+              <% if @family.created_by == current_user && @family.family_memberships.count == 1 %>
+                <%= link_to "Delete Family", @family, method: :delete, 
+                            class: "btn btn-danger",
+                            data: { 
+                              "turbo-method": :delete,
+                              "turbo-confirm": "Are you sure? This will permanently delete the family and cannot be undone."
+                            } %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .family-info-section {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #6b5d4f;
+  }
+
+  .family-info-section h5 {
+    color: #6b5d4f;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+
+  .info-item {
+    margin-bottom: 1rem;
+  }
+
+  .info-item small {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .info-item p {
+    color: #333;
+    font-size: 1.1rem;
+  }
+</style>

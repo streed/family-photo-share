@@ -6,9 +6,46 @@ if [ -z "${LD_PRELOAD+x}" ]; then
     export LD_PRELOAD
 fi
 
+# Remove a potentially pre-existing server.pid for Rails.
+rm -f /rails/tmp/pids/server.pid
+
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+  echo "Starting Family Photo Share web server..."
+  
+  # Wait for database to be ready if DATABASE_URL is set
+  if [ -n "$DATABASE_URL" ]; then
+    echo "Waiting for database to be ready..."
+    until ./bin/rails runner "ActiveRecord::Base.connection.execute('select 1')" >/dev/null 2>&1; do
+      echo "Database is unavailable - sleeping"
+      sleep 2
+    done
+    echo "Database is ready!"
+  fi
+  
+  echo "Preparing database..."
   ./bin/rails db:prepare
+  
+  # Create default admin user if no users exist and ADMIN_EMAIL is set
+  if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then
+    ./bin/rails runner "
+      if User.count == 0
+        user = User.new(
+          email: '$ADMIN_EMAIL',
+          password: '$ADMIN_PASSWORD',
+          password_confirmation: '$ADMIN_PASSWORD',
+          first_name: 'Admin',
+          last_name: 'User'
+        )
+        user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+        if user.save
+          puts 'Created admin user: $ADMIN_EMAIL'
+        else
+          puts 'Failed to create admin user: ' + user.errors.full_messages.join(', ')
+        end
+      end
+    "
+  fi
 fi
 
 exec "${@}"

@@ -1,0 +1,21 @@
+name: family-photo-share
+train: community
+version: 1.0.0
+app_version: 1.0.0
+title: Family Photo Share
+description: A private photo sharing application for families
+home: https://github.com/streed/family-photo-share
+sources:
+  - https://github.com/streed/family-photo-share
+maintainers:
+  - name: Your Name
+    email: your.email@example.com
+icon: https://example.com/family-photo-share-icon.png
+keywords:
+  - photos
+  - sharing
+  - family
+  - media
+  - gallery
+categories:
+  - media

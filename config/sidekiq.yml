@@ -1,0 +1,55 @@
+# Sidekiq Configuration
+---
+# Global settings
+:verbose: false
+:pidfile: /tmp/sidekiq.pid
+:logfile: ./log/sidekiq.log
+:concurrency: 5
+:timeout: 25
+
+# Queue configuration (in order of priority)
+:queues:
+  - default
+  - image_processing
+  - bulk_processing
+
+# Redis configuration
+:redis:
+  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379/0") %>
+  pool_timeout: 1
+  
+# Production settings
+production:
+  :concurrency: 10
+  :queues:
+    - [default, 5]
+    - [image_processing, 10] 
+    - [bulk_processing, 2]
+
+# Development settings  
+development:
+  :concurrency: 5
+  :queues:
+    - default
+    - image_processing
+    - bulk_processing
+
+# Test settings
+test:
+  :concurrency: 2
+  :queues:
+    - default
+    - image_processing
+
+# Queue-specific worker configurations
+:scheduler:
+  # Clean up old processed jobs every hour
+  cleanup_processed_jobs:
+    cron: '0 * * * *'
+    class: CleanupJob
+    
+  # Daily bulk processing check
+  daily_bulk_check:
+    cron: '0 2 * * *'
+    class: BulkImageProcessingJob
+    args: [50]

@@ -1,0 +1,20 @@
+# Sidekiq Cron Schedule
+# This file defines scheduled jobs for the application
+# Cron format: minute hour day month weekday
+# Use https://crontab.guru/ to test cron expressions
+
+cleanup_expired_sessions:
+  cron: "0 * * * *"  # Every hour
+  class: "CleanupExpiredSessionsJob"
+  queue: "default"
+  description: "Clean up expired guest access sessions"
+  active_job: true  # Use ActiveJob interface
+
+# Add more scheduled jobs here as needed
+# Example:
+# daily_report:
+#   cron: "0 2 * * *"  # Daily at 2 AM
+#   class: "DailyReportJob"
+#   queue: "default"
+#   description: "Generate daily usage report"
+#   active_job: true

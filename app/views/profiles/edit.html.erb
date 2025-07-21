@@ -1,0 +1,44 @@
+<h1>Edit Profile</h1>
+
+<%= form_with model: @user, url: profile_path(@user), method: :patch, local: true do |f| %>
+  <% if @user.errors.any? %>
+    <div class="error-messages">
+      <h4><%= pluralize(@user.errors.count, "error") %> prohibited this profile from being saved:</h4>
+      <ul>
+        <% @user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :first_name %>
+    <%= f.text_field :first_name, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :last_name %>
+    <%= f.text_field :last_name, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :display_name, "Display Name (optional)" %>
+    <%= f.text_field :display_name, class: "form-control", placeholder: "Leave blank to use full name" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :bio, "Bio (optional)" %>
+    <%= f.text_area :bio, class: "form-control", rows: 4, placeholder: "Tell others about yourself..." %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :phone_number, "Phone Number (optional)" %>
+    <%= f.telephone_field :phone_number, class: "form-control" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit "Update Profile", class: "btn btn-primary" %>
+    <%= link_to "Cancel", profile_path(@user), class: "btn btn-secondary" %>
+  </div>
+<% end %>

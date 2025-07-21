@@ -1,0 +1,34 @@
+module PhotosHelper
+  def photo_url(photo, variant = :medium)
+    return nil unless photo&.image&.attached?
+
+    case variant
+    when :thumbnail
+      photo.thumbnail
+    when :medium
+      photo.medium
+    when :large
+      photo.large
+    else
+      photo.image
+    end
+  end
+
+  def photo_tag(photo, variant = :medium, **options)
+    return content_tag(:div, "No image", class: "no-image") unless photo&.image&.attached?
+
+    options[:alt] ||= photo.title
+    options[:class] = [options[:class], "photo-image", "photo-#{variant}"].compact.join(" ")
+
+    if photo.image_processed?
+      image_tag(photo_url(photo, variant), options)
+    else
+      content_tag(:div, "Processing...", class: "photo-processing")
+    end
+  end
+
+  def formatted_photo_date(photo)
+    date = photo.taken_at || photo.created_at
+    date.strftime("%B %d, %Y at %I:%M %p")
+  end
+end

@@ -1,0 +1,132 @@
+# TrueNAS SCALE Application Configuration
+# This file defines the configurable values for the Family Photo Share app
+
+image:
+  repository: family_photo_share
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# Web Interface Configuration
+webPort: 3000
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+  username: postgres
+  database: family_photo_share_production
+  # Password will be auto-generated if not specified
+
+# Redis Configuration  
+redis:
+  enabled: true
+
+# Storage Configuration
+storage:
+  photos:
+    enabled: true
+    mountPath: /rails/storage
+    size: 100Gi
+    storageClass: "ix-storage-class"
+  
+  database:
+    enabled: true
+    mountPath: /var/lib/postgresql/data
+    size: 10Gi
+    storageClass: "ix-storage-class"
+    
+  redis:
+    enabled: true
+    mountPath: /data
+    size: 1Gi
+    storageClass: "ix-storage-class"
+
+# Environment Variables
+environmentVariables:
+  - name: RAILS_ENV
+    value: "production"
+  - name: RAILS_LOG_TO_STDOUT
+    value: "true"
+  - name: RAILS_SERVE_STATIC_FILES
+    value: "true"
+  - name: ACTIVE_STORAGE_VARIANT_PROCESSOR
+    value: "vips"
+
+# Secrets (will be created by TrueNAS)
+secrets:
+  railsMasterKey:
+    enabled: true
+    value: ""
+  secretKeyBase:
+    enabled: true
+    value: ""
+
+# Resource Limits
+resources:
+  web:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  sidekiq:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+      
+  postgresql:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+      
+  redis:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Health Checks
+healthcheck:
+  liveness:
+    enabled: true
+    path: /up
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    
+  readiness:
+    enabled: true
+    path: /up
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+# Network Configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+  
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: photos.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Backup Configuration
+backup:
+  enabled: false
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention: 7  # Keep 7 days of backups

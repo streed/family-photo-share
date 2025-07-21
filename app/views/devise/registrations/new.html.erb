@@ -1,0 +1,263 @@
+<div class="auth-container">
+  <div class="auth-card">
+    <div class="auth-header">
+      <div class="auth-logo mb-4">
+        <i class="fas fa-users" style="font-size: 3rem; color: rgba(255, 255, 255, 0.9);"></i>
+      </div>
+      <h2 class="auth-title">Join Our Family</h2>
+      <p class="auth-subtitle">Create your account to start sharing memories</p>
+    </div>
+
+    <div class="auth-body">
+      <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "auth-form" }) do |f| %>
+        <%= render "devise/shared/error_messages", resource: resource %>
+
+        <div class="row">
+          <div class="col-6">
+            <div class="form-group mb-3">
+              <%= f.label :first_name, "First Name", class: "form-label" %>
+              <%= f.text_field :first_name, 
+                               autofocus: true, 
+                               autocomplete: "given-name",
+                               class: "form-control form-control-lg",
+                               placeholder: "First name" %>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="form-group mb-3">
+              <%= f.label :last_name, "Last Name", class: "form-label" %>
+              <%= f.text_field :last_name, 
+                               autocomplete: "family-name",
+                               class: "form-control form-control-lg",
+                               placeholder: "Last name" %>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mb-3">
+          <%= f.label :email, "Email Address", class: "form-label" %>
+          <%= f.email_field :email, 
+                            autocomplete: "email",
+                            class: "form-control form-control-lg",
+                            placeholder: "Enter your email address" %>
+        </div>
+
+        <div class="form-group mb-3">
+          <%= f.label :phone_number, "Phone Number (Optional)", class: "form-label" %>
+          <%= f.telephone_field :phone_number, 
+                                autocomplete: "tel",
+                                class: "form-control form-control-lg",
+                                placeholder: "Enter your phone number" %>
+        </div>
+
+        <div class="form-group mb-3">
+          <%= f.label :password, "Password", class: "form-label" %>
+          <% if @minimum_password_length %>
+            <small class="text-muted">(<%= @minimum_password_length %> characters minimum)</small>
+          <% end %>
+          <%= f.password_field :password, 
+                               autocomplete: "new-password",
+                               class: "form-control form-control-lg",
+                               placeholder: "Create a password" %>
+        </div>
+
+        <div class="form-group mb-4">
+          <%= f.label :password_confirmation, "Confirm Password", class: "form-label" %>
+          <%= f.password_field :password_confirmation, 
+                               autocomplete: "new-password",
+                               class: "form-control form-control-lg",
+                               placeholder: "Confirm your password" %>
+        </div>
+
+        <div class="d-grid mb-4">
+          <%= f.submit "Create Account", class: "btn btn-primary btn-lg" %>
+        </div>
+      <% end %>
+
+    </div>
+
+    <div class="auth-footer">
+      <%= render "devise/shared/links" %>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Auth Container */
+  .auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .auth-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    border: none;
+    overflow: hidden;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Header */
+  .auth-header {
+    text-align: center;
+    padding: 3rem 2rem 2rem 2rem;
+    background: linear-gradient(135deg, #6b5d4f 0%, #8b7355 100%);
+    color: white;
+  }
+
+  .auth-logo {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .auth-title {
+    color: white;
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .auth-subtitle {
+    color: rgba(255, 255, 255, 0.8) !important;
+    font-size: 1.1rem;
+    margin-bottom: 0;
+  }
+
+  /* Body */
+  .auth-body {
+    padding: 2rem;
+  }
+
+  .auth-form .form-label {
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-form .form-control {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+  }
+
+  .auth-form .form-control:focus {
+    border-color: #6b5d4f;
+    box-shadow: 0 0 0 0.2rem rgba(107, 93, 79, 0.15);
+    background: white;
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background: linear-gradient(135deg, #6b5d4f 0%, #8b7355 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 0.875rem 2rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    text-transform: none;
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #5a4e42 0%, #7a6348 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107, 93, 79, 0.3);
+  }
+
+
+  /* Footer */
+  .auth-footer {
+    padding: 1.5rem 2rem 2rem 2rem;
+    background: #f8f9fa;
+    text-align: center;
+    border-top: 1px solid #e9ecef;
+  }
+
+  .auth-footer a {
+    color: #6b5d4f;
+    text-decoration: none;
+    font-weight: 500;
+    margin: 0 0.5rem;
+    transition: color 0.3s ease;
+  }
+
+  .auth-footer a:hover {
+    color: #5a4e42;
+    text-decoration: underline;
+  }
+
+  /* Error Messages */
+  #error_explanation {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #721c24;
+  }
+
+  #error_explanation h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #721c24;
+  }
+
+  #error_explanation ul {
+    margin-bottom: 0;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .auth-container {
+      padding: 1rem;
+    }
+
+    .auth-header {
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+    }
+
+    .auth-title {
+      font-size: 1.75rem;
+    }
+
+    .auth-body {
+      padding: 1.5rem;
+    }
+
+    .auth-footer {
+      padding: 1.5rem;
+    }
+
+    .btn-primary {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .auth-header {
+      padding: 1.5rem 1rem;
+    }
+
+    .auth-body {
+      padding: 1rem;
+    }
+
+    .auth-footer {
+      padding: 1rem;
+    }
+    
+    .row .col-6 {
+      margin-bottom: 0;
+    }
+  }
+</style>

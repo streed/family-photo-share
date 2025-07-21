@@ -1,0 +1,65 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2>Upload New Photo</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @photo, local: true, multipart: true, 
+                        class: "photo-upload-form", 
+                        data: { controller: "form", action: "submit->form#submit" } do |form| %>
+            <% if @photo.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@photo.errors.count, "error") %> prohibited this photo from being saved:</h4>
+                <ul class="mb-0">
+                  <% @photo.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="form-group mb-3" data-controller="file-upload">
+              <%= form.label :image, class: "form-label" %>
+              <%= form.file_field :image, class: "form-control", accept: "image/*", required: true,
+                                  data: { "file-upload-target": "input", action: "change->file-upload#change" } %>
+              <div class="form-text">Choose a photo to upload (PNG, JPEG, or GIF format, max 10MB)</div>
+              <div data-file-upload-target="preview" class="mt-3"></div>
+            </div>
+
+            <div class="form-group mb-3">
+              <%= form.label :title, class: "form-label" %>
+              <%= form.text_field :title, class: "form-control", placeholder: "Enter a title for your photo" %>
+            </div>
+
+            <div class="form-group mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe your photo..." %>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <%= form.label :location, class: "form-label" %>
+                  <%= form.text_field :location, class: "form-control", placeholder: "Where was this photo taken?" %>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <%= form.label :taken_at, "Date Taken", class: "form-label" %>
+                  <%= form.date_field :taken_at, class: "form-control" %>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <%= form.submit "Upload Photo", class: "btn btn-primary", data: { "form-target": "submit" } %>
+              <%= link_to "Cancel", photos_path, class: "btn btn-secondary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

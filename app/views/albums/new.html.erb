@@ -1,0 +1,62 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2>Create New Album</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @album, local: true do |form| %>
+            <% if @album.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@album.errors.count, "error") %> prohibited this album from being saved:</h4>
+                <ul class="mb-0">
+                  <% @album.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="form-group mb-3">
+              <%= form.label :name, class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", placeholder: "Enter album name" %>
+            </div>
+
+            <div class="form-group mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe your album (optional)" %>
+            </div>
+
+            <div class="form-group mb-4">
+              <%= form.label :privacy, "Privacy Setting", class: "form-label" %>
+              <%= form.select :privacy, 
+                              options_for_select([
+                                ['Private - Only you can see this album', 'private'],
+                                ['Family - Family members can see this album', 'family']
+                              ], @album.privacy), 
+                              {}, 
+                              { class: "form-control" } %>
+              <div class="form-text">You can change this setting later.</div>
+            </div>
+
+            <div class="info-box p-3 mb-4 bg-light border rounded">
+              <h6><i class="fas fa-info-circle text-primary"></i> Getting Started</h6>
+              <ul class="mb-0 small">
+                <li>After creating your album, you can add photos from your library</li>
+                <li>Drag and drop photos to reorder them</li>
+                <li>Set any photo as the album cover</li>
+                <li>Share albums with family members based on privacy settings</li>
+              </ul>
+            </div>
+
+            <div class="form-actions">
+              <%= form.submit "Create Album", class: "btn btn-primary" %>
+              <%= link_to "Cancel", albums_path, class: "btn btn-secondary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

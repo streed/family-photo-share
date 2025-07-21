@@ -1,0 +1,962 @@
+<div class="container">
+  <% if @album.cover_photo&.image&.attached? %>
+    <div class="album-header-cover mb-4">
+      <%= image_tag @album.cover_photo.short_large_url, alt: @album.name, class: "album-header-image" %>
+      <div class="album-header-overlay">
+        <div class="album-header-content">
+          <h1 class="album-header-title"><%= @album.name %></h1>
+          <% if @album.description.present? %>
+            <p class="album-header-description"><%= @album.description %></p>
+          <% end %>
+          <div class="album-header-info">
+            <span class="badge bg-<%= @album.privacy == 'private' ? 'secondary' : (@album.privacy == 'family' ? 'info' : 'success') %>">
+              <%= @album.privacy.capitalize %>
+            </span>
+            <small class="text-white ms-2">
+              <i class="fas fa-images"></i> <%= pluralize(@album.photo_count, 'photo') %>
+              • Created <%= time_ago_in_words(@album.created_at) %> ago
+            </small>
+          </div>
+        </div>
+      </div>
+      <% if @album.editable_by?(current_user) %>
+        <div class="album-header-actions">
+          <div class="btn-group">
+            <%= link_to "Edit Album", edit_album_path(@album), class: "btn btn-outline-light btn-sm" %>
+            <%= link_to "Delete Album", album_path(@album), method: :delete, 
+                        class: "btn btn-outline-light btn-sm",
+                        confirm: "Are you sure? This will remove all photos from the album.",
+                        data: { "turbo-method": :delete } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="d-flex justify-content-between align-items-start mb-4">
+      <div>
+        <h1><%= @album.name %></h1>
+        <% if @album.description.present? %>
+          <p class="text-muted"><%= @album.description %></p>
+        <% end %>
+        <div class="album-info">
+          <span class="badge bg-<%= @album.privacy == 'private' ? 'secondary' : (@album.privacy == 'family' ? 'info' : 'success') %>">
+            <%= @album.privacy.capitalize %>
+          </span>
+          <small class="text-muted ms-2">
+            <i class="fas fa-images"></i> <%= pluralize(@album.photo_count, 'photo') %>
+            • Created <%= time_ago_in_words(@album.created_at) %> ago
+          </small>
+        </div>
+      </div>
+      <% if @album.editable_by?(current_user) %>
+        <div class="album-actions">
+          <div class="btn-group">
+            <%= link_to "Edit Album", edit_album_path(@album), class: "btn btn-outline-primary btn-sm" %>
+            <%= link_to "Delete Album", album_path(@album), method: :delete, 
+                        class: "btn btn-outline-danger btn-sm",
+                        confirm: "Are you sure? This will remove all photos from the album.",
+                        data: { "turbo-method": :delete } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @album.allow_external_access? && @album.sharing_url.present? && @album.editable_by?(current_user) %>
+    <div class="album-sharing-section mb-4">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="card-title">
+            <i class="fas fa-share-alt"></i> External Sharing
+          </h5>
+          <p class="text-muted mb-3">This album is shared externally. Share the link below to allow others to view this album.</p>
+          
+          <div class="input-group">
+            <input type="text" class="form-control sharing-link-input" value="<%= @album.sharing_url %>" readonly>
+            <button class="btn btn-outline-secondary copy-link-btn" type="button" data-clipboard-target=".sharing-link-input">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          
+          <% if @album.password_digest.present? %>
+            <div class="alert alert-info mt-3 mb-0">
+              <i class="fas fa-lock"></i> This album is password protected.
+              <% if @album.external_password.present? %>
+                <div class="mt-2">
+                  <strong>Password:</strong> <code class="album-password"><%= @album.external_password %></code>
+                  <button class="btn btn-sm btn-outline-secondary ms-2 copy-password-btn" type="button">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+                <small class="text-muted mt-2 d-block">Share this password with people who need access to the album.</small>
+              <% else %>
+                <br><small class="text-muted mt-2 d-block">Password was set before this feature was added. Update the password in album settings to see it here.</small>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <% if @photos.any? %>
+    <div class="album-photos-container" data-controller="slideshow">
+      <div class="photo-grid">
+        <% @photos.each_with_index do |photo, index| %>
+          <div class="photo-tile">
+            <div class="photo-item position-relative" 
+                 data-action="click->slideshow#open" 
+                 data-slideshow-index-value="<%= index %>"
+                 data-slideshow-photo-id="<%= photo.id %>">
+              <div class="photo-container">
+                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                              class: "photo-thumbnail", 
+                              data: { 
+                                large: photo.short_large_url,
+                                title: photo.title,
+                                description: photo.description,
+                                user: photo.user.display_name_or_full_name
+                              } %>
+                <div class="photo-overlay">
+                  <div class="photo-info">
+                    <div class="photo-title"><%= truncate(photo.title, length: 30) %></div>
+                    <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
+                  </div>
+                </div>
+              </div>
+              
+              <% if @album.editable_by?(current_user) %>
+                <div class="photo-actions">
+                  <div class="action-buttons">
+                    <% if @album.cover_photo != photo %>
+                      <%= button_to set_cover_album_path(@album, photo_id: photo.id), 
+                                    method: :patch,
+                                    class: "btn btn-sm btn-light btn-action",
+                                    title: "Set as album cover",
+                                    data: { 
+                                      turbo_method: :patch,
+                                      turbo_confirm: "Set this as the album cover?"
+                                    },
+                                    form: { onclick: "event.stopPropagation();" } do %>
+                        📸
+                      <% end %>
+                    <% else %>
+                      <span class="btn btn-sm btn-warning btn-action" title="Current album cover">
+                        <i class="fas fa-crown"></i>
+                      </span>
+                    <% end %>
+                    
+                    <%= link_to remove_photo_album_path(@album, photo_id: photo.id), method: :delete, 
+                                class: "btn btn-sm btn-danger btn-action",
+                                title: "Remove photo from album",
+                                confirm: "Remove this photo from the album?",
+                                data: { "turbo-method": :delete },
+                                onclick: "event.stopPropagation();" do %>
+                      <i class="fas fa-trash-alt"></i>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <!-- Slideshow Modal -->
+    <div class="slideshow-modal" data-slideshow-target="modal">
+      <div class="slideshow-overlay" data-action="click->slideshow#close"></div>
+      <div class="slideshow-container">
+        <button class="slideshow-close" data-action="click->slideshow#close">
+          <i class="fas fa-times"></i>
+        </button>
+        
+        <button class="slideshow-nav slideshow-prev" data-action="click->slideshow#previous">
+          <i class="fas fa-chevron-left"></i>
+        </button>
+        
+        <div class="slideshow-content">
+          <img class="slideshow-image" data-slideshow-target="image" src="" alt="">
+          <div class="slideshow-info">
+            <h3 class="slideshow-title" data-slideshow-target="title"></h3>
+            <p class="slideshow-description" data-slideshow-target="description"></p>
+            <p class="slideshow-meta">
+              Photo <span data-slideshow-target="counter"></span> of <%= @photos.size %>
+              • by <span data-slideshow-target="user"></span>
+            </p>
+          </div>
+        </div>
+        
+        <button class="slideshow-nav slideshow-next" data-action="click->slideshow#next">
+          <i class="fas fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+    </div>
+  <% else %>
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="fas fa-images text-muted" style="font-size: 4rem;"></i>
+      </div>
+      <h3 class="text-muted">No photos in this album</h3>
+      <% if @album.editable_by?(current_user) %>
+        <p class="text-muted">Add photos from your library to get started!</p>
+      <% else %>
+        <p class="text-muted">This album is empty.</p>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @album.editable_by?(current_user) && @user_photos.present? %>
+    <div class="add-photos-section mt-5">
+      <h4>Add Photos to Album</h4>
+      <p class="text-muted">Click on any photo below to add it to this album.</p>
+      
+      <div class="add-photos-grid">
+        <% @user_photos.limit(20).each do |photo| %>
+          <div class="add-photo-tile">
+            <%= link_to add_photo_album_path(@album, photo_id: photo.id), method: :patch, 
+                        class: "add-photo-link",
+                        data: { "turbo-method": :patch } do %>
+              <div class="add-photo-container">
+                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                              class: "add-photo-thumbnail" %>
+                <div class="add-photo-overlay">
+                  <div class="add-photo-icon">
+                    <i class="fas fa-plus"></i>
+                  </div>
+                  <div class="add-photo-info">
+                    <div class="add-photo-title"><%= truncate(photo.title, length: 20) %></div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+      
+      <% if @user_photos.count > 20 %>
+        <div class="text-center mt-3">
+          <small class="text-muted">Showing 20 of <%= @user_photos.count %> available photos</small>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<style>
+  /* Album Header Styles */
+  .album-header-cover {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .album-header-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.7);
+  }
+
+  .album-header-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    color: white;
+    padding: 40px 30px 30px;
+  }
+
+  .album-header-content {
+    max-width: 800px;
+  }
+
+  .album-header-title {
+    color: white;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  }
+
+  .album-header-description {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .album-header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .album-header-actions {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+  }
+
+  .album-header-actions .btn-outline-light {
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+  }
+
+  .album-header-actions .btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: white;
+    color: white;
+  }
+
+  /* Photo Grid Layout */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 20px 0;
+  }
+
+  .photo-tile {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 15px;
+    background: #f8f9fa;
+    box-shadow: 0 4px 15px rgba(89, 85, 80, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  .photo-tile:hover {
+    box-shadow: 0 8px 25px rgba(89, 85, 80, 0.25);
+  }
+
+  .photo-item {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .photo-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .photo-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border-radius: 15px;
+  }
+
+  .photo-tile:hover .photo-thumbnail {
+    transform: scale(1.05);
+  }
+
+  .photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    color: white;
+    padding: 15px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .photo-tile:hover .photo-overlay {
+    opacity: 1;
+  }
+
+  .photo-title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+  }
+
+  .photo-meta {
+    font-size: 0.75rem;
+    opacity: 0.9;
+  }
+
+  .photo-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+  }
+
+  .photo-tile:hover .photo-actions {
+    opacity: 1;
+  }
+
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .action-buttons form {
+    display: inline;
+    margin: 0;
+  }
+
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+    color: #333;
+    text-decoration: none;
+  }
+
+  .btn-action:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    background: rgba(255, 255, 255, 1);
+    color: #000;
+    text-decoration: none;
+  }
+
+  .btn-action i {
+    color: inherit;
+    font-size: inherit;
+  }
+
+  .btn-light.btn-action {
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+  }
+
+  .btn-light.btn-action:hover {
+    background: rgba(255, 255, 255, 1);
+    color: #000;
+  }
+
+  .btn-warning.btn-action {
+    background: rgba(255, 193, 7, 0.9);
+    color: #000;
+    border-color: rgba(255, 193, 7, 0.8);
+  }
+
+  .btn-warning.btn-action:hover {
+    background: rgba(255, 193, 7, 1);
+    color: #000;
+  }
+
+  .btn-danger.btn-action {
+    background: rgba(220, 53, 69, 0.9);
+    color: white;
+    border-color: rgba(220, 53, 69, 0.8);
+  }
+
+  .btn-danger.btn-action:hover {
+    background: rgba(220, 53, 69, 1);
+    color: white;
+  }
+
+  /* Slideshow Modal */
+  .slideshow-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .slideshow-modal.show {
+    display: flex;
+  }
+
+  .slideshow-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .slideshow-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slideshow-content {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .slideshow-image {
+    width: 90vw;
+    height: 85vh;
+    object-fit: contain;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .slideshow-info {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    border-radius: 10px;
+    padding: 15px 25px;
+    text-align: center;
+    max-width: 80vw;
+    color: white;
+    margin: 0;
+  }
+
+  .slideshow-title {
+    margin: 0 0 8px 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: white;
+    font-family: 'Comic Neue', cursive;
+  }
+
+  .slideshow-description {
+    margin: 0 0 8px 0;
+    color: rgba(255, 255, 255, 0.9);
+    line-height: 1.4;
+    font-size: 0.95rem;
+  }
+
+  .slideshow-meta {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.85rem;
+  }
+
+  .slideshow-close {
+    position: fixed;
+    top: 30px;
+    right: 30px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 1.4rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slideshow-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  .slideshow-nav {
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    font-size: 1.6rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .slideshow-nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-50%);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+
+  .slideshow-prev {
+    left: 30px;
+  }
+
+  .slideshow-next {
+    right: 30px;
+  }
+
+  /* Add Photo Section */
+  .add-photo-link {
+    position: relative;
+    display: block;
+  }
+  
+  .add-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 123, 255, 0.8);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+    border-radius: 0.375rem;
+  }
+  
+  .add-photo-link:hover .add-overlay {
+    opacity: 1;
+  }
+  
+  .photo-thumbnail-add {
+    filter: brightness(0.8);
+    transition: filter 0.2s ease-in-out;
+  }
+  
+  .add-photo-link:hover .photo-thumbnail-add {
+    filter: brightness(1);
+  }
+
+  /* Add Photos Grid Layout */
+  .add-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 12px;
+    padding: 20px 0;
+  }
+
+  .add-photo-tile {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #f8f9fa;
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+  }
+
+  .add-photo-tile:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    border-color: #6b5d4f;
+  }
+
+  .add-photo-link {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .add-photo-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .add-photo-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 10px;
+    transition: transform 0.3s ease;
+  }
+
+  .add-photo-tile:hover .add-photo-thumbnail {
+    transform: scale(1.05);
+  }
+
+  .add-photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.8));
+    color: white;
+    padding: 10px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .add-photo-tile:hover .add-photo-overlay {
+    opacity: 1;
+  }
+
+  .add-photo-icon {
+    background: rgba(107, 93, 79, 0.9);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.3s ease;
+  }
+
+  .add-photo-tile:hover .add-photo-icon {
+    background: #6b5d4f;
+    transform: rotate(90deg);
+  }
+
+  .add-photo-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.9;
+    flex: 1;
+    margin-right: 8px;
+  }
+
+  .add-photos-section {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 2rem;
+    border-left: 4px solid #6b5d4f;
+  }
+
+  .add-photos-section h4 {
+    color: #6b5d4f;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .album-header-cover {
+      height: 250px;
+    }
+
+    .album-header-title {
+      font-size: 2rem;
+    }
+
+    .album-header-description {
+      font-size: 1rem;
+    }
+
+    .album-header-overlay {
+      padding: 30px 20px 20px;
+    }
+
+    .album-header-actions {
+      top: 10px;
+      right: 10px;
+    }
+
+    .photo-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .slideshow-container {
+      width: 95%;
+      height: 95%;
+    }
+
+    .slideshow-nav {
+      width: 50px;
+      height: 50px;
+      font-size: 1.2rem;
+    }
+
+    .slideshow-prev {
+      left: 10px;
+    }
+
+    .slideshow-next {
+      right: 10px;
+    }
+
+    .slideshow-close {
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
+    }
+
+    .slideshow-info {
+      padding: 15px;
+      margin-top: 15px;
+    }
+
+    .slideshow-title {
+      font-size: 1.2rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .album-header-cover {
+      height: 200px;
+      border-radius: 0;
+    }
+
+    .album-header-title {
+      font-size: 1.5rem;
+    }
+
+    .album-header-description {
+      font-size: 0.9rem;
+    }
+
+    .album-header-info {
+      flex-wrap: wrap;
+    }
+
+    .album-header-info small {
+      font-size: 0.75rem;
+    }
+
+    .photo-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+    }
+  }
+
+  /* Sharing Section Styles */
+  .album-sharing-section .card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: #f8f9fa;
+  }
+
+  .album-sharing-section .card-title {
+    color: #6b5d4f;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .sharing-link-input {
+    font-family: monospace;
+    background-color: white;
+    cursor: text;
+  }
+
+  .copy-link-btn {
+    min-width: 100px;
+  }
+
+  .copy-link-btn.copied {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+  }
+
+  .album-password {
+    background-color: #fff3cd;
+    color: #856404;
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .copy-password-btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .copy-password-btn.copied {
+    background-color: #28a745;
+    border-color: #28a745;
+    color: white;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Copy link functionality
+    const copyLinkButton = document.querySelector('.copy-link-btn');
+    if (copyLinkButton) {
+      copyLinkButton.addEventListener('click', function() {
+        const input = document.querySelector('.sharing-link-input');
+        input.select();
+        input.setSelectionRange(0, 99999); // For mobile devices
+        
+        navigator.clipboard.writeText(input.value).then(function() {
+          // Show success feedback
+          copyLinkButton.classList.add('copied');
+          copyLinkButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+          
+          // Reset after 2 seconds
+          setTimeout(function() {
+            copyLinkButton.classList.remove('copied');
+            copyLinkButton.innerHTML = '<i class="fas fa-copy"></i> Copy';
+          }, 2000);
+        }).catch(function(err) {
+          console.error('Failed to copy text: ', err);
+        });
+      });
+    }
+
+    // Copy password functionality
+    const copyPasswordButton = document.querySelector('.copy-password-btn');
+    if (copyPasswordButton) {
+      copyPasswordButton.addEventListener('click', function() {
+        const passwordElement = document.querySelector('.album-password');
+        const password = passwordElement.textContent;
+        
+        navigator.clipboard.writeText(password).then(function() {
+          // Show success feedback
+          copyPasswordButton.classList.add('copied');
+          copyPasswordButton.innerHTML = '<i class="fas fa-check"></i>';
+          
+          // Reset after 2 seconds
+          setTimeout(function() {
+            copyPasswordButton.classList.remove('copied');
+            copyPasswordButton.innerHTML = '<i class="fas fa-copy"></i>';
+          }, 2000);
+        }).catch(function(err) {
+          console.error('Failed to copy password: ', err);
+        });
+      });
+    }
+  });
+</script>

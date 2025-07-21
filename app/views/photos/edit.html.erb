@@ -1,0 +1,63 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2>Edit Photo</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @photo, local: true, class: "photo-edit-form" do |form| %>
+            <% if @photo.errors.any? %>
+              <div class="alert alert-danger">
+                <h4><%= pluralize(@photo.errors.count, "error") %> prohibited this photo from being saved:</h4>
+                <ul class="mb-0">
+                  <% @photo.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <% if @photo.image.attached? %>
+              <div class="current-image mb-4">
+                <h5>Photo:</h5>
+                <%= image_tag @photo.short_medium_url, alt: @photo.title, class: "img-fluid", style: "max-height: 300px; border-radius: 8px;" %>
+              </div>
+            <% end %>
+
+            <div class="form-group mb-3">
+              <%= form.label :title, class: "form-label" %>
+              <%= form.text_field :title, class: "form-control", placeholder: "Enter a title for your photo" %>
+            </div>
+
+            <div class="form-group mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe your photo..." %>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <%= form.label :location, class: "form-label" %>
+                  <%= form.text_field :location, class: "form-control", placeholder: "Where was this photo taken?" %>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-group mb-3">
+                  <%= form.label :taken_at, "Date Taken", class: "form-label" %>
+                  <%= form.date_field :taken_at, class: "form-control" %>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <%= form.submit "Update Photo", class: "btn btn-primary" %>
+              <%= link_to "View Photo", @photo, class: "btn btn-info" %>
+              <%= link_to "Cancel", photos_path, class: "btn btn-secondary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

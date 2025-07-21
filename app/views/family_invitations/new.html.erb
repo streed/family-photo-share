@@ -1,0 +1,123 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h2>Invite Family Members</h2>
+          <p class="text-muted">Family: <%= @family.name %></p>
+        </div>
+        <div>
+          <%= link_to "Back to Family", family_path(@family), class: "btn btn-secondary" %>
+          <%= link_to "Manage Members", members_family_path(@family), class: "btn btn-outline-primary" %>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Send New Invitation</h5>
+            </div>
+            <div class="card-body">
+              <%= form_with model: [@family, @invitation], local: true, class: "invitation-form" do |form| %>
+                <% if @invitation.errors.any? %>
+                  <div class="alert alert-danger">
+                    <h6><%= pluralize(@invitation.errors.count, "error") %> prohibited this invitation from being sent:</h6>
+                    <ul class="mb-0">
+                      <% @invitation.errors.full_messages.each do |message| %>
+                        <li><%= message %></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                <% end %>
+
+                <div class="form-group mb-3">
+                  <%= form.label :email, "Email Address", class: "form-label" %>
+                  <%= form.email_field :email, class: "form-control", 
+                                       placeholder: "Enter email address to invite",
+                                       required: true %>
+                  <div class="form-text">We'll send an invitation email to this address</div>
+                </div>
+
+                <div class="form-actions">
+                  <%= form.submit "Send Invitation", class: "btn btn-success" %>
+                  <%= link_to "Cancel", family_path(@family), class: "btn btn-secondary ms-2" %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Pending Invitations (<%= @pending_invitations.count %>)</h5>
+            </div>
+            <div class="card-body">
+              <% if @pending_invitations.any? %>
+                <% @pending_invitations.each do |invitation| %>
+                  <div class="invitation-item d-flex align-items-center justify-content-between p-2 mb-2 border rounded">
+                    <div>
+                      <div class="fw-bold"><%= invitation.email %></div>
+                      <div class="text-muted small">
+                        Sent <%= time_ago_in_words(invitation.created_at) %> ago
+                        <% if invitation.expires_at < Time.current %>
+                          <span class="badge bg-danger ms-1">Expired</span>
+                        <% else %>
+                          <span class="badge bg-warning ms-1">Pending</span>
+                        <% end %>
+                      </div>
+                    </div>
+                    <div>
+                      <%= link_to family_invitation_path(@family, invitation), 
+                                  method: :delete,
+                                  class: "btn btn-sm btn-outline-danger",
+                                  confirm: "Cancel invitation to #{invitation.email}?",
+                                  data: { "turbo-method": :delete },
+                                  title: "Cancel invitation" do %>
+                        <i class="fas fa-times"></i>
+                      <% end %>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="text-center py-3">
+                  <i class="fas fa-envelope text-muted mb-2" style="font-size: 1.5rem;"></i>
+                  <p class="text-muted">No pending invitations</p>
+                  <p class="text-muted small">Send your first invitation using the form on the left</p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="card mt-3">
+            <div class="card-header">
+              <h5 class="mb-0">Family Info</h5>
+            </div>
+            <div class="card-body">
+              <div class="stat-item mb-2">
+                <strong><%= pluralize(@family.member_count, 'member') %></strong> currently in family
+              </div>
+              <div class="stat-item mb-2">
+                <strong><%= @pending_invitations.count %></strong> pending invitation(s)
+              </div>
+              <div class="stat-item">
+                <strong><%= pluralize(@family.shared_photos.count, 'photo') %></strong> shared
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .invitation-item:last-child {
+    margin-bottom: 0 !important;
+  }
+  
+  .stat-item {
+    padding: 0.25rem 0;
+  }
+</style>

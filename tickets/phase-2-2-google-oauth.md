@@ -1,12 +1,15 @@
-# Phase 2, Ticket 2: Google OAuth Integration
+# Phase 2, Ticket 2: Google OAuth Integration [REMOVED]
 
-**Priority**: High  
-**Estimated Time**: 2-3 hours  
-**Prerequisites**: Completed Phase 2, Ticket 1  
+**Status**: REMOVED - Google OAuth integration has been removed from the application  
+**Priority**: N/A  
+**Estimated Time**: N/A  
+**Prerequisites**: N/A  
 
 ## Objective
 
-Integrate Google OAuth authentication to allow users to sign up and log in using their Google accounts, alongside the existing email/password authentication.
+~~Integrate Google OAuth authentication to allow users to sign up and log in using their Google accounts, alongside the existing email/password authentication.~~
+
+**This feature has been removed from the application. Users can only authenticate using email/password through Devise.**
 
 ## Acceptance Criteria
 

@@ -1,0 +1,2 @@
+module FamilyInvitationsHelper
+end

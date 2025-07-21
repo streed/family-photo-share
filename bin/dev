@@ -1,2 +1,18 @@
-#!/usr/bin/env ruby
-exec "./bin/rails", "server", *ARGV
+#!/usr/bin/env bash
+
+# Development startup script
+echo "Starting Family Photo Share development environment..."
+
+# Check if Docker containers are running
+if ! docker ps | grep -q "postgres"; then
+  echo "Starting Docker containers..."
+  docker-compose up -d
+fi
+
+# Wait for services to be ready
+echo "Waiting for services to be ready..."
+sleep 3
+
+# Start Rails server
+echo "Starting Rails server..."
+rails server

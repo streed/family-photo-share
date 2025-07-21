@@ -12,13 +12,13 @@ Family Photo Share is a Ruby on Rails application that allows families to share 
 - **Database**: PostgreSQL
 - **File Storage**: Active Storage (for photo uploads)
 - **Background Jobs**: Sidekiq with Redis
-- **Authentication**: Devise + OmniAuth (Google OAuth)
+- **Authentication**: Devise
 - **Frontend**: ERB templates with JavaScript for dynamic features
 - **Styling**: CSS/SCSS (framework TBD)
 
 ## Key Features
 
-- Google OAuth and email/password authentication
+- Email/password authentication
 - Photo upload and storage with Active Storage
 - Album creation and management
 - Family invitation system with role-based access (owner/editor/viewer)

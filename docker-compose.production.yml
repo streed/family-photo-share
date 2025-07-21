@@ -1,0 +1,130 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: family_photo_share_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-family_photo_share_production}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - family_photo_share
+
+  redis:
+    image: redis:7-alpine
+    container_name: family_photo_share_redis
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes
+    networks:
+      - family_photo_share
+
+  web:
+    image: family_photo_share:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: family_photo_share_web
+    ports:
+      - "${APP_PORT:-3000}:80"
+    environment:
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      RAILS_SERVE_STATIC_FILES: "true"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-family_photo_share_production}
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      # App specific
+      APP_HOST: ${APP_HOST:-localhost}
+      APP_PORT: ${APP_PORT:-3000}
+      # Storage
+      ACTIVE_STORAGE_VARIANT_PROCESSOR: ${ACTIVE_STORAGE_VARIANT_PROCESSOR:-vips}
+    volumes:
+      - rails_storage:/rails/storage
+      - rails_public:/rails/public
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - family_photo_share
+
+  sidekiq:
+    image: family_photo_share:latest
+    container_name: family_photo_share_sidekiq
+    environment:
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-family_photo_share_production}
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    volumes:
+      - rails_storage:/rails/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq"]
+    networks:
+      - family_photo_share
+
+  sidekiq_image_processing:
+    image: family_photo_share:latest
+    container_name: family_photo_share_sidekiq_images
+    environment:
+      RAILS_ENV: production
+      RAILS_LOG_TO_STDOUT: "true"
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-family_photo_share_production}
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+    volumes:
+      - rails_storage:/rails/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "image_processing", "-c", "4"]
+    networks:
+      - family_photo_share
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  rails_storage:
+    driver: local
+  rails_public:
+    driver: local
+
+networks:
+  family_photo_share:
+    driver: bridge

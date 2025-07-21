@@ -1,0 +1,259 @@
+<div class="container">
+  <div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+      <h1><%= @family.name %></h1>
+      <% if @family.description.present? %>
+        <p class="text-muted"><%= @family.description %></p>
+      <% end %>
+    </div>
+    
+    <div class="family-actions">
+      <% if @family.admin?(current_user) %>
+        <div class="btn-group">
+          <%= link_to "Invite Members", new_family_invitation_path(@family), class: "btn btn-success btn-sm" %>
+          <%= link_to "Manage Family", members_family_path(@family), class: "btn btn-outline-primary btn-sm" %>
+          <%= link_to "Edit Family", edit_family_path(@family), class: "btn btn-outline-secondary btn-sm" %>
+        </div>
+      <% else %>
+        <%= link_to "Leave Family", leave_family_path(@family), method: :patch, 
+                    class: "btn btn-outline-danger btn-sm",
+                    confirm: "Are you sure you want to leave this family?",
+                    data: { "turbo-method": :patch } %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Recent Family Photos</h5>
+          <%= link_to "View All Photos", photos_path(family_id: @family.id), class: "btn btn-sm btn-outline-primary" %>
+        </div>
+        <div class="card-body">
+          <% if @recent_photos.any? %>
+            <div class="family-photos-grid">
+              <% @recent_photos.each do |photo| %>
+                <div class="family-photo-tile">
+                  <div class="family-photo-item" onclick="window.location.href='<%= photo_path(photo) %>'">
+                    <div class="family-photo-container">
+                      <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                                    class: "family-photo-thumbnail" %>
+                      <div class="family-photo-overlay">
+                        <div class="family-photo-info">
+                          <div class="family-photo-title"><%= truncate(photo.title, length: 20) %></div>
+                          <div class="family-photo-meta">by <%= photo.user.display_name_or_full_name %></div>
+                          <div class="family-photo-date">
+                            <%= photo.taken_at.present? ? photo.taken_at.strftime("%b %d") : time_ago_in_words(photo.created_at) + " ago" %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <i class="fas fa-images text-muted mb-3" style="font-size: 2rem;"></i>
+              <p class="text-muted">No photos shared yet</p>
+              <%= link_to "Upload First Photo", new_photo_path, class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Family Members</h5>
+        </div>
+        <div class="card-body">
+          <% @members.each do |membership| %>
+            <div class="member-item d-flex align-items-center mb-3">
+              <% if membership.user.avatar_url.present? %>
+                <%= image_tag membership.user.avatar_url, class: "avatar-small me-3" %>
+              <% else %>
+                <span class="avatar-placeholder avatar-small me-3">
+                  <%= membership.user.display_name_or_full_name.first.upcase %>
+                </span>
+              <% end %>
+              <div class="flex-grow-1">
+                <div class="fw-bold"><%= membership.user.display_name_or_full_name %></div>
+                <small class="text-muted">
+                  <%= membership.role.capitalize %>
+                  <% if membership.admin? %>
+                    <i class="fas fa-crown text-warning"></i>
+                  <% end %>
+                </small>
+              </div>
+              <small class="text-muted">
+                Joined <%= time_ago_in_words(membership.joined_at) %> ago
+              </small>
+            </div>
+          <% end %>
+          
+          <% if @family.admin?(current_user) && @pending_invitations.any? %>
+            <hr>
+            <h6 class="text-muted">Pending Invitations</h6>
+            <% @pending_invitations.each do |invitation| %>
+              <div class="d-flex align-items-center mb-2">
+                <i class="fas fa-envelope text-muted me-2"></i>
+                <span class="flex-grow-1"><%= invitation.email %></span>
+                <small class="text-muted">
+                  <%= time_ago_in_words(invitation.created_at) %> ago
+                </small>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+        <% if @family.admin?(current_user) %>
+          <div class="card-footer">
+            <%= link_to "Manage Members", members_family_path(@family), class: "btn btn-outline-primary btn-sm w-100" %>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Family Stats</h5>
+        </div>
+        <div class="card-body">
+          <div class="stat-item mb-2">
+            <strong><%= pluralize(@family.member_count, 'member') %></strong>
+          </div>
+          <div class="stat-item mb-2">
+            <strong><%= pluralize(@family.shared_photos.count, 'photo') %></strong> shared
+          </div>
+          <div class="stat-item mb-2">
+            Created <strong><%= time_ago_in_words(@family.created_at) %></strong> ago
+          </div>
+          <div class="stat-item">
+            Created by <strong><%= @family.created_by.display_name_or_full_name %></strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* Family Photos Grid */
+  .family-photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    padding: 0;
+  }
+
+  .family-photo-tile {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #f8f9fa;
+    box-shadow: 0 3px 12px rgba(89, 85, 80, 0.12);
+    transition: all 0.3s ease;
+  }
+
+  .family-photo-tile:hover {
+    box-shadow: 0 6px 20px rgba(89, 85, 80, 0.2);
+  }
+
+  .family-photo-item {
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .family-photo-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .family-photo-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    border-radius: 12px;
+  }
+
+  .family-photo-tile:hover .family-photo-thumbnail {
+    transform: scale(1.08);
+  }
+
+  .family-photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.75));
+    color: white;
+    padding: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .family-photo-tile:hover .family-photo-overlay {
+    opacity: 1;
+  }
+
+  .family-photo-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+    line-height: 1.2;
+  }
+
+  .family-photo-meta {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin-bottom: 1px;
+  }
+
+  .family-photo-date {
+    font-size: 0.65rem;
+    opacity: 0.8;
+  }
+
+  /* Member items styling */
+  .member-item:last-child {
+    margin-bottom: 0 !important;
+  }
+
+  /* Responsive adjustments for family photos */
+  @media (max-width: 992px) {
+    .family-photos-grid {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .family-photos-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+    }
+    
+    .family-photo-overlay {
+      padding: 8px;
+    }
+    
+    .family-photo-title {
+      font-size: 0.75rem;
+    }
+    
+    .family-photo-meta {
+      font-size: 0.65rem;
+    }
+    
+    .family-photo-date {
+      font-size: 0.6rem;
+    }
+  }
+</style>

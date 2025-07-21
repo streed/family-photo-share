@@ -12,6 +12,11 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -21,7 +26,104 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_web
+    ports:
+      - "3000:3000"
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+    volumes:
+      - .:/rails
+      - rails_storage:/rails/storage
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["./bin/rails", "server", "-b", "0.0.0.0", "-p", "3000"]
+
+  sidekiq:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_sidekiq
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+    volumes:
+      - .:/rails
+      - rails_storage:/rails/storage
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq"]
+
+  sidekiq_cron:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_sidekiq_cron
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+    volumes:
+      - .:/rails
+      - rails_storage:/rails/storage
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "bulk_processing", "-c", "2"]
+
+  sidekiq_image_processing:
+    build: 
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_sidekiq_images
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY}
+    volumes:
+      - .:/rails
+      - rails_storage:/rails/storage
+      - bundle_cache:/usr/local/bundle
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "image_processing", "-c", "4"]
 
 volumes:
   postgres_data:
   redis_data:
+  rails_storage:
+  bundle_cache:

@@ -2,13 +2,15 @@
 
 A Ruby on Rails application that allows families to share photos privately. Users can create accounts, upload photos to albums, invite family members, and manage access with role-based permissions.
 
+**Note**: The application enforces a single family per user constraint, meaning each user can belong to only one family at a time. This simplifies the user experience and data model while maintaining all core functionality.
+
 ## Tech Stack
 
 - **Backend**: Ruby on Rails 7.x
 - **Database**: PostgreSQL
 - **File Storage**: Active Storage (for photo uploads)
 - **Background Jobs**: Sidekiq with Redis
-- **Authentication**: Devise + OmniAuth (Google OAuth)
+- **Authentication**: Devise
 - **Frontend**: ERB templates with JavaScript for dynamic features
 
 ## Prerequisites

@@ -1,0 +1,130 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: family_photo_share_postgres_dev
+    environment:
+      POSTGRES_DB: family_photo_share_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: family_photo_share_redis_dev
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: ["redis-server", "--appendonly", "yes"]
+
+  # Rails web application
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_web_dev
+    ports:
+      - "3000:3000"
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+      - rails_storage:/rails/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["./bin/rails", "server", "-b", "0.0.0.0"]
+
+  # Main Sidekiq worker for general jobs
+  sidekiq:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_sidekiq_dev
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+      - rails_storage:/rails/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-c", "5", "-v"]
+
+  # Dedicated worker for image processing jobs
+  sidekiq_images:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_sidekiq_images_dev
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+      - rails_storage:/rails/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "image_processing", "-c", "4", "-v"]
+
+  # Dedicated worker for bulk processing jobs  
+  sidekiq_bulk:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: family_photo_share_sidekiq_bulk_dev
+    environment:
+      RAILS_ENV: development
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/family_photo_share_development
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+      - rails_storage:/rails/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    command: ["bundle", "exec", "sidekiq", "-q", "bulk_processing", "-c", "2", "-v"]
+
+volumes:
+  postgres_data:
+  redis_data:
+  rails_storage:
+  bundle_cache:

@@ -39,15 +39,14 @@ gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
+gem "active_storage_validations"
 
-# Authentication (prepare for next phase)
+# Authentication
 gem 'devise'
-gem 'omniauth'
-gem 'omniauth-google-oauth2'
-gem 'omniauth-rails_csrf_protection'
 
 # Background jobs
 gem 'sidekiq'
+gem 'sidekiq-cron'
 gem 'redis', '~> 4.0'
 
 group :development, :test do
@@ -74,6 +73,7 @@ group :development do
   # Development tools
   gem 'rubocop-rails', require: false
   gem 'bullet'  # N+1 query detection
+  gem 'letter_opener'  # Preview emails in browser
 end
 
 group :test do
@@ -82,4 +82,5 @@ group :test do
   gem "selenium-webdriver"
   gem 'shoulda-matchers'
   gem 'database_cleaner-active_record'
+  gem 'rails-controller-testing'
 end

@@ -1,0 +1,191 @@
+groups:
+  - name: "Application Configuration"
+    description: "Configure the Family Photo Share application"
+  - name: "Storage"
+    description: "Configure storage for photos and data"
+  - name: "Network"
+    description: "Configure network settings"
+  - name: "Advanced"
+    description: "Advanced settings"
+
+questions:
+  # Application Configuration
+  - variable: webPort
+    label: "Web Port"
+    description: "Port to access the web interface"
+    group: "Application Configuration"
+    schema:
+      type: int
+      default: 3000
+      min: 1
+      max: 65535
+      required: true
+      
+  - variable: secrets.railsMasterKey.value
+    label: "Rails Master Key"
+    description: "Rails master key from config/master.key file"
+    group: "Application Configuration"
+    schema:
+      type: string
+      required: true
+      private: true
+      
+  - variable: secrets.secretKeyBase.value
+    label: "Secret Key Base"
+    description: "Secret key base for Rails (generate with: rails secret)"
+    group: "Application Configuration"
+    schema:
+      type: string
+      required: true
+      private: true
+      
+  - variable: environmentVariables
+    label: "Additional Environment Variables"
+    description: "Add custom environment variables"
+    group: "Application Configuration"
+    schema:
+      type: list
+      default: []
+      items:
+        - variable: envEntry
+          label: "Environment Variable"
+          schema:
+            type: dict
+            attrs:
+              - variable: name
+                label: "Name"
+                schema:
+                  type: string
+                  required: true
+              - variable: value
+                label: "Value"
+                schema:
+                  type: string
+                  required: true
+                  
+  # Storage Configuration
+  - variable: storage.photos.size
+    label: "Photo Storage Size"
+    description: "Size of the volume for storing photos"
+    group: "Storage"
+    schema:
+      type: string
+      default: "100Gi"
+      required: true
+      
+  - variable: storage.photos.mountPath
+    label: "Photo Storage Path"
+    description: "Path where photos will be stored"
+    group: "Storage"
+    schema:
+      type: path
+      default: "/rails/storage"
+      required: true
+      
+  - variable: storage.database.size
+    label: "Database Storage Size"
+    description: "Size of the volume for PostgreSQL database"
+    group: "Storage"
+    schema:
+      type: string
+      default: "10Gi"
+      required: true
+      
+  - variable: hostPathVolumes
+    label: "Host Path Volumes"
+    description: "Mount host paths for persistent storage"
+    group: "Storage"
+    schema:
+      type: list
+      default: []
+      items:
+        - variable: hostPathEntry
+          label: "Host Path"
+          schema:
+            type: dict
+            attrs:
+              - variable: enabled
+                label: "Enable"
+                schema:
+                  type: boolean
+                  default: true
+              - variable: hostPath
+                label: "Host Path"
+                schema:
+                  type: hostpath
+                  required: true
+              - variable: mountPath
+                label: "Mount Path"
+                schema:
+                  type: string
+                  required: true
+                  
+  # Network Configuration
+  - variable: service.type
+    label: "Service Type"
+    description: "Kubernetes service type"
+    group: "Network"
+    schema:
+      type: string
+      default: "ClusterIP"
+      enum:
+        - value: "ClusterIP"
+          description: "Internal cluster access only"
+        - value: "NodePort"
+          description: "Expose on each node's IP"
+        - value: "LoadBalancer"
+          description: "External load balancer"
+          
+  - variable: ingress.enabled
+    label: "Enable Ingress"
+    description: "Enable ingress for external access"
+    group: "Network"
+    schema:
+      type: boolean
+      default: false
+      show_subquestions_if: true
+      subquestions:
+        - variable: ingress.hosts[0].host
+          label: "Hostname"
+          description: "Hostname for accessing the application"
+          schema:
+            type: string
+            default: "photos.local"
+            required: true
+            
+  # Advanced Configuration
+  - variable: postgresql.username
+    label: "PostgreSQL Username"
+    description: "Username for PostgreSQL database"
+    group: "Advanced"
+    schema:
+      type: string
+      default: "postgres"
+      required: true
+      
+  - variable: postgresql.database
+    label: "PostgreSQL Database"
+    description: "Database name for the application"
+    group: "Advanced"
+    schema:
+      type: string
+      default: "family_photo_share_production"
+      required: true
+      
+  - variable: resources.web.limits.memory
+    label: "Web Memory Limit"
+    description: "Maximum memory for web container"
+    group: "Advanced"
+    schema:
+      type: string
+      default: "2Gi"
+      required: true
+      
+  - variable: resources.web.limits.cpu
+    label: "Web CPU Limit"
+    description: "Maximum CPU for web container"
+    group: "Advanced"
+    schema:
+      type: string
+      default: "2000m"
+      required: true
