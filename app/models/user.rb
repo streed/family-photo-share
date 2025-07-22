@@ -2,7 +2,7 @@ class User < ApplicationRecord
   # Devise modules
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable,
-         :confirmable, :trackable, :lockable
+         :trackable, :lockable
 
   # Validations
   validates :first_name, presence: true, length: { maximum: 50 }
@@ -10,6 +10,7 @@ class User < ApplicationRecord
   validates :display_name, length: { maximum: 50 }
   validates :bio, length: { maximum: 500 }
   validates :phone_number, format: { with: /\A[\+]?[1-9][\d\s\-\(\)]+\z/, message: "Invalid phone format" }, allow_blank: true
+  validates :password, length: { minimum: 6 }, if: :password_required?
 
 
   # Associations
@@ -24,6 +25,10 @@ class User < ApplicationRecord
   # Callbacks
   before_save :set_display_name
 
+  # Class methods
+  def self.password_length
+    6..128
+  end
 
   # Instance methods
   def full_name
@@ -95,4 +100,9 @@ class User < ApplicationRecord
   def set_display_name
     self.display_name = full_name if display_name.blank?
   end
+
+  def password_required?
+    !persisted? || password.present? || password_confirmation.present?
+  end
+
 end

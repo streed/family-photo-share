@@ -1,0 +1,26 @@
+NEW FAMILY MEMBER JOINED!
+========================
+
+Great news! <%= @new_member.display_name_or_full_name %> has accepted your invitation and joined <%= @family.name %>.
+
+NEW MEMBER DETAILS
+------------------
+Name: <%= @new_member.display_name_or_full_name %>
+Email: <%= @new_member.email %>
+Joined: <%= Time.current.strftime("%B %d, %Y at %I:%M %p") %>
+Role: Member
+
+You can now share photos and albums with <%= @new_member.display_name_or_full_name %>. They'll be able to see all family albums and contribute their own photos to your shared collection.
+
+View Family Members: <%= @family_url %>
+
+WHAT'S NEXT?
+------------
+• <%= @new_member.display_name_or_full_name %> can now access all family albums
+• They can upload and share their own photos
+• You can collaborate on shared albums together
+
+---
+This notification was sent by Family Photo Share
+Manage Family Settings: <%= @family_url %>
+Visit Family Photo Share: <%= root_url %>

@@ -1,0 +1,24 @@
+EMAIL CONFIGURATION TEST - Family Photo Share
+============================================
+
+✅ SUCCESS - Your email configuration is working!
+
+This test email confirms that your SMTP settings are correctly configured for Family Photo Share.
+
+EMAIL DETAILS
+-------------
+Sent at: <%= @test_time.strftime('%B %d, %Y at %I:%M %p %Z') %>
+From: <%= ENV.fetch('SMTP_USERNAME', 'noreply@localhost') %>
+SMTP Server: <%= ENV['SMTP_ADDRESS'] || 'Letter Opener (Development)' %>
+
+WHAT'S NEXT?
+------------
+• Your Family Photo Share instance can now send invitation emails
+• Password reset emails will work correctly  
+• Email notifications are enabled
+
+You can now invite family members to join your photo sharing platform!
+
+---
+This is an automated test email from <%= @app_name %>
+If you didn't request this test, you can safely ignore this email.

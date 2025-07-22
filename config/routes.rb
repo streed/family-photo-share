@@ -40,7 +40,7 @@ Rails.application.routes.draw do
     sessions: 'sessions'
   }
   
-  # Invite-based registration route
+  # Invite-based registration route (with token)
   get 'users/sign_up/:invitation_token', to: 'registrations#new', as: :invitation_signup
 
   # Profile routes

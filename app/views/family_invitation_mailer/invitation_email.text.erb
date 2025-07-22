@@ -1,3 +1,38 @@
-FamilyInvitation#invitation_email
+YOU'RE INVITED TO JOIN <%= @family.name.upcase %>!
+====================================
 
-<%= @greeting %>, find me in app/views/family_invitation_mailer/invitation_email.text.erb
+Hello there!
+
+<%= @inviter.display_name_or_full_name %> has invited you to join their family group on Family Photo Share, a private space for sharing precious memories with loved ones.
+
+FAMILY DETAILS
+--------------
+Family Name: <%= @family.name %>
+Invited by: <%= @inviter.display_name_or_full_name %>
+Current Members: <%= pluralize(@family.members.count, 'member') %>
+<% if @family.description.present? %>Description: <%= @family.description %><% end %>
+
+WHAT YOU'LL GET ACCESS TO
+-------------------------
+• View and download family photos
+• Create and share your own photo albums
+• Collaborate on shared family albums
+• Keep your memories private and secure
+• Connect with family members near and far
+
+ACCEPT OR DECLINE
+-----------------
+Accept Invitation: <%= @accept_url %>
+Decline Invitation: <%= @decline_url %>
+
+IMPORTANT: This invitation will expire on <%= @invitation.expires_at.strftime("%B %d, %Y") %>
+
+NEW TO FAMILY PHOTO SHARE?
+--------------------------
+When you accept this invitation, you'll be able to create an account or sign in with your existing account. Family Photo Share is a private, self-hosted platform designed to keep your family's memories safe and accessible only to those you trust.
+
+---
+This invitation was sent by <%= @inviter.display_name_or_full_name %> via Family Photo Share
+If you don't know <%= @inviter.display_name_or_full_name %> or didn't expect this invitation, you can safely ignore this email.
+
+Learn more: <%= root_url %>

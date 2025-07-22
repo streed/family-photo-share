@@ -1,5 +1,210 @@
-<h1>FamilyInvitation#invitation_email</h1>
-
-<p>
-  <%= @greeting %>, find me in app/views/family_invitation_mailer/invitation_email.html.erb
-</p>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta content='text/html; charset=UTF-8' http-equiv='Content-Type' />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background-color: #f5f5f5;
+        margin: 0;
+        padding: 0;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        overflow: hidden;
+      }
+      .header {
+        background: linear-gradient(135deg, #6b5d4f 0%, #8b7355 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+      }
+      .header p {
+        margin: 10px 0 0 0;
+        opacity: 0.9;
+        font-size: 16px;
+      }
+      .content {
+        padding: 40px 30px;
+      }
+      .invitation-box {
+        background-color: #f0f7ff;
+        border-left: 4px solid #2196f3;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+      }
+      .invitation-box h2 {
+        color: #1976d2;
+        margin: 0 0 10px 0;
+        font-size: 20px;
+      }
+      .family-info {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .family-info h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+        font-size: 18px;
+      }
+      .info-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #e0e0e0;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-label {
+        color: #666;
+        font-weight: 500;
+      }
+      .info-value {
+        color: #333;
+        font-weight: 600;
+      }
+      .button-group {
+        text-align: center;
+        margin: 30px 0;
+      }
+      .cta-button {
+        display: inline-block;
+        padding: 14px 32px;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        margin: 0 10px;
+      }
+      .accept-button {
+        background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+        color: white;
+      }
+      .decline-button {
+        background: #f5f5f5;
+        color: #666;
+        border: 1px solid #ddd;
+      }
+      .benefits {
+        background-color: #fff8e1;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .benefits h4 {
+        color: #f57c00;
+        margin: 0 0 15px 0;
+        font-size: 16px;
+      }
+      .benefits ul {
+        margin: 0;
+        padding-left: 20px;
+        color: #666;
+      }
+      .benefits li {
+        margin: 8px 0;
+      }
+      .footer {
+        background-color: #f8f9fa;
+        padding: 30px;
+        text-align: center;
+        font-size: 14px;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+      .footer a {
+        color: #6b5d4f;
+        text-decoration: none;
+      }
+      .expires-notice {
+        color: #f44336;
+        font-size: 14px;
+        margin-top: 20px;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>You're Invited! 🎉</h1>
+        <p>Join <%= @family.name %> on Family Photo Share</p>
+      </div>
+      
+      <div class="content">
+        <div class="invitation-box">
+          <h2>Hello there!</h2>
+          <p><strong><%= @inviter.display_name_or_full_name %></strong> has invited you to join their family group on Family Photo Share, a private space for sharing precious memories with loved ones.</p>
+        </div>
+        
+        <div class="family-info">
+          <h3>Family Details</h3>
+          <div class="info-row">
+            <span class="info-label">Family Name:</span>
+            <span class="info-value"><%= @family.name %></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Invited by:</span>
+            <span class="info-value"><%= @inviter.display_name_or_full_name %></span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Current Members:</span>
+            <span class="info-value"><%= pluralize(@family.members.count, 'member') %></span>
+          </div>
+          <% if @family.description.present? %>
+            <div class="info-row">
+              <span class="info-label">Description:</span>
+              <span class="info-value"><%= @family.description %></span>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="benefits">
+          <h4>🌟 What you'll get access to:</h4>
+          <ul>
+            <li>View and download family photos</li>
+            <li>Create and share your own photo albums</li>
+            <li>Collaborate on shared family albums</li>
+            <li>Keep your memories private and secure</li>
+            <li>Connect with family members near and far</li>
+          </ul>
+        </div>
+        
+        <div class="button-group">
+          <a href="<%= @accept_url %>" class="cta-button accept-button">Accept Invitation</a>
+          <a href="<%= @decline_url %>" class="cta-button decline-button">Decline</a>
+        </div>
+        
+        <p class="expires-notice">
+          <strong>Note:</strong> This invitation will expire on <%= @invitation.expires_at.strftime("%B %d, %Y") %>
+        </p>
+        
+        <p style="color: #666; font-size: 14px; margin-top: 30px;">
+          <strong>New to Family Photo Share?</strong><br>
+          When you accept this invitation, you'll be able to create an account or sign in with your existing account. Family Photo Share is a private, self-hosted platform designed to keep your family's memories safe and accessible only to those you trust.
+        </p>
+      </div>
+      
+      <div class="footer">
+        <p>This invitation was sent by <%= @inviter.display_name_or_full_name %> via Family Photo Share</p>
+        <p>If you don't know <%= @inviter.display_name_or_full_name %> or didn't expect this invitation, you can safely ignore this email.</p>
+        <p>
+          <a href="<%= root_url %>">Learn more about Family Photo Share</a>
+        </p>
+      </div>
+    </div>
+  </body>
+</html>

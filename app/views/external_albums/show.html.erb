@@ -1,4 +1,13 @@
-<div class="container">
+<div class="container" 
+     data-controller="guest-session" 
+     data-guest-session-expires-at-value="<%= @current_guest_session&.expires_at&.to_i * 1000 || (Time.current + 10.minutes).to_i * 1000 %>">
+  
+  <!-- Hidden session management (no UI shown to user) -->
+  <div class="d-none" data-guest-session-target="warning">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Warning:</strong> Your session will expire soon. Continue browsing to extend your access automatically.
+  </div>
+
   <div class="external-album-header mb-4">
     <div class="d-flex justify-content-between align-items-start">
       <div>
@@ -17,7 +26,7 @@
             <i class="fas fa-user"></i> by <%= @album.user.display_name_or_full_name %>
           </span>
           <span class="badge bg-success ms-2">
-            <i class="fas fa-shield-alt"></i> External Access
+            <i class="fas fa-shield-alt"></i> Guest Access
           </span>
         </div>
       </div>
@@ -286,7 +295,7 @@
     font-size: 1.3rem;
     font-weight: 700;
     color: white;
-    font-family: 'Comic Neue', cursive;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 
   .slideshow-description {

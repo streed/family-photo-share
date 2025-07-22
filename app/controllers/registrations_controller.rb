@@ -1,14 +1,14 @@
 class RegistrationsController < Devise::RegistrationsController
-  before_action :check_invitation_token, only: [:new, :create]
   before_action :set_invitation, only: [:new, :create]
 
   def new
-    redirect_to root_path, alert: 'Registration is by invitation only.' unless @invitation
+    # Allow both public signup and invitation-based signup
     super
   end
 
   def create
     if @invitation
+      # Invitation-based signup
       super do |user|
         if user.persisted?
           # Accept the invitation and add user to family
@@ -18,18 +18,12 @@ class RegistrationsController < Devise::RegistrationsController
         end
       end
     else
-      redirect_to root_path, alert: 'Registration is by invitation only.'
+      # Public signup - user creates account without joining a family
+      super
     end
   end
 
   private
-
-  def check_invitation_token
-    token = params[:invitation_token] || session[:invitation_token]
-    unless token
-      redirect_to root_path, alert: 'Registration is by invitation only.'
-    end
-  end
 
   def set_invitation
     token = params[:invitation_token] || session[:invitation_token]
@@ -51,9 +45,11 @@ class RegistrationsController < Devise::RegistrationsController
 
   def after_sign_up_path_for(resource)
     if @invitation
+      # Invitation-based signup goes to family page
       family_path(@invitation.family)
     else
-      super
+      # Public signup goes to families index to create or join a family
+      families_path
     end
   end
 end

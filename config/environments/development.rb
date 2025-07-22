@@ -31,8 +31,24 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Email configuration for development - open emails in browser
-  config.action_mailer.delivery_method = :letter_opener
+  # Email configuration for development
+  if ENV["SMTP_ADDRESS"].present?
+    # Use SMTP if configured (e.g., Gmail)
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: ENV["SMTP_ADDRESS"],
+      port: ENV.fetch("SMTP_PORT", 587).to_i,
+      domain: ENV["SMTP_DOMAIN"],
+      user_name: ENV["SMTP_USERNAME"],
+      password: ENV["SMTP_PASSWORD"],
+      authentication: ENV.fetch("SMTP_AUTHENTICATION", "plain").to_sym,
+      enable_starttls_auto: ENV.fetch("SMTP_ENABLE_STARTTLS_AUTO", "true") == "true"
+    }
+  else
+    # Default to letter_opener for local development
+    config.action_mailer.delivery_method = :letter_opener
+  end
+  
   config.action_mailer.perform_deliveries = true
   config.action_mailer.raise_delivery_errors = true
 

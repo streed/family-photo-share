@@ -1,10 +1,8 @@
 # Docker Setup Guide
 
-This guide explains how to run the Family Photo Share application with Sidekiq workers using Docker Compose.
+This guide explains how to run Family Photo Share using Docker Compose.
 
 ## Quick Start
-
-### Development Setup
 
 1. **Copy environment variables:**
    ```bash
@@ -12,27 +10,19 @@ This guide explains how to run the Family Photo Share application with Sidekiq w
    # Edit .env with your actual values
    ```
 
-2. **Start infrastructure only (for local development):**
+2. **Start all services:**
    ```bash
-   docker-compose up postgres redis
+   docker-compose up -d
    ```
 
-3. **Start with Sidekiq workers (full development):**
+3. **Check service status:**
    ```bash
-   docker-compose -f docker-compose.dev.yml up
+   docker-compose ps
    ```
 
-### Production Setup
-
-1. **Set environment variables:**
+4. **View logs:**
    ```bash
-   cp .env.example .env.production
-   # Edit .env.production with production values
-   ```
-
-2. **Start production services:**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
+   docker-compose logs -f
    ```
 
 ## Service Architecture
@@ -42,193 +32,138 @@ This guide explains how to run the Family Photo Share application with Sidekiq w
 - **redis**: Redis 7 for Sidekiq job queue with persistence
 
 ### Application Services  
-- **web**: Rails application server (port 3000 in dev, 80 in prod)
-- **sidekiq**: Main worker for general jobs (5 threads)
-- **sidekiq_images**: Dedicated image processing worker (4 threads)
-- **sidekiq_bulk**: Bulk processing worker (2 threads)
+- **web**: Rails application server (port 3000)
+- **sidekiq**: Main worker for general jobs
+- **sidekiq_cron**: Scheduled job worker
+- **sidekiq_image_processing**: Dedicated image processing worker (4 threads)
 
-## Sidekiq Workers
+## Development Workflow
 
-### Queue Configuration
+### Starting Services
 
-| Queue | Purpose | Worker | Concurrency |
-|-------|---------|--------|-------------|
-| `default` | General application jobs | `sidekiq` | 5 |
-| `image_processing` | Photo thumbnail generation | `sidekiq_images` | 4 |
-| `bulk_processing` | Batch operations | `sidekiq_bulk` | 2 |
-
-### Worker Specialization
-
-- **Main Worker**: Handles user-facing jobs (emails, notifications)
-- **Image Worker**: CPU-intensive thumbnail generation
-- **Bulk Worker**: Background maintenance and batch operations
-
-## Docker Compose Files
-
-### `docker-compose.yml` (Default)
-- Full application stack for development
-- Uses built Docker image
-- Suitable for testing production-like environment
-
-### `docker-compose.dev.yml` (Development)
-- Uses Ruby base image for faster iteration
-- Volume mounts for live code reloading
-- Separate containers for each worker type
-
-### `docker-compose.prod.yml` (Production)
-- Production-optimized configuration
-- Health checks and resource limits
-- Proper logging and restart policies
-
-## Environment Variables
-
-### Required Variables
 ```bash
-RAILS_MASTER_KEY=your_rails_master_key
-POSTGRES_PASSWORD=secure_database_password
-DATABASE_URL=postgresql://postgres:password@postgres:5432/database_name
-REDIS_URL=redis://redis:6379/0
+# Start all services
+docker-compose up -d
+
+# Start only infrastructure (for local Rails development)
+docker-compose up postgres redis -d
+
+# Rebuild and start (after Gemfile changes)
+docker-compose build
+docker-compose up -d
 ```
 
-### Optional Variables
-```bash
-SIDEKIQ_USERNAME=admin
-SIDEKIQ_PASSWORD=secure_password
-MAX_IMAGE_SIZE=10485760
-SIDEKIQ_CONCURRENCY=5
-```
+### Viewing Logs
 
-## Usage Commands
-
-### Start Services
-```bash
-# Development (infrastructure only)
-docker-compose up postgres redis
-
-# Development (full stack)
-docker-compose -f docker-compose.dev.yml up
-
-# Production
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-### Stop Services
-```bash
-docker-compose down
-# or
-docker-compose -f docker-compose.dev.yml down
-# or  
-docker-compose -f docker-compose.prod.yml down
-```
-
-### View Logs
 ```bash
 # All services
 docker-compose logs -f
 
 # Specific service
-docker-compose logs -f sidekiq_images
-
-# Specific worker type
-docker-compose -f docker-compose.dev.yml logs -f sidekiq_images
+docker-compose logs -f web
+docker-compose logs -f sidekiq
 ```
 
-### Execute Commands
-```bash
-# Rails console
-docker-compose exec web rails console
+### Accessing Services
 
+- **Rails App**: http://localhost:3000
+- **PostgreSQL**: localhost:5433
+- **Redis**: localhost:6380
+
+### Database Management
+
+```bash
 # Run migrations
 docker-compose exec web rails db:migrate
 
-# Process images
-docker-compose exec web rails images:process_all
+# Access Rails console
+docker-compose exec web rails console
 
-# Check processing status
-docker-compose exec web rails images:status
+# Access database console
+docker-compose exec postgres psql -U postgres family_photo_share_development
 ```
 
-## Monitoring
+### Stopping Services
 
-### Sidekiq Web UI
-- **Development**: http://localhost:3000/sidekiq (if enabled in routes)
-- **Production**: Access through Rails application with authentication
-
-### Container Health
 ```bash
-# Check container status
-docker-compose ps
+# Stop all services
+docker-compose down
 
-# Check service health
-docker-compose exec postgres pg_isready -U postgres
-docker-compose exec redis redis-cli ping
-```
-
-### Worker Status
-```bash
-# Check active jobs
-docker-compose exec web rails runner "puts Sidekiq::Queue.new.size"
-
-# Check failed jobs
-docker-compose exec web rails runner "puts Sidekiq::RetrySet.new.size"
-
-# Check processing status
-docker-compose exec web rails images:status
-```
-
-## Scaling Workers
-
-### Horizontal Scaling
-```bash
-# Scale image processing workers
-docker-compose up --scale sidekiq_images=3
-
-# Scale with specific compose file
-docker-compose -f docker-compose.prod.yml up --scale sidekiq_images=4 -d
-```
-
-### Vertical Scaling
-Edit the concurrency in `config/sidekiq.yml` or set environment variables:
-```bash
-SIDEKIQ_CONCURRENCY=10 docker-compose up
+# Stop and remove volumes (careful - deletes data!)
+docker-compose down -v
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Port Conflicts
 
-1. **Port conflicts**: Change ports in docker-compose.yml if 5433/6380 are in use
-2. **Permission errors**: Ensure proper file permissions for storage volumes
-3. **Memory issues**: Increase Docker memory limits for image processing
-4. **Database connection**: Ensure postgres service is healthy before starting app
+If you get port already in use errors, the docker-compose.yml uses non-standard ports:
+- PostgreSQL: 5433 (instead of 5432)
+- Redis: 6380 (instead of 6379)
 
-### Debug Commands
+### Permission Issues
+
+If you encounter permission errors with volumes:
+
 ```bash
-# Check container logs
-docker-compose logs sidekiq_images
-
-# Access container shell
-docker-compose exec sidekiq_images bash
-
-# Check Redis connection
-docker-compose exec web rails runner "puts Redis.new.ping"
-
-# Check database connection  
-docker-compose exec web rails runner "puts ActiveRecord::Base.connection.active?"
+# Fix ownership
+docker-compose exec web chown -R rails:rails /rails/storage
 ```
 
-### Performance Tuning
+### Database Connection Issues
 
-1. **Image Processing**: Increase `sidekiq_images` concurrency for faster processing
-2. **Memory**: Monitor container memory usage and adjust limits
-3. **Storage**: Use SSD for faster image processing
-4. **Network**: Ensure low latency between services
+Ensure the database is healthy:
 
-## Production Considerations
+```bash
+docker-compose ps
+# Should show postgres as "healthy"
+```
 
-1. **Use external Redis/PostgreSQL** for better performance and reliability
-2. **Set up proper logging** aggregation (ELK, Splunk, etc.)
-3. **Configure monitoring** (New Relic, DataDog, etc.)
-4. **Set resource limits** to prevent resource exhaustion
-5. **Use health checks** for automatic recovery
-6. **Backup strategy** for data volumes
+### Sidekiq Not Processing Jobs
+
+Check Sidekiq logs:
+
+```bash
+docker-compose logs sidekiq
+docker-compose logs sidekiq_image_processing
+```
+
+## Environment Variables
+
+See `.env.example` for all available configuration options. Key variables:
+
+- `POSTGRES_PASSWORD`: Database password
+- `RAILS_MASTER_KEY`: Rails encryption key
+- `REDIS_URL`: Redis connection string
+- `DATABASE_URL`: PostgreSQL connection string
+
+### Email Configuration (Gmail)
+
+To send invitation emails, add these to your `.env`:
+
+```bash
+SMTP_ADDRESS=smtp.gmail.com
+SMTP_PORT=587
+SMTP_DOMAIN=gmail.com
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password  # 16-character app password from Google
+SMTP_AUTHENTICATION=plain
+SMTP_ENABLE_STARTTLS_AUTO=true
+```
+
+Test email sending:
+```bash
+docker-compose exec web rails email:test TEST_EMAIL=test@example.com
+```
+
+## Docker Compose Commands Reference
+
+| Command | Description |
+|---------|-------------|
+| `docker-compose up -d` | Start all services in background |
+| `docker-compose ps` | List running services |
+| `docker-compose logs -f [service]` | View logs (follow mode) |
+| `docker-compose exec [service] [command]` | Run command in service |
+| `docker-compose down` | Stop all services |
+| `docker-compose build` | Rebuild images |
+| `docker-compose restart [service]` | Restart specific service |

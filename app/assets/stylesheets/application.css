@@ -12,7 +12,7 @@
 /* Application Styles */
 
 body {
-  font-family: 'Comic Neue', 'Quicksand', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   margin: 0;
   padding: 0;
   background: linear-gradient(135deg, #f7f5f3 0%, #f0f4f1 50%, #f4f1f0 100%);
@@ -44,7 +44,7 @@ body {
   color: #6b5d4f;
   text-decoration: none;
   text-shadow: 2px 2px 4px rgba(89, 85, 80, 0.1);
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .navbar-brand:hover {
@@ -135,7 +135,7 @@ body {
 .profile-info h1 {
   margin: 0 0 1rem 0;
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
 }
 
@@ -173,7 +173,7 @@ body {
   margin-bottom: 0.75rem;
   font-weight: 700;
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-size: 1.1rem;
 }
 
@@ -187,7 +187,7 @@ body {
   transition: all 0.3s ease;
   background: linear-gradient(135deg, #ffffff 0%, #f7f5f3 100%);
   color: #5a5550;
-  font-family: 'Quicksand', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .form-control:focus {
@@ -282,7 +282,7 @@ body {
   cursor: pointer;
   font-size: 1rem;
   font-weight: 700;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   transition: all 0.3s ease;
   position: relative;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
@@ -357,7 +357,7 @@ body {
   position: relative;
   transition: all 0.3s ease;
   font-weight: 600;
-  font-family: 'Quicksand', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   box-shadow: 0 4px 15px rgba(139, 69, 151, 0.15);
 }
 
@@ -440,7 +440,7 @@ body {
 .welcome-section h1 {
   color: #6b5d4f;
   margin-bottom: 1.5rem;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 800;
   font-size: 2.5rem;
   text-shadow: 2px 2px 4px rgba(89, 85, 80, 0.1);
@@ -462,7 +462,7 @@ body {
   text-align: center;
   margin-bottom: 3rem;
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   font-size: 2rem;
 }
@@ -492,7 +492,7 @@ body {
 .feature-item h4 {
   margin: 0 0 1.5rem 0;
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   font-size: 1.3rem;
 }
@@ -511,7 +511,7 @@ body {
   border-radius: 25px !important;
   padding: 0.75rem 1.5rem !important;
   font-weight: 700 !important;
-  font-family: 'Comic Neue', cursive !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   border: 3px solid #d4c4b0 !important;
   box-shadow: 0 4px 15px rgba(89, 85, 80, 0.3) !important;
   text-transform: uppercase !important;
@@ -565,7 +565,7 @@ body {
   font-weight: 800;
   color: #6b5d4f;
   margin-bottom: 0.75rem;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   text-shadow: 2px 2px 4px rgba(89, 85, 80, 0.1);
   position: relative;
   z-index: 1;
@@ -578,7 +578,7 @@ body {
   letter-spacing: 1px;
   margin-bottom: 1rem;
   font-weight: 700;
-  font-family: 'Quicksand', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   position: relative;
   z-index: 1;
 }
@@ -595,7 +595,7 @@ body {
   transition: all 0.3s ease;
   position: relative;
   z-index: 1;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .stat-link:hover {
@@ -689,7 +689,7 @@ body {
   border-top: 4px solid #d4c4b0;
   border-radius: 30px 30px 0 0;
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 600;
   box-shadow: 0 -8px 25px rgba(89, 85, 80, 0.1);
   margin-top: 4rem;
@@ -707,7 +707,7 @@ body {
   background: linear-gradient(135deg, #e8ddd4 0%, #ddd4e8 100%) !important;
   border-bottom: 3px solid #a8b5a1 !important;
   color: #6b5d4f !important;
-  font-family: 'Comic Neue', cursive !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   font-weight: 700 !important;
   font-size: 1.3rem !important;
   padding: 1.5rem 2rem !important;
@@ -715,7 +715,7 @@ body {
 
 .card-header h2, .card-header h3, .card-header h4 {
   color: #6b5d4f !important;
-  font-family: 'Comic Neue', cursive !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   font-weight: 800 !important;
   margin: 0 !important;
 }
@@ -740,7 +740,7 @@ body {
 
 /* Headings */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   color: #6b5d4f;
   text-shadow: 1px 1px 2px rgba(89, 85, 80, 0.1);
@@ -748,7 +748,7 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Paragraphs and text */
 p, .lead {
-  font-family: 'Quicksand', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   color: #5a5550;
   line-height: 1.7;
   font-weight: 500;
@@ -776,7 +776,7 @@ a:hover {
 .table th {
   background: linear-gradient(135deg, #e8ddd4 0%, #ddd4e8 100%);
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   border: none;
   padding: 1rem;
@@ -785,7 +785,7 @@ a:hover {
 .table td {
   background: linear-gradient(135deg, #ffffff 0%, #f7f5f3 100%);
   color: #5a5550;
-  font-family: 'Quicksand', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   border: none;
   padding: 1rem;
 }
@@ -999,7 +999,7 @@ img:hover {
   color: #6b5d4f;
   text-decoration: none;
   font-weight: 600;
-  font-family: 'Quicksand', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   transition: all 0.3s ease;
   border: none;
   background: transparent;
@@ -1030,7 +1030,7 @@ img:hover {
 
 .settings-header h1 {
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 800;
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
@@ -1082,7 +1082,7 @@ img:hover {
 
 .section-header h2 {
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   margin-bottom: 0.5rem;
   font-size: 1.8rem;
@@ -1114,7 +1114,7 @@ img:hover {
 
 .password-section h3 {
   color: #6b5d4f;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   margin-bottom: 0.5rem;
   font-size: 1.3rem;
@@ -1191,7 +1191,7 @@ img:hover {
 
 .modal-title {
   color: #dc3545;
-  font-family: 'Comic Neue', cursive;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
   margin: 0;
 }

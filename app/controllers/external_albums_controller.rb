@@ -1,9 +1,12 @@
 class ExternalAlbumsController < ApplicationController
+  include GuestSessionTracking
+  
   skip_before_action :authenticate_user!
   layout 'external'
   before_action :set_album_by_token, only: [:show, :authenticate, :password_form]
   before_action :check_external_access_enabled, only: [:show, :authenticate, :password_form]
   before_action :verify_external_access, only: [:show]
+  before_action :set_guest_session_info, only: [:show]
   
   # Rate limiting for password attempts
   before_action :check_rate_limit, only: [:authenticate]
@@ -18,15 +21,22 @@ class ExternalAlbumsController < ApplicationController
       # Create access session
       access_session = @album.create_access_session(request.remote_ip)
       
-      # Set session cookie
+      # Set session cookie - expires in 10 minutes from creation
       cookies.signed[:album_access] = {
         value: {
           'token' => access_session.session_token,
           'album_id' => @album.id
         },
-        expires: 1.day.from_now,
+        expires: access_session.expires_at,
         httponly: true,
         secure: Rails.env.production?
+      }
+      
+      # Set expiration info for JavaScript countdown
+      cookies[:guest_session_expires_at] = {
+        value: access_session.expires_at.to_i.to_s,
+        expires: access_session.expires_at,
+        httponly: false # Allow JavaScript access
       }
       
       redirect_to external_album_path(@album.sharing_token), notice: 'Access granted!'
@@ -81,11 +91,12 @@ class ExternalAlbumsController < ApplicationController
     # Check if we have a valid session in the database
     access_session = @album.album_access_sessions.find_by(session_token: token)
     return false unless access_session
-    return false if access_session.expired?
     
-    # Touch the access to update last accessed time
-    access_session.touch_access!
-    true
+    # Store current session for activity tracking
+    @current_guest_session = access_session
+    
+    # Check if session is still valid (this will also extend it if valid)
+    return access_session.valid_with_activity_check!
   end
   
   def check_rate_limit

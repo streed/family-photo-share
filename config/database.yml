@@ -69,20 +69,7 @@ test:
 # for a full overview on how database connection configuration can be specified.
 #
 production:
-  primary: &primary_production
-    <<: *default
+  <<: *default
+  primary:
     database: family_photo_share_production
-    username: family_photo_share
     password: <%= ENV["FAMILY_PHOTO_SHARE_DATABASE_PASSWORD"] %>
-  cache:
-    <<: *primary_production
-    database: family_photo_share_production_cache
-    migrations_paths: db/cache_migrate
-  queue:
-    <<: *primary_production
-    database: family_photo_share_production_queue
-    migrations_paths: db/queue_migrate
-  cable:
-    <<: *primary_production
-    database: family_photo_share_production_cable
-    migrations_paths: db/cable_migrate

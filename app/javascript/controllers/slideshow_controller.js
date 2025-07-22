@@ -54,6 +54,9 @@ export default class extends Controller {
     
     // Add keyboard event listener
     document.addEventListener('keydown', this.boundKeydown)
+    
+    // Extend session when opening slideshow
+    this.extendGuestSession()
   }
 
   close() {
@@ -70,12 +73,14 @@ export default class extends Controller {
     if (this.photos.length === 0) return
     this.currentIndex = (this.currentIndex + 1) % this.photos.length
     this.showPhoto(this.currentIndex)
+    this.extendGuestSession()
   }
 
   previous() {
     if (this.photos.length === 0) return
     this.currentIndex = this.currentIndex === 0 ? this.photos.length - 1 : this.currentIndex - 1
     this.showPhoto(this.currentIndex)
+    this.extendGuestSession()
   }
 
   showPhoto(index) {
@@ -122,6 +127,17 @@ export default class extends Controller {
         this.previous()
         break
     }
+  }
+
+  extendGuestSession() {
+    // Extend guest session by making a HEAD request
+    fetch(window.location.href, {
+      method: 'HEAD',
+      credentials: 'same-origin'
+    }).catch(error => {
+      // Silently handle errors - session extension is not critical for slideshow functionality
+      console.log('Session extension failed:', error)
+    })
   }
 
   disconnect() {
