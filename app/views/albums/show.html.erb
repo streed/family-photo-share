@@ -30,6 +30,20 @@
           </div>
         </div>
       <% end %>
+      
+      <% if @album.allow_external_access? && @album.sharing_url.present? && @album.editable_by?(current_user) && @album.photo_count > 0 %>
+        <div class="album-header-qr">
+          <div class="qr-code-container-header">
+            <div class="qr-code-wrapper-header">
+              <%= image_tag qr_code_data_url(@album.sharing_url), 
+                            alt: "QR Code for #{@album.name}", 
+                            class: "qr-code-image-header",
+                            title: "Scan to view album" %>
+            </div>
+            <small class="text-white d-block mt-1 text-center">Scan to share</small>
+          </div>
+        </div>
+      <% end %>
     </div>
   <% else %>
     <div class="d-flex justify-content-between align-items-start mb-4">
@@ -48,17 +62,31 @@
           </small>
         </div>
       </div>
-      <% if @album.editable_by?(current_user) %>
-        <div class="album-actions">
-          <div class="btn-group">
-            <%= link_to "Edit Album", edit_album_path(@album), class: "btn btn-outline-primary btn-sm" %>
-            <%= link_to "Delete Album", album_path(@album), method: :delete, 
-                        class: "btn btn-outline-danger btn-sm",
-                        confirm: "Are you sure? This will remove all photos from the album.",
-                        data: { "turbo-method": :delete } %>
+      <div class="d-flex align-items-center gap-3">
+        <% if @album.editable_by?(current_user) %>
+          <div class="album-actions">
+            <div class="btn-group">
+              <%= link_to "Edit Album", edit_album_path(@album), class: "btn btn-outline-primary btn-sm" %>
+              <%= link_to "Delete Album", album_path(@album), method: :delete, 
+                          class: "btn btn-outline-danger btn-sm",
+                          confirm: "Are you sure? This will remove all photos from the album.",
+                          data: { "turbo-method": :delete } %>
+            </div>
           </div>
-        </div>
-      <% end %>
+        <% end %>
+        
+        <% if @album.allow_external_access? && @album.sharing_url.present? && @album.editable_by?(current_user) && @album.photo_count > 0 %>
+          <div class="qr-code-container-simple">
+            <div class="qr-code-wrapper-simple">
+              <%= image_tag qr_code_data_url(@album.sharing_url), 
+                            alt: "QR Code for #{@album.name}", 
+                            class: "qr-code-image-simple",
+                            title: "Scan to view album" %>
+            </div>
+            <small class="text-muted d-block mt-1 text-center">Scan to share</small>
+          </div>
+        <% end %>
+      </div>
     </div>
   <% end %>
 
@@ -76,6 +104,12 @@
             <button class="btn btn-outline-secondary copy-link-btn" type="button" data-clipboard-target=".sharing-link-input">
               <i class="fas fa-copy"></i> Copy
             </button>
+          </div>
+          
+          <div class="mt-2">
+            <%= link_to view_events_album_path(@album), class: "btn btn-outline-info btn-sm" do %>
+              <i class="fas fa-chart-line me-1"></i>View Guest Activity
+            <% end %>
           </div>
           
           <% if @album.password_digest.present? %>

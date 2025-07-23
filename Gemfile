@@ -36,6 +36,9 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 gem "active_storage_validations"
 
+# QR Code generation
+gem "rqrcode", "~> 3.0"
+
 # Authentication
 gem 'devise'
 

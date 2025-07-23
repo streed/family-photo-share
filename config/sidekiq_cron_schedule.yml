@@ -10,6 +10,13 @@ cleanup_expired_sessions:
   description: "Clean up expired guest access sessions"
   active_job: true  # Use ActiveJob interface
 
+cleanup_album_view_events:
+  cron: "0 3 * * *"  # Daily at 3 AM
+  class: "CleanupAlbumViewEventsJob"
+  queue: "low"
+  description: "Clean up album view events older than 7 days"
+  active_job: true
+
 # Add more scheduled jobs here as needed
 # Example:
 # daily_report:

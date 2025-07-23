@@ -1,8 +1,8 @@
 class AlbumsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_album, only: [:show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover]
+  before_action :set_album, only: [:show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events]
   before_action :ensure_access, only: [:show]
-  before_action :ensure_owner, only: [:edit, :update, :destroy, :add_photo, :remove_photo, :set_cover]
+  before_action :ensure_owner, only: [:edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events]
 
   def index
     @albums = current_user.albums.recent.includes(:cover_photo)
@@ -95,6 +95,22 @@ class AlbumsController < ApplicationController
     rescue ActiveRecord::RecordNotFound
       redirect_to @album, alert: 'Photo not found.'
     end
+  end
+
+  def view_events
+    @events = @album.album_view_events.recent
+                    .includes(:photo)
+                    .order(occurred_at: :desc)
+                    .limit(100)
+                    
+    # Get base query for statistics
+    recent_events = @album.album_view_events.recent
+    
+    # Group events by type for summary
+    @event_counts = recent_events.group(:event_type).count
+    @unique_visitors = recent_events.distinct.count(:ip_address)
+    @total_photo_views = recent_events.by_type('photo_view').count
+    @password_attempts = recent_events.where(event_type: ['password_entry', 'password_attempt_failed']).count
   end
 
   private

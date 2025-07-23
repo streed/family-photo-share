@@ -3,6 +3,7 @@ import { Controller } from "@hotwired/stimulus"
 // Connects to data-controller="slideshow"
 export default class extends Controller {
   static targets = ["modal", "image", "title", "description", "user", "counter"]
+  static values = { trackUrl: String }
 
   connect() {
     this.currentIndex = 0
@@ -21,6 +22,7 @@ export default class extends Controller {
       
       return {
         index: idx,
+        id: item.dataset.slideshowPhotoIdValue,
         src: img.dataset.large || img.src,
         title: img.dataset.title || img.alt || 'Untitled',
         description: img.dataset.description || '',
@@ -111,6 +113,27 @@ export default class extends Controller {
     if (this.hasCounterTarget) {
       this.counterTarget.textContent = index + 1
     }
+    
+    // Track photo view if we have a tracking URL
+    if (this.hasTrackUrlValue && photo.id) {
+      this.trackPhotoView(photo.id)
+    }
+  }
+  
+  trackPhotoView(photoId) {
+    if (!this.trackUrlValue) return
+    
+    fetch(this.trackUrlValue, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ photo_id: photoId }),
+      credentials: 'same-origin'
+    }).catch(error => {
+      // Silently handle errors - tracking is not critical for functionality
+      console.log('Photo view tracking failed:', error)
+    })
   }
 
   handleKeydown(event) {

@@ -5,7 +5,6 @@ FactoryBot.define do
     email { Faker::Internet.unique.email }
     password { 'password123' }
     password_confirmation { 'password123' }
-    confirmed_at { Time.current }
 
     trait :oauth_user do
       provider { 'google_oauth2' }
@@ -14,9 +13,6 @@ FactoryBot.define do
       password_confirmation { nil }
     end
 
-    trait :unconfirmed do
-      confirmed_at { nil }
-    end
 
     trait :with_bio do
       bio { Faker::Lorem.paragraph(sentence_count: 2) }

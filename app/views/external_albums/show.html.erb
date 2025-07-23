@@ -34,14 +34,14 @@
   </div>
 
   <% if @photos.any? %>
-    <div class="external-album-photos" data-controller="slideshow">
+    <div class="external-album-photos" data-controller="slideshow" data-slideshow-track-url-value="<%= track_external_photo_view_path(@album.sharing_token) %>">
       <div class="photo-grid">
         <% @photos.each_with_index do |photo, index| %>
           <div class="photo-tile">
             <div class="photo-item" 
                  data-action="click->slideshow#open" 
                  data-slideshow-index-value="<%= index %>"
-                 data-slideshow-photo-id="<%= photo.id %>">
+                 data-slideshow-photo-id-value="<%= photo.id %>">
               <div class="photo-container">
                 <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
                               class: "photo-thumbnail", 

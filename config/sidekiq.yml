@@ -12,6 +12,7 @@
   - default
   - image_processing
   - bulk_processing
+  - low
 
 # Redis configuration
 :redis:
@@ -25,6 +26,7 @@ production:
     - [default, 5]
     - [image_processing, 10] 
     - [bulk_processing, 2]
+    - [low, 1]
 
 # Development settings  
 development:
@@ -33,6 +35,7 @@ development:
     - default
     - image_processing
     - bulk_processing
+    - low
 
 # Test settings
 test:

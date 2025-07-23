@@ -2,10 +2,11 @@ class ExternalAlbumsController < ApplicationController
   include GuestSessionTracking
   
   skip_before_action :authenticate_user!
+  skip_before_action :verify_authenticity_token, only: [:track_photo_view]
   layout 'external'
-  before_action :set_album_by_token, only: [:show, :authenticate, :password_form]
-  before_action :check_external_access_enabled, only: [:show, :authenticate, :password_form]
-  before_action :verify_external_access, only: [:show]
+  before_action :set_album_by_token, only: [:show, :authenticate, :password_form, :track_photo_view]
+  before_action :check_external_access_enabled, only: [:show, :authenticate, :password_form, :track_photo_view]
+  before_action :verify_external_access, only: [:show, :track_photo_view]
   before_action :set_guest_session_info, only: [:show]
   
   # Rate limiting for password attempts
@@ -20,6 +21,9 @@ class ExternalAlbumsController < ApplicationController
     if @album.accessible_externally_with_password?(params[:password])
       # Create access session
       access_session = @album.create_access_session(request.remote_ip)
+      
+      # Track successful password entry
+      AlbumViewEvent.track_password_entry(@album, request, access_session.session_token)
       
       # Set session cookie - expires in 10 minutes from creation
       cookies.signed[:album_access] = {
@@ -43,6 +47,7 @@ class ExternalAlbumsController < ApplicationController
     else
       # Track failed attempt
       track_failed_attempt
+      AlbumViewEvent.track_failed_password_attempt(@album, request)
       
       flash.now[:alert] = 'Incorrect password. Please try again.'
       render :password_form
@@ -51,6 +56,17 @@ class ExternalAlbumsController < ApplicationController
   
   def password_form
     # This action renders the password entry form
+  end
+  
+  def track_photo_view
+    photo = @album.photos.find(params[:photo_id])
+    session_token = @current_guest_session&.session_token || 'anonymous'
+    
+    AlbumViewEvent.track_photo_view(@album, photo, request, session_token)
+    
+    head :ok
+  rescue ActiveRecord::RecordNotFound
+    head :not_found
   end
   
   private

@@ -5,6 +5,7 @@ class Album < ApplicationRecord
   has_many :album_photos, dependent: :destroy
   has_many :photos, through: :album_photos
   has_many :album_access_sessions, dependent: :destroy
+  has_many :album_view_events, dependent: :destroy
   
   # External sharing with password protection
   has_secure_password :password, validations: false

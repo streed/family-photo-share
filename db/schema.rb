@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_22_082459) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_22_201938) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,25 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_082459) do
     t.index ["album_id", "position"], name: "index_album_photos_on_album_id_and_position"
     t.index ["album_id"], name: "index_album_photos_on_album_id"
     t.index ["photo_id"], name: "index_album_photos_on_photo_id"
+  end
+
+  create_table "album_view_events", force: :cascade do |t|
+    t.bigint "album_id", null: false
+    t.string "event_type", null: false
+    t.bigint "photo_id"
+    t.string "ip_address"
+    t.text "user_agent"
+    t.string "referrer"
+    t.string "session_id"
+    t.datetime "occurred_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["album_id", "occurred_at"], name: "index_album_view_events_on_album_id_and_occurred_at"
+    t.index ["album_id"], name: "index_album_view_events_on_album_id"
+    t.index ["event_type"], name: "index_album_view_events_on_event_type"
+    t.index ["occurred_at"], name: "index_album_view_events_on_occurred_at"
+    t.index ["photo_id"], name: "index_album_view_events_on_photo_id"
+    t.index ["session_id"], name: "index_album_view_events_on_session_id"
   end
 
   create_table "albums", force: :cascade do |t|
@@ -213,6 +232,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_082459) do
   add_foreign_key "album_access_sessions", "albums"
   add_foreign_key "album_photos", "albums"
   add_foreign_key "album_photos", "photos"
+  add_foreign_key "album_view_events", "albums"
+  add_foreign_key "album_view_events", "photos"
   add_foreign_key "albums", "photos", column: "cover_photo_id"
   add_foreign_key "albums", "users"
   add_foreign_key "families", "users", column: "created_by_id"

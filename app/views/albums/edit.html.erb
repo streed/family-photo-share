@@ -92,6 +92,20 @@
                       </small>
                     </div>
                     
+                    <div class="qr-code-section">
+                      <div class="alert alert-light">
+                        <h6><i class="fas fa-qrcode"></i> QR Code</h6>
+                        <div class="text-center">
+                          <img src="<%= qr_code_data_url(@album.sharing_url) %>" 
+                               alt="QR Code for album sharing link" 
+                               class="qr-code-image">
+                        </div>
+                        <small class="text-muted">
+                          Scan with a smartphone camera to quickly access the album.
+                        </small>
+                      </div>
+                    </div>
+                    
                     <div class="external-sharing-stats">
                       <small class="text-muted">
                         <i class="fas fa-clock"></i>
@@ -219,5 +233,14 @@
   .form-check-input:focus {
     border-color: #6b5d4f;
     box-shadow: 0 0 0 0.25rem rgba(107, 93, 79, 0.25);
+  }
+  
+  .qr-code-image {
+    max-width: 150px;
+    height: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 10px;
+    background: white;
   }
 </style>

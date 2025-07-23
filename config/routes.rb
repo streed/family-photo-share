@@ -6,6 +6,7 @@ Rails.application.routes.draw do
       patch :add_photo
       delete :remove_photo
       patch :set_cover
+      get :view_events
     end
   end
   # Short URL routes (must be before auth required routes)
@@ -15,6 +16,7 @@ Rails.application.routes.draw do
   get "shared/albums/:token", to: "external_albums#show", as: :external_album
   get "shared/albums/:token/password", to: "external_albums#password_form", as: :external_album_password
   post "shared/albums/:token/authenticate", to: "external_albums#authenticate", as: :external_album_authenticate
+  post "shared/albums/:token/track_photo_view", to: "external_albums#track_photo_view", as: :track_external_photo_view
   
   # Family invitation acceptance routes (outside nested resources)
   get "invitations/:token", to: "family_invitations#show", as: :invitation
