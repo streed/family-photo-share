@@ -1,8 +1,8 @@
 class AlbumsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_album, only: [:show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events]
+  before_action :set_album, only: [:show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions]
   before_action :ensure_access, only: [:show]
-  before_action :ensure_owner, only: [:edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events]
+  before_action :ensure_owner, only: [:edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions]
 
   def index
     @albums = current_user.albums.recent.includes(:cover_photo)
@@ -111,6 +111,47 @@ class AlbumsController < ApplicationController
     @unique_visitors = recent_events.distinct.count(:ip_address)
     @total_photo_views = recent_events.by_type('photo_view').count
     @password_attempts = recent_events.where(event_type: ['password_entry', 'password_attempt_failed']).count
+  end
+
+  def guest_sessions
+    # Only show guest sessions page if external access is enabled
+    unless @album.allow_external_access?
+      redirect_to @album, alert: 'Guest access is not enabled for this album.'
+      return
+    end
+    
+    @active_sessions = @album.album_access_sessions.active.recent
+    @expired_sessions = @album.album_access_sessions.expired.recent.limit(20)
+    @total_sessions_count = @album.album_access_sessions.count
+  end
+
+  def revoke_guest_session
+    session = @album.album_access_sessions.find_by(session_token: params[:session_token])
+    
+    if session
+      was_active = !session.expired?
+      session.destroy
+      
+      if was_active
+        redirect_to guest_sessions_album_path(@album), notice: 'Guest session revoked successfully. The guest user has been logged out.'
+      else
+        redirect_to guest_sessions_album_path(@album), notice: 'Expired session removed from records.'
+      end
+    else
+      redirect_to guest_sessions_album_path(@album), alert: 'Session not found or already removed.'
+    end
+  end
+
+  def revoke_all_guest_sessions
+    count = @album.album_access_sessions.active.count
+    
+    if count == 0
+      redirect_to guest_sessions_album_path(@album), alert: 'No active guest sessions to revoke.'
+      return
+    end
+    
+    @album.revoke_all_access_sessions
+    redirect_to guest_sessions_album_path(@album), notice: "Success! #{pluralize(count, 'active guest session')} revoked. All guest users have been logged out."
   end
 
   private

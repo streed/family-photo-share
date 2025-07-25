@@ -21,12 +21,13 @@
             <% if @photo.image.attached? %>
               <div class="current-image mb-4">
                 <h5>Photo:</h5>
-                <%= image_tag @photo.short_medium_url, alt: @photo.title, class: "img-fluid", style: "max-height: 300px; border-radius: 8px;" %>
+                <%= image_tag @photo.short_medium_url, alt: photo_title_or_default(@photo), class: "img-fluid", style: "max-height: 300px; border-radius: 8px;" %>
               </div>
             <% end %>
 
             <div class="form-group mb-3">
               <%= form.label :title, class: "form-label" %>
+              <span class="text-muted">(Optional)</span>
               <%= form.text_field :title, class: "form-control", placeholder: "Enter a title for your photo" %>
             </div>
 

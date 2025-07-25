@@ -9,13 +9,6 @@
     </div>
 
     <div class="auth-body">
-      <% if defined?(rate_limit_info) && rate_limit_info[:failed_attempts] > 0 && rate_limit_info[:remaining_attempts] > 0 %>
-        <div class="alert alert-warning">
-          <i class="fas fa-exclamation-triangle"></i>
-          <strong>Warning:</strong> <%= pluralize(rate_limit_info[:remaining_attempts], 'attempt') %> remaining before temporary lockout.
-        </div>
-      <% end %>
-      
       <%= form_for(resource, as: resource_name, url: session_path(resource_name), html: { class: "auth-form" }) do |f| %>
         <div class="form-group mb-3">
           <%= f.label :email, "Email Address", class: "form-label" %>
@@ -181,19 +174,79 @@
     text-decoration: underline;
   }
 
-  /* Warning Alert */
-  .alert-warning {
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    color: #856404;
-    border: 2px solid #ffc107;
+  /* Alert Styles */
+  .alert {
     border-radius: 12px;
     padding: 1rem;
     margin-bottom: 1.5rem;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    position: relative;
   }
 
-  .alert-warning i {
-    margin-right: 0.5rem;
+  .alert i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  .alert-danger {
+    background: linear-gradient(135deg, #fee5e5 0%, #fdd8d8 100%);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border: 1px solid #ffeaa7;
+  }
+
+  .btn-close {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-close:hover {
+    opacity: 0.8;
+  }
+
+  .btn-close::after {
+    content: '×';
+  }
+
+  /* Error List */
+  .error-list {
+    margin: 0.5rem 0 0 1.75rem;
+    padding: 0;
+    list-style: disc;
+  }
+
+  .error-list li {
+    margin-bottom: 0.25rem;
+  }
+
+  .alert-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
   }
 
   /* Responsive */

@@ -15,11 +15,38 @@ class RegistrationsController < Devise::RegistrationsController
           @invitation.accept!(user)
           # Clear the invitation token from session
           session.delete(:invitation_token)
+          flash[:notice] = "Welcome to #{@invitation.family.name}! Your account has been created successfully."
+        elsif user.errors.any?
+          # Convert validation errors to a single flash message
+          if user.errors[:email].any?
+            flash.now[:alert] = "Email #{user.errors[:email].first}"
+          elsif user.errors[:password].any?
+            flash.now[:alert] = "Password #{user.errors[:password].first}"
+          elsif user.errors[:password_confirmation].any?
+            flash.now[:alert] = "Password confirmation #{user.errors[:password_confirmation].first}"
+          else
+            flash.now[:alert] = "Please correct the errors: #{user.errors.full_messages.first}"
+          end
         end
       end
     else
       # Public signup - user creates account without joining a family
-      super
+      super do |user|
+        if user.persisted?
+          flash[:notice] = "Welcome! Your account has been created. You can now create or join a family."
+        elsif user.errors.any?
+          # Convert validation errors to a single flash message
+          if user.errors[:email].any?
+            flash.now[:alert] = "Email #{user.errors[:email].first}"
+          elsif user.errors[:password].any?
+            flash.now[:alert] = "Password #{user.errors[:password].first}"
+          elsif user.errors[:password_confirmation].any?
+            flash.now[:alert] = "Password confirmation #{user.errors[:password_confirmation].first}"
+          else
+            flash.now[:alert] = "Please correct the errors: #{user.errors.full_messages.first}"
+          end
+        end
+      end
     end
   end
 

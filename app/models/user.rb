@@ -16,6 +16,7 @@ class User < ApplicationRecord
   # Associations
   has_many :photos, dependent: :destroy
   has_many :albums, dependent: :destroy
+  has_many :bulk_uploads, dependent: :destroy
   has_many :created_families, class_name: 'Family', foreign_key: 'created_by_id', dependent: :destroy
   has_one :family_membership, dependent: :destroy
   has_one :family, through: :family_membership

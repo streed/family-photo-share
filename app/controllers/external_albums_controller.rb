@@ -18,6 +18,17 @@ class ExternalAlbumsController < ApplicationController
   end
   
   def authenticate
+    # Check rate limiting first (skip in development)
+    if !Rails.env.development?
+      attempts = get_failed_attempts
+      
+      if attempts >= 5
+        remaining_time = rate_limit_remaining_time
+        flash.now[:alert] = "Too many incorrect password attempts. Please try again in #{remaining_time} #{'minute'.pluralize(remaining_time)}."
+        render :password_form and return
+      end
+    end
+    
     if @album.accessible_externally_with_password?(params[:password])
       # Create access session
       access_session = @album.create_access_session(request.remote_ip)
@@ -43,13 +54,31 @@ class ExternalAlbumsController < ApplicationController
         httponly: false # Allow JavaScript access
       }
       
-      redirect_to external_album_path(@album.sharing_token), notice: 'Access granted!'
+      # Clear failed attempts
+      clear_failed_attempts unless Rails.env.development?
+      
+      redirect_to external_album_path(@album.sharing_token), notice: "Welcome! You now have access to view this album. Your session will expire in 10 minutes."
     else
       # Track failed attempt
-      track_failed_attempt
+      track_failed_attempt unless Rails.env.development?
       AlbumViewEvent.track_failed_password_attempt(@album, request)
       
-      flash.now[:alert] = 'Incorrect password. Please try again.'
+      # Add error message exactly like sessions controller
+      if Rails.env.development?
+        flash.now[:alert] = "Incorrect password. Please try again."
+      else
+        attempts = get_failed_attempts
+        attempts_left = 5 - attempts
+        
+        if attempts_left == 1
+          flash.now[:alert] = "Incorrect password. Warning: You have 1 more attempt before access is temporarily blocked."
+        elsif attempts_left > 0
+          flash.now[:alert] = "Incorrect password. You have #{attempts_left} attempts remaining."
+        else
+          flash.now[:alert] = "Incorrect password. This was your last attempt - access is now temporarily blocked."
+        end
+      end
+      
       render :password_form
     end
   end
@@ -116,6 +145,8 @@ class ExternalAlbumsController < ApplicationController
   end
   
   def check_rate_limit
+    return true if Rails.env.development?
+    
     cache_key = "album_password_attempts:#{request.remote_ip}:#{@album.id}"
     attempts = Rails.cache.read(cache_key) || 0
     
@@ -130,6 +161,22 @@ class ExternalAlbumsController < ApplicationController
     cache_key = "album_password_attempts:#{request.remote_ip}:#{@album.id}"
     attempts = Rails.cache.read(cache_key) || 0
     Rails.cache.write(cache_key, attempts + 1, expires_in: 1.hour)
+  end
+  
+  def get_failed_attempts
+    cache_key = "album_password_attempts:#{request.remote_ip}:#{@album.id}"
+    Rails.cache.read(cache_key) || 0
+  end
+  
+  def clear_failed_attempts
+    cache_key = "album_password_attempts:#{request.remote_ip}:#{@album.id}"
+    Rails.cache.delete(cache_key)
+  end
+  
+  def rate_limit_remaining_time
+    # Since we use 1 hour expiry, calculate approximate remaining time
+    # This is a simplified version - in production you might want to store the timestamp
+    15 # Default to 15 minutes
   end
   
   def render_not_found

@@ -75,6 +75,24 @@
           <button type="button" class="alert-close" data-action="click->alert#dismiss">&times;</button>
         </div>
       <% end %>
+      
+      <% if flash.now[:alert] %>
+        <div class="alert alert-danger alert-dismissible" 
+             data-controller="alert" 
+             data-alert-auto-dismiss-value="5000">
+          <%= flash.now[:alert] %>
+          <button type="button" class="alert-close" data-action="click->alert#dismiss">&times;</button>
+        </div>
+      <% end %>
+      
+      <% if flash.now[:notice] %>
+        <div class="alert alert-success alert-dismissible" 
+             data-controller="alert" 
+             data-alert-auto-dismiss-value="5000">
+          <%= flash.now[:notice] %>
+          <button type="button" class="alert-close" data-action="click->alert#dismiss">&times;</button>
+        </div>
+      <% end %>
 
       <%= yield %>
     </main>

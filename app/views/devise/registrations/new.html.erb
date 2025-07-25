@@ -10,7 +10,6 @@
 
     <div class="auth-body">
       <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { class: "auth-form" }) do |f| %>
-        <%= render "devise/shared/error_messages", resource: resource %>
 
         <div class="row">
           <div class="col-6">
@@ -194,25 +193,73 @@
     text-decoration: underline;
   }
 
-  /* Error Messages */
-  #error_explanation {
-    background: #f8d7da;
-    border: 1px solid #f5c6cb;
+  /* Alert Styles */
+  .alert {
     border-radius: 12px;
     padding: 1rem;
     margin-bottom: 1.5rem;
-    color: #721c24;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    position: relative;
   }
 
-  #error_explanation h2 {
+  .alert i {
+    margin-right: 0.75rem;
     font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: #721c24;
   }
 
-  #error_explanation ul {
-    margin-bottom: 0;
+  .alert-danger {
+    background: linear-gradient(135deg, #fee5e5 0%, #fdd8d8 100%);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .btn-close {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-close:hover {
+    opacity: 0.8;
+  }
+
+  .btn-close::after {
+    content: '×';
+  }
+
+  /* Error List */
+  .error-list {
+    margin: 0.5rem 0 0 1.75rem;
+    padding: 0;
+    list-style: disc;
+  }
+
+  .error-list li {
+    margin-bottom: 0.25rem;
+  }
+
+  .alert-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
   }
 
   /* Responsive */

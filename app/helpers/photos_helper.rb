@@ -31,4 +31,12 @@ module PhotosHelper
     date = photo.taken_at || photo.created_at
     date.strftime("%B %d, %Y at %I:%M %p")
   end
+  
+  def photo_title_or_default(photo)
+    photo.title.presence || "Untitled Photo"
+  end
+  
+  def truncated_photo_title(photo, length: 30)
+    truncate(photo_title_or_default(photo), length: length)
+  end
 end

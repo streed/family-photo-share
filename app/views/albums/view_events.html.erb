@@ -146,7 +146,7 @@
                             <%= image_tag event.photo.short_thumbnail_url, 
                                           class: "rounded me-2", 
                                           style: "width: 30px; height: 30px; object-fit: cover;" %>
-                            <small><%= truncate(event.photo.title, length: 20) %></small>
+                            <small><%= truncated_photo_title(event.photo, length: 20) %></small>
                           </div>
                         <% else %>
                           <span class="text-muted">—</span>

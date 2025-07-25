@@ -62,7 +62,7 @@ export default class extends Controller {
         this.updateExpirationFromCookie()
       }
     }).catch(error => {
-      console.log('Session extension failed:', error)
+      // Session extension failed silently
     })
   }
 

@@ -32,23 +32,36 @@
       </div>
     </nav>
 
-    <!-- Flash Messages -->
-    <% if notice %>
-      <div class="alert alert-success alert-dismissible fade show" role="alert">
-        <%= notice %>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    <% end %>
-
-    <% if alert %>
-      <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <%= alert %>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-      </div>
-    <% end %>
-
     <!-- Main Content -->
     <main class="main-content">
+      <!-- Flash Messages -->
+      <div class="container">
+        <!-- Prioritize flash.now over regular flash to avoid duplicates -->
+        <% if flash.now[:alert] %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 1rem; border-radius: 8px;">
+            <%= flash.now[:alert] %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% elsif flash[:alert] %>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-bottom: 1rem; border-radius: 8px;">
+            <%= flash[:alert] %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% end %>
+        
+        <% if flash.now[:notice] %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 1rem; border-radius: 8px;">
+            <%= flash.now[:notice] %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% elsif flash[:notice] %>
+          <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-bottom: 1rem; border-radius: 8px;">
+            <%= flash[:notice] %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <% end %>
+      </div>
+
       <%= yield %>
     </main>
 
@@ -80,10 +93,6 @@
         font-size: 1.5rem;
       }
       
-      .alert {
-        margin-bottom: 0;
-        border-radius: 0;
-      }
     </style>
   </body>
 </html>

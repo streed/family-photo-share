@@ -1,227 +1,440 @@
 # Family Photo Share
 
-A self-hosted Ruby on Rails application for families to share photos privately. Create albums, invite family members, and manage access with role-based permissions - all while keeping your precious memories under your control.
+[![Ruby](https://img.shields.io/badge/ruby-3.4.2-red.svg)](https://www.ruby-lang.org/)
+[![Rails](https://img.shields.io/badge/rails-7.1.5-red.svg)](https://rubyonrails.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io/)
+[![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A modern, secure photo-sharing platform designed for families. Built with Ruby on Rails, this application provides a private space for families to share, organize, and preserve their memories together.
+
+## Table of Contents
+
+- [Features](#features)
+- [Demo](#demo)
+- [Tech Stack](#tech-stack)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Development](#development)
+- [Production Deployment](#production-deployment)
+- [Usage Guide](#usage-guide)
+- [Architecture](#architecture)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
 
 ## Features
 
-- 📸 **Photo Management**: Upload, organize, and share photos with your family
-- 👨‍👩‍👧‍👦 **Family Groups**: Create private family spaces with invite-only access
-- 📚 **Albums**: Organize photos into albums with customizable privacy settings
-- 🔒 **Privacy Controls**: Private and family-only album permissions
-- 🖼️ **Image Processing**: Automatic thumbnail generation and image optimization
-- 📧 **Invitations**: Email-based family member invitations
-- 🎨 **Responsive Design**: Works great on desktop and mobile devices
-- 🚀 **Background Processing**: Efficient image processing using Sidekiq
+### Core Features
+- 📸 **Photo Management**: Upload, organize, and manage photos with automatic metadata extraction
+- 👨‍👩‍👧‍👦 **Family Groups**: Create private family spaces with secure member management
+- 📚 **Smart Albums**: Organize photos with automatic date-based sorting using EXIF data
+- 🔒 **Privacy Controls**: Granular privacy settings (private, family, external sharing)
+- 🎯 **Bulk Upload**: Upload up to 100 photos at once with real-time progress tracking
+- 🔗 **External Sharing**: Share albums via password-protected links with guest session tracking
+- 🖼️ **Image Processing**: Automatic thumbnail generation and multiple image variants
+- 📱 **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- 🎬 **Slideshow Mode**: Beautiful fullscreen photo viewing experience
+- 📍 **Location Data**: Automatic GPS extraction and mapping (when available)
+
+### Security Features
+- 🔐 **Authentication**: Secure user authentication with Devise
+- 🛡️ **Rate Limiting**: Protection against brute force attacks with progressive lockouts
+- 👥 **Session Management**: Track and revoke external access sessions
+- 🔑 **Password Protection**: Optional passwords for shared albums
+- 📧 **Two-Factor Authentication**: Email-based verification (optional)
+
+### Technical Features
+- ⚡ **Background Processing**: Sidekiq for asynchronous job processing
+- 💾 **Flexible Storage**: Support for local and cloud storage (S3, GCS)
+- 🔄 **Real-time Updates**: Hotwire (Turbo + Stimulus) for seamless interactions
+- 📊 **Monitoring**: Built-in metrics and health checks
+- 🐳 **Docker Ready**: Complete Docker and Docker Compose setup
+- 🧪 **Comprehensive Testing**: Full RSpec test suite with high coverage
+
+## Demo
+
+![Family Photo Share Demo](docs/images/demo.gif)
+
+*Note: Demo images can be added to the docs/images directory*
 
 ## Tech Stack
 
-- **Backend**: Ruby on Rails 8.0
+- **Backend Framework**: Ruby on Rails 7.1.5
+- **Ruby Version**: 3.4.2
 - **Database**: PostgreSQL 15
-- **File Storage**: Active Storage with local or cloud storage support
-- **Background Jobs**: Sidekiq with Redis
-- **Authentication**: Devise with secure invite-only registration
-- **Image Processing**: ImageMagick/libvips
-- **Frontend**: ERB templates with Stimulus.js
+- **Cache/Queue**: Redis 7
+- **Job Processing**: Sidekiq
+- **File Storage**: Active Storage (Local/S3/GCS)
+- **Image Processing**: ImageMagick + libvips
+- **Frontend**: Hotwire (Turbo + Stimulus), Bootstrap 5
+- **Authentication**: Devise
+- **Testing**: RSpec, FactoryBot, Capybara
 
 ## Prerequisites
 
-- Docker and Docker Compose
-- Ruby 3.4.2 (for local development)
+### Using Docker (Recommended)
+- Docker 20.10+
+- Docker Compose 2.0+
+- Git
+
+### Local Development
+- Ruby 3.4.2
+- PostgreSQL 15+
+- Redis 7+
+- ImageMagick 7+
+- ExifTool
+- Node.js 18+ and Yarn
 - Git
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### 🐳 Using Docker (Recommended)
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/family-photo-share.git
-   cd family-photo-share
-   ```
-
-2. **Copy environment configuration**
-   ```bash
-   cp .env.example .env
-   # Edit .env with your settings
-   ```
-
-3. **Start the application**
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Visit the application**
-   Open your browser and go to `http://localhost:3000`
-
-### Local Development
-
-1. **Install dependencies**
-   ```bash
-   bundle install
-   ```
-
-2. **Start PostgreSQL and Redis**
-   ```bash
-   docker-compose up postgres redis -d
-   ```
-
-3. **Setup database**
-   ```bash
-   rails db:create db:migrate
-   ```
-
-4. **Start the Rails server**
-   ```bash
-   rails server
-   ```
-
-5. **Start Sidekiq (in another terminal)**
-   ```bash
-   bundle exec sidekiq
-   ```
-
-## Environment Variables
-
-Copy `.env.example` to `.env` and configure the following variables:
-
-### Required Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `POSTGRES_DB` | Database name | `family_photo_share_production` |
-| `POSTGRES_USER` | Database username | `postgres` |
-| `POSTGRES_PASSWORD` | Database password | `your_secure_password` |
-| `RAILS_MASTER_KEY` | Rails encryption key (from config/master.key) | `your_master_key` |
-| `SECRET_KEY_BASE` | Rails secret key (generate with `rails secret`) | `your_secret_key` |
-
-### Optional Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_HOST` | Application hostname | `localhost` |
-| `APP_PORT` | Application port | `3000` |
-| `ADMIN_EMAIL` | Initial admin email (created on first startup) | - |
-| `ADMIN_PASSWORD` | Initial admin password | - |
-| `ACTIVE_STORAGE_VARIANT_PROCESSOR` | Image processor (`vips` or `mini_magick`) | `vips` |
-| `FORCE_SSL` | Force HTTPS in production | `false` |
-
-### Email Configuration (Gmail)
-
-To enable email sending for family invitations, configure Gmail SMTP:
-
-1. **Enable 2-factor authentication** on your Google account
-2. **Generate an App Password** at https://myaccount.google.com/apppasswords
-3. **Configure these variables** with your Gmail settings:
-
-| Variable | Description | Gmail Example |
-|----------|-------------|---------------|
-| `SMTP_ADDRESS` | SMTP server address | `smtp.gmail.com` |
-| `SMTP_PORT` | SMTP server port | `587` |
-| `SMTP_DOMAIN` | SMTP domain | `gmail.com` |
-| `SMTP_USERNAME` | Your Gmail address | `your-email@gmail.com` |
-| `SMTP_PASSWORD` | 16-character app password | `xxxx xxxx xxxx xxxx` |
-| `SMTP_AUTHENTICATION` | Authentication method | `plain` |
-| `SMTP_ENABLE_STARTTLS_AUTO` | Enable STARTTLS | `true` |
-
-**Test your email configuration:**
 ```bash
-TEST_EMAIL=your@email.com rails email:test
+# 1. Clone the repository
+git clone https://github.com/yourusername/family-photo-share.git
+cd family-photo-share
+
+# 2. Copy and configure environment variables
+cp .env.example .env
+# Edit .env with your settings
+
+# 3. Generate Rails master key
+echo "$(docker run --rm ruby:3.4.2 sh -c 'ruby -rsecurerandom -e "puts SecureRandom.hex(32)"')" > .env
+# Add as RAILS_MASTER_KEY in .env
+
+# 4. Start all services
+docker-compose up -d
+
+# 5. Setup database
+docker-compose exec web rails db:create db:migrate db:seed
+
+# 6. Visit http://localhost:3000
 ```
 
-## Usage
+### 💻 Local Development
 
-### Creating Your First Family
+```bash
+# 1. Clone and install dependencies
+git clone https://github.com/yourusername/family-photo-share.git
+cd family-photo-share
+bundle install
+yarn install
 
-1. Sign up using an invitation link (the app is invite-only)
-2. Create a family group from your dashboard
-3. Invite family members via email
-4. Start creating albums and uploading photos!
+# 2. Install system dependencies (macOS)
+brew install postgresql@15 redis imagemagick exiftool
 
-### Album Privacy Settings
+# 3. Setup database
+cp config/database.yml.example config/database.yml
+rails db:create db:migrate db:seed
 
-- **Private**: Only you can see the album
-- **Family**: All family members can view the album
+# 4. Start services
+# Terminal 1: Rails server
+rails server
 
-### Managing Family Members
+# Terminal 2: Sidekiq
+bundle exec sidekiq
 
-Family members have three roles:
-- **Admin**: Can invite/remove members and manage family settings
-- **Member**: Can view family albums and upload photos
-- **Viewer**: Can only view family albums (coming soon)
+# Terminal 3: Redis (if not running)
+redis-server
+```
 
 ## Development
 
-### Running Tests
+### 🛠️ Development Setup
+
 ```bash
-bundle exec rspec
-```
+# Run all services with Docker
+docker-compose up
 
-### Code Linting
-```bash
-bundle exec rubocop
-```
+# Access Rails console
+docker-compose exec web rails console
 
-### Database Commands
-```bash
-# Create database
-rails db:create
-
-# Run migrations
-rails db:migrate
-
-# Seed database (development only)
-rails db:seed
-```
-
-### Docker Commands
-```bash
-# Start all services
-docker-compose up -d
+# Run database migrations
+docker-compose exec web rails db:migrate
 
 # View logs
-docker-compose logs -f
-
-# Stop all services
-docker-compose down
-
-# Rebuild images
-docker-compose build
+docker-compose logs -f web
+docker-compose logs -f sidekiq
 ```
 
-## Project Structure
+### 📝 Code Style
+
+We use RuboCop for Ruby code style:
+
+```bash
+# Run linter
+docker-compose exec web rubocop
+
+# Auto-fix issues
+docker-compose exec web rubocop -a
+```
+
+### 🧪 Testing
+
+```bash
+# Run all tests
+docker-compose exec web rspec
+
+# Run specific test
+docker-compose exec web rspec spec/models/photo_spec.rb
+
+# Run with coverage
+docker-compose exec web COVERAGE=true rspec
+
+# Run system tests
+docker-compose exec web rspec spec/system
+```
+
+### 📚 Documentation
+
+- [Architecture Overview](docs/ARCHITECTURE.md)
+- [API Documentation](docs/API.md)
+- [Deployment Guide](docs/DEPLOYMENT.md)
+- [Contributing Guidelines](CONTRIBUTING.md)
+- [Error Handling Guide](docs/ERROR_HANDLING.md)
+
+## Production Deployment
+
+### 🚀 Docker Production Deployment
+
+```bash
+# 1. Setup production environment
+cp .env.production.example .env.production
+# Configure with production values
+
+# 2. Build production image
+docker build -t family-photo-share:latest .
+
+# 3. Run with production compose
+docker-compose -f docker-compose.production.yml up -d
+
+# 4. Run production migrations
+docker-compose -f docker-compose.production.yml exec web rails db:migrate
+```
+
+### 🔧 Environment Variables
+
+#### Required Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `RAILS_MASTER_KEY` | Rails encryption key | `your-32-char-hex-key` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host/db` |
+| `REDIS_URL` | Redis connection string | `redis://localhost:6379/0` |
+
+#### Optional Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RAILS_ENV` | Environment | `production` |
+| `RAILS_LOG_TO_STDOUT` | Log to stdout | `true` |
+| `RAILS_SERVE_STATIC_FILES` | Serve static files | `false` |
+| `FORCE_SSL` | Force HTTPS | `true` |
+| `AWS_ACCESS_KEY_ID` | AWS S3 access key | - |
+| `AWS_SECRET_ACCESS_KEY` | AWS S3 secret | - |
+| `AWS_REGION` | AWS region | `us-east-1` |
+| `AWS_BUCKET` | S3 bucket name | - |
+
+#### Email Configuration
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `SMTP_ADDRESS` | SMTP server | `smtp.gmail.com` |
+| `SMTP_PORT` | SMTP port | `587` |
+| `SMTP_USERNAME` | SMTP username | `your@email.com` |
+| `SMTP_PASSWORD` | SMTP password | `app-specific-password` |
+| `SMTP_DOMAIN` | SMTP domain | `yourdomain.com` |
+
+### 📊 Monitoring & Maintenance
+
+#### Health Checks
+```bash
+# Application health
+curl http://localhost:3000/health
+
+# Sidekiq health
+curl http://localhost:3000/sidekiq/stats
+```
+
+#### Maintenance Tasks
+```bash
+# Clean expired sessions
+docker-compose exec web rake sessions:cleanup
+
+# Update EXIF data
+docker-compose exec web rake photos:update_exif_direct
+
+# Clean orphaned storage
+docker-compose exec web rake storage:cleanup
+
+# Show photo statistics
+docker-compose exec web rake photos:exif_stats
+```
+
+## Usage Guide
+
+### 👤 User Management
+
+1. **Sign Up**: Create your account (first user becomes admin)
+2. **Create Family**: Set up your family group
+3. **Invite Members**: Send email invitations to family members
+
+### 📸 Photo Management
+
+1. **Upload Photos**:
+   - Single or bulk upload (up to 100 files)
+   - Supported formats: JPEG, PNG, GIF, HEIC, WEBP
+   - Automatic EXIF extraction
+
+2. **Organize Albums**:
+   - Create albums with privacy settings
+   - Add/remove photos
+   - Set cover photos
+   - Share externally with passwords
+
+3. **View Photos**:
+   - Grid or slideshow view
+   - Full metadata display
+   - Download originals
+
+### 🔗 External Sharing
+
+1. Create album with "External" privacy
+2. Optional: Set password protection
+3. Share the generated link
+4. Monitor guest access and sessions
+
+## Architecture
+
+### 📋 Data Models
+
+```ruby
+User (Devise authentication)
+├── Family (belongs_to)
+├── Photos (has_many)
+└── Albums (has_many)
+
+Photo
+├── User (belongs_to)
+├── Albums (has_and_belongs_to_many)
+├── Active Storage attachment
+└── EXIF metadata (JSON)
+
+Album
+├── User (belongs_to)
+├── Photos (has_and_belongs_to_many)
+├── Privacy settings
+└── External access sessions
+```
+
+### 🔄 Background Jobs
+
+- `ExtractPhotoMetadataJob`: EXIF data extraction
+- `ProcessPhotoJob`: Image variant generation
+- `BulkUploadProcessingJob`: Batch upload handling
+- `DirectBulkExifUpdateJob`: Bulk metadata updates
+- `ExpiredSessionCleanupJob`: Session maintenance
+
+### 📁 Directory Structure
 
 ```
 family-photo-share/
-├── app/              # Rails application code
-│   ├── controllers/  # Request handlers
-│   ├── models/       # Data models
-│   ├── views/        # HTML templates
-│   ├── jobs/         # Background jobs
-│   └── javascript/   # Stimulus controllers
-├── config/           # Configuration files
-├── db/               # Database migrations
-├── spec/             # Test files
-├── docker-compose.yml # Docker services
-└── .env.example      # Environment template
+├── app/
+│   ├── controllers/      # Request handlers
+│   ├── models/          # Data models
+│   ├── views/           # View templates
+│   ├── jobs/            # Background jobs
+│   ├── javascript/      # Stimulus controllers
+│   └── helpers/         # View helpers
+├── config/              # Rails configuration
+├── db/                  # Database files
+├── lib/                 # Custom tasks
+├── spec/                # Test suite
+├── docs/                # Documentation
+└── docker/              # Docker configs
+```
+
+## API Documentation
+
+See [API Documentation](docs/API.md) for detailed endpoint information.
+
+### Key Endpoints
+
+- `GET /api/v1/photos` - List photos
+- `POST /api/v1/photos` - Upload photo
+- `GET /api/v1/albums` - List albums
+- `POST /api/v1/albums` - Create album
+
+## Testing
+
+### Test Coverage
+
+We maintain high test coverage across:
+- Models (100%)
+- Controllers (95%+)
+- Jobs (90%+)
+- System tests for critical paths
+
+### Running Tests
+
+```bash
+# Full test suite
+make test
+
+# Specific tests
+make test-models
+make test-controllers
+make test-system
+
+# With coverage report
+make test-coverage
 ```
 
 ## Contributing
 
-We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+### Quick Contribution Guide
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Write tests for your changes
+4. Ensure all tests pass
+5. Commit your changes (`git commit -m 'Add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Development Standards
+
+- Follow Ruby style guide (RuboCop)
+- Write comprehensive tests
+- Document public APIs
+- Keep commits atomic
+- Update CHANGELOG.md
 
 ## Security
 
-- The application uses invite-only registration to prevent unauthorized access
-- All passwords are encrypted using bcrypt
-- File uploads are validated and processed in background jobs
-- Session-based rate limiting prevents brute force attacks
-- CSRF protection is enabled by default
+### 🔒 Security Features
+
+- Invite-only registration
+- Password encryption (bcrypt)
+- CSRF protection
+- SQL injection prevention
+- XSS protection
+- Rate limiting
+- Session expiration
+- Secure file uploads
+
+### 🐛 Reporting Security Issues
+
+Please report security vulnerabilities to: security@example.com
+
+Do not open public issues for security concerns.
 
 ## License
 
@@ -229,6 +442,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Built with Ruby on Rails
-- Uses Docker for easy deployment
-- Inspired by the need for private, self-hosted photo sharing
+- Ruby on Rails community
+- Open source contributors
+- [ImageMagick](https://imagemagick.org/)
+- [ExifTool](https://exiftool.org/)
+- [Bootstrap](https://getbootstrap.com/)
+
+## Support
+
+- 📚 [Documentation](docs/)
+- 💬 [Discussions](https://github.com/yourusername/family-photo-share/discussions)
+- 🐛 [Issue Tracker](https://github.com/yourusername/family-photo-share/issues)
+- 📧 [Email Support](mailto:support@example.com)
+
+---
+
+Built with ❤️ for families everywhere

@@ -132,7 +132,6 @@ export default class extends Controller {
       credentials: 'same-origin'
     }).catch(error => {
       // Silently handle errors - tracking is not critical for functionality
-      console.log('Photo view tracking failed:', error)
     })
   }
 
@@ -159,7 +158,6 @@ export default class extends Controller {
       credentials: 'same-origin'
     }).catch(error => {
       // Silently handle errors - session extension is not critical for slideshow functionality
-      console.log('Session extension failed:', error)
     })
   }
 

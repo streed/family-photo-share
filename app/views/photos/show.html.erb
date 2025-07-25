@@ -5,13 +5,13 @@
         <div class="card-body p-0">
           <% if @photo.image.attached? %>
             <div class="photo-container">
-              <%= image_tag @photo.short_xl_url, alt: @photo.title, class: "photo-display" %>
+              <%= image_tag @photo.short_xl_url, alt: photo_title_or_default(@photo), class: "photo-display" %>
             </div>
           <% end %>
           
           <div class="p-4">
             <div class="d-flex justify-content-between align-items-start mb-3">
-              <h1 class="h3 mb-0"><%= @photo.title %></h1>
+              <h1 class="h3 mb-0"><%= photo_title_or_default(@photo) %></h1>
               
               <% if current_user == @photo.user %>
                 <div class="btn-group">

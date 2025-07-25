@@ -8,8 +8,17 @@ RSpec.describe Photo, type: :model do
   describe 'validations' do
     subject { build(:photo) }
 
-    it { should validate_presence_of(:title) }
-    it { should validate_length_of(:title).is_at_most(255) }
+    it { should validate_length_of(:title).is_at_most(255).allow_nil }
+    
+    it 'allows photos without titles' do
+      photo = build(:photo, title: nil)
+      expect(photo).to be_valid
+    end
+    
+    it 'allows photos with blank titles' do
+      photo = build(:photo, title: '')
+      expect(photo).to be_valid
+    end
     it { should validate_length_of(:description).is_at_most(1000) }
     it { should validate_length_of(:location).is_at_most(255) }
 
@@ -95,6 +104,80 @@ RSpec.describe Photo, type: :model do
       expect(photo.original_filename).to eq('test_image.jpg')
       expect(photo.content_type).to eq('image/jpeg')
       expect(photo.file_size).to be > 0
+    end
+  end
+
+  describe 'deletion behavior' do
+    let(:user) { create(:user) }
+    let(:album1) { create(:album, user: user) }
+    let(:album2) { create(:album, user: user) }
+    let(:photo) { create(:photo, user: user) }
+
+    before do
+      # Add photo to both albums
+      album1.add_photo(photo)
+      album2.add_photo(photo)
+      
+      # Set photo as cover for album1
+      album1.update!(cover_photo: photo)
+    end
+
+    it 'removes photo from all albums when deleted' do
+      expect(photo.albums.count).to eq(2)
+      expect(album1.photos.count).to eq(1)
+      expect(album2.photos.count).to eq(1)
+
+      photo.destroy!
+
+      album1.reload
+      album2.reload
+      
+      expect(album1.photos.count).to eq(0)
+      expect(album2.photos.count).to eq(0)
+    end
+
+    it 'removes cover photo reference when deleted' do
+      expect(album1.cover_photo).to eq(photo)
+
+      photo.destroy!
+
+      album1.reload
+      expect(album1.cover_photo).to be_nil
+    end
+
+    it 'sets new cover photo if other photos exist in album' do
+      other_photo = create(:photo, user: user)
+      album1.add_photo(other_photo)
+      
+      expect(album1.cover_photo).to eq(photo)
+      expect(album1.photos.count).to eq(2)
+
+      photo.destroy!
+
+      album1.reload
+      expect(album1.cover_photo).to eq(other_photo)
+      expect(album1.photos.count).to eq(1)
+    end
+
+    it 'reorders album photo positions after deletion' do
+      photo2 = create(:photo, user: user)
+      photo3 = create(:photo, user: user)
+      
+      album1.add_photo(photo2)
+      album1.add_photo(photo3)
+      
+      # Verify initial positions
+      expect(album1.album_photos.order(:position).pluck(:position)).to eq([1, 2, 3])
+      
+      # Find which photo is in position 2
+      photo_in_position_2 = album1.album_photos.find_by(position: 2).photo
+      
+      # Delete the middle photo (position 2)
+      photo_in_position_2.destroy!
+      
+      album1.reload
+      positions = album1.album_photos.order(:position).pluck(:position)
+      expect(positions).to eq([1, 2])
     end
   end
 end

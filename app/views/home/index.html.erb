@@ -36,6 +36,7 @@
 
     <div class="quick-actions mt-4">
       <%= link_to "Upload Photo", new_photo_path, class: "btn btn-primary me-2" %>
+      <%= link_to "Bulk Upload", new_bulk_upload_path, class: "btn btn-success me-2" %>
       <%= link_to "Create Album", new_album_path, class: "btn btn-secondary me-2" %>
       <% if current_user.can_create_family? %>
         <%= link_to "Create Family", new_family_path, class: "btn btn-secondary" %>
@@ -51,7 +52,7 @@
           <% current_user.recent_photos(6).each do |photo| %>
             <div class="col-md-2 col-sm-4 col-6 mb-3">
               <%= link_to photo_path(photo) do %>
-                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                               class: "img-fluid rounded recent-photo" %>
               <% end %>
             </div>

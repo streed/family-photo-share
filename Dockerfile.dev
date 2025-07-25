@@ -20,6 +20,7 @@ RUN apt-get update -qq && \
       libyaml-dev \
       pkg-config \
       postgresql-client \
+      exiftool \
       && rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set development environment

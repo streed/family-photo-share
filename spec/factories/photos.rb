@@ -26,5 +26,9 @@ FactoryBot.define do
     trait :old do
       taken_at { 1.year.ago }
     end
+    
+    trait :without_title do
+      title { nil }
+    end
   end
 end

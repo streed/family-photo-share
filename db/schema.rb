@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_22_201938) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_23_021502) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -113,6 +113,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_201938) do
     t.index ["user_id"], name: "index_albums_on_user_id"
   end
 
+  create_table "bulk_upload_photos", force: :cascade do |t|
+    t.bigint "bulk_upload_id", null: false
+    t.bigint "photo_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["bulk_upload_id"], name: "index_bulk_upload_photos_on_bulk_upload_id"
+    t.index ["photo_id"], name: "index_bulk_upload_photos_on_photo_id"
+  end
+
+  create_table "bulk_uploads", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "album_id"
+    t.string "status", default: "pending", null: false
+    t.integer "total_count", default: 0, null: false
+    t.integer "processed_count", default: 0, null: false
+    t.integer "failed_count", default: 0, null: false
+    t.text "error_messages"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.text "metadata"
+    t.index ["album_id"], name: "index_bulk_uploads_on_album_id"
+    t.index ["status"], name: "index_bulk_uploads_on_status"
+    t.index ["user_id", "created_at"], name: "index_bulk_uploads_on_user_id_and_created_at"
+    t.index ["user_id"], name: "index_bulk_uploads_on_user_id"
+  end
+
   create_table "families", force: :cascade do |t|
     t.string "name", null: false
     t.text "description"
@@ -158,7 +184,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_201938) do
   end
 
   create_table "photos", force: :cascade do |t|
-    t.string "title", null: false
+    t.string "title"
     t.text "description"
     t.bigint "user_id", null: false
     t.datetime "taken_at"
@@ -236,6 +262,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_22_201938) do
   add_foreign_key "album_view_events", "photos"
   add_foreign_key "albums", "photos", column: "cover_photo_id"
   add_foreign_key "albums", "users"
+  add_foreign_key "bulk_upload_photos", "bulk_uploads"
+  add_foreign_key "bulk_upload_photos", "photos"
+  add_foreign_key "bulk_uploads", "albums"
+  add_foreign_key "bulk_uploads", "users"
   add_foreign_key "families", "users", column: "created_by_id"
   add_foreign_key "family_invitations", "families"
   add_foreign_key "family_invitations", "users", column: "inviter_id"

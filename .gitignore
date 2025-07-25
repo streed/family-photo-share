@@ -37,3 +37,49 @@
 /config/credentials/*.key
 
 /config/credentials/production.key
+
+# Ignore uploaded files and processed images
+/storage/*
+!/storage/.keep
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node modules (if using any frontend build tools)
+node_modules/
+/yarn-error.log
+yarn-debug.log*
+
+# Coverage and testing
+/coverage/
+/spec/reports/
+/spec/examples.txt
+
+# Docker volumes
+/postgres-data/
+/redis-data/
+
+# Backup files
+*.bak
+*.backup
+*.sql
+
+# Log files
+*.log
+
+# Temporary files
+*.tmp
+*.temp

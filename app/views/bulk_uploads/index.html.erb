@@ -1,0 +1,81 @@
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Bulk Upload History</h1>
+    <%= link_to "New Bulk Upload", new_bulk_upload_path, class: "btn btn-primary" %>
+  </div>
+  
+  <% if @bulk_uploads.any? %>
+    <div class="row">
+      <% @bulk_uploads.each do |bulk_upload| %>
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <small class="text-muted">
+                <%= bulk_upload.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+              </small>
+              <span class="badge badge-<%= status_badge_class(bulk_upload.status) %>">
+                <%= bulk_upload.status.titleize %>
+              </span>
+            </div>
+            <div class="card-body">
+              <div class="row text-center mb-3">
+                <div class="col-4">
+                  <div class="h5 text-primary"><%= bulk_upload.total_count %></div>
+                  <small class="text-muted">Total</small>
+                </div>
+                <div class="col-4">
+                  <div class="h5 text-success"><%= bulk_upload.processed_count - bulk_upload.failed_count %></div>
+                  <small class="text-muted">Success</small>
+                </div>
+                <div class="col-4">
+                  <div class="h5 text-danger"><%= bulk_upload.failed_count %></div>
+                  <small class="text-muted">Failed</small>
+                </div>
+              </div>
+              
+              <% if bulk_upload.processing? %>
+                <div class="progress mb-3" style="height: 8px;">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                       role="progressbar" 
+                       style="width: <%= (bulk_upload.processed_count.to_f / bulk_upload.total_count * 100).round(1) %>%">
+                  </div>
+                </div>
+              <% else %>
+                <div class="progress mb-3" style="height: 8px;">
+                  <div class="progress-bar bg-<%= progress_bar_class(bulk_upload.status) %>" 
+                       role="progressbar" 
+                       style="width: 100%">
+                  </div>
+                </div>
+              <% end %>
+              
+              <% if bulk_upload.album.present? %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-images"></i> 
+                  Album: <%= link_to bulk_upload.album.name, album_path(bulk_upload.album), class: "text-decoration-none" %>
+                </p>
+              <% else %>
+                <p class="text-muted mb-2">
+                  <i class="fas fa-photo-video"></i> No album
+                </p>
+              <% end %>
+              
+              <div class="text-center">
+                <%= link_to "View Details", bulk_upload_path(bulk_upload), class: "btn btn-sm btn-outline-primary" %>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-5">
+      <div class="mb-4">
+        <i class="fas fa-cloud-upload-alt text-muted" style="font-size: 4rem;"></i>
+      </div>
+      <h3 class="text-muted">No bulk uploads yet</h3>
+      <p class="text-muted">Start uploading multiple photos at once to save time!</p>
+      <%= link_to "Start Your First Bulk Upload", new_bulk_upload_path, class: "btn btn-primary btn-lg" %>
+    </div>
+  <% end %>
+</div>

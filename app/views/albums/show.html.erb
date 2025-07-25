@@ -1,4 +1,4 @@
-<div class="container">
+<div class="container" data-controller="album-actions">
   <% if @album.cover_photo&.image&.attached? %>
     <div class="album-header-cover mb-4">
       <%= image_tag @album.cover_photo.short_large_url, alt: @album.name, class: "album-header-image" %>
@@ -23,10 +23,12 @@
         <div class="album-header-actions">
           <div class="btn-group">
             <%= link_to "Edit Album", edit_album_path(@album), class: "btn btn-outline-light btn-sm" %>
-            <%= link_to "Delete Album", album_path(@album), method: :delete, 
-                        class: "btn btn-outline-light btn-sm",
-                        confirm: "Are you sure? This will remove all photos from the album.",
-                        data: { "turbo-method": :delete } %>
+            <button type="button" class="btn btn-outline-light btn-sm" 
+                    data-action="click->album-actions#confirmDelete"
+                    data-album-actions-album-name-value="<%= @album.name %>"
+                    data-album-actions-delete-url-value="<%= album_path(@album) %>">
+              Delete Album
+            </button>
           </div>
         </div>
       <% end %>
@@ -67,10 +69,12 @@
           <div class="album-actions">
             <div class="btn-group">
               <%= link_to "Edit Album", edit_album_path(@album), class: "btn btn-outline-primary btn-sm" %>
-              <%= link_to "Delete Album", album_path(@album), method: :delete, 
-                          class: "btn btn-outline-danger btn-sm",
-                          confirm: "Are you sure? This will remove all photos from the album.",
-                          data: { "turbo-method": :delete } %>
+              <button type="button" class="btn btn-outline-danger btn-sm"
+                      data-action="click->album-actions#confirmDelete"
+                      data-album-actions-album-name-value="<%= @album.name %>"
+                      data-album-actions-delete-url-value="<%= album_path(@album) %>">
+                Delete Album
+              </button>
             </div>
           </div>
         <% end %>
@@ -107,8 +111,11 @@
           </div>
           
           <div class="mt-2">
-            <%= link_to view_events_album_path(@album), class: "btn btn-outline-info btn-sm" do %>
+            <%= link_to view_events_album_path(@album), class: "btn btn-outline-info btn-sm me-2" do %>
               <i class="fas fa-chart-line me-1"></i>View Guest Activity
+            <% end %>
+            <%= link_to guest_sessions_album_path(@album), class: "btn btn-outline-warning btn-sm" do %>
+              <i class="fas fa-users me-1"></i>Manage Guest Sessions
             <% end %>
           </div>
           
@@ -143,17 +150,17 @@
                  data-slideshow-index-value="<%= index %>"
                  data-slideshow-photo-id="<%= photo.id %>">
               <div class="photo-container">
-                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                               class: "photo-thumbnail", 
                               data: { 
                                 large: photo.short_large_url,
-                                title: photo.title,
+                                title: photo_title_or_default(photo),
                                 description: photo.description,
                                 user: photo.user.display_name_or_full_name
                               } %>
                 <div class="photo-overlay">
                   <div class="photo-info">
-                    <div class="photo-title"><%= truncate(photo.title, length: 30) %></div>
+                    <div class="photo-title"><%= truncated_photo_title(photo, length: 30) %></div>
                     <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
                   </div>
                 </div>
@@ -252,14 +259,14 @@
                         class: "add-photo-link",
                         data: { "turbo-method": :patch } do %>
               <div class="add-photo-container">
-                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                               class: "add-photo-thumbnail" %>
                 <div class="add-photo-overlay">
                   <div class="add-photo-icon">
                     <i class="fas fa-plus"></i>
                   </div>
                   <div class="add-photo-info">
-                    <div class="add-photo-title"><%= truncate(photo.title, length: 20) %></div>
+                    <div class="add-photo-title"><%= truncated_photo_title(photo, length: 20) %></div>
                   </div>
                 </div>
               </div>
@@ -994,3 +1001,136 @@
     }
   });
 </script>
+
+<!-- Album Deletion Confirmation Modal -->
+<div class="confirmation-modal" data-album-actions-target="confirmModal" style="display: none;">
+  <div class="confirmation-modal-overlay"></div>
+  <div class="confirmation-modal-content">
+    <div class="confirmation-modal-header">
+      <h3>Delete Album</h3>
+    </div>
+    <div class="confirmation-modal-body">
+      <p data-album-actions-target="confirmMessage">Are you sure you want to delete this album?</p>
+      <div class="alert alert-warning mt-3">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Warning:</strong> This will remove all photos from the album. The photos themselves will not be deleted.
+      </div>
+    </div>
+    <div class="confirmation-modal-footer">
+      <button type="button" class="btn btn-secondary" data-action="click->album-actions#cancelDelete">
+        Cancel
+      </button>
+      <button type="button" class="btn btn-danger" data-action="click->album-actions#confirmDeleteAction">
+        Delete Album
+      </button>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Confirmation Modal Styling */
+.confirmation-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1060;
+}
+
+.confirmation-modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.2s ease-out;
+}
+
+.confirmation-modal-content {
+  position: relative;
+  background: white;
+  border-radius: 12px;
+  max-width: 400px;
+  margin: 15% auto;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+}
+
+.confirmation-modal-header {
+  padding: 20px 20px 10px 20px;
+  border-bottom: 1px solid #dee2e6;
+  border-radius: 12px 12px 0 0;
+}
+
+.confirmation-modal-header h3 {
+  margin: 0;
+  color: #495057;
+  font-size: 1.25rem;
+}
+
+.confirmation-modal-body {
+  padding: 20px;
+}
+
+.confirmation-modal-body p {
+  margin: 0 0 10px 0;
+  color: #6c757d;
+  line-height: 1.5;
+}
+
+.confirmation-modal-footer {
+  padding: 15px 20px;
+  border-top: 1px solid #dee2e6;
+  border-radius: 0 0 12px 12px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.confirmation-modal-footer .btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  min-width: 80px;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.confirmation-modal-footer .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.confirmation-modal-footer .btn-secondary:hover {
+  background: #5a6268;
+  color: white;
+}
+
+.confirmation-modal-footer .btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.confirmation-modal-footer .btn-danger:hover {
+  background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+  color: white;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+</style>

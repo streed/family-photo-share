@@ -7,8 +7,12 @@ Rails.application.routes.draw do
       delete :remove_photo
       patch :set_cover
       get :view_events
+      get :guest_sessions
+      delete :revoke_guest_session
+      patch :revoke_all_guest_sessions
     end
   end
+  
   # Short URL routes (must be before auth required routes)
   get "s/:token", to: "short_urls#show", as: :short_url
   
@@ -36,6 +40,9 @@ Rails.application.routes.draw do
       get :processing_status
     end
   end
+  
+  # Bulk upload routes
+  resources :bulk_uploads, only: [:new, :create, :show, :index]
   get "home/index"
   devise_for :users, controllers: { 
     registrations: 'registrations',

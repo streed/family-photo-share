@@ -8,6 +8,22 @@
     <strong>Warning:</strong> Your session will expire soon. Continue browsing to extend your access automatically.
   </div>
 
+  <% if flash[:alert] %>
+    <div class="alert alert-danger alert-dismissible" role="alert">
+      <i class="fas fa-exclamation-circle"></i>
+      <%= flash[:alert] %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% end %>
+  
+  <% if flash[:notice] %>
+    <div class="alert alert-success alert-dismissible" role="alert">
+      <i class="fas fa-check-circle"></i>
+      <%= flash[:notice] %>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  <% end %>
+
   <div class="external-album-header mb-4">
     <div class="d-flex justify-content-between align-items-start">
       <div>
@@ -43,17 +59,17 @@
                  data-slideshow-index-value="<%= index %>"
                  data-slideshow-photo-id-value="<%= photo.id %>">
               <div class="photo-container">
-                <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                               class: "photo-thumbnail", 
                               data: { 
                                 large: photo.short_medium_url,
-                                title: photo.title,
+                                title: photo_title_or_default(photo),
                                 description: photo.description,
                                 user: photo.user.display_name_or_full_name
                               } %>
                 <div class="photo-overlay">
                   <div class="photo-info">
-                    <div class="photo-title"><%= truncate(photo.title, length: 30) %></div>
+                    <div class="photo-title"><%= truncated_photo_title(photo, length: 30) %></div>
                     <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
                   </div>
                 </div>
@@ -374,23 +390,178 @@
     border-top: 1px solid #dee2e6;
     padding-top: 2rem;
   }
+  
+  /* Alert Styles */
+  .alert {
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+
+  .alert i {
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+  }
+
+  .alert-danger {
+    background: linear-gradient(135deg, #fee5e5 0%, #fdd8d8 100%);
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+  }
+
+  .alert-success {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .btn-close {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    color: inherit;
+    opacity: 0.5;
+    cursor: pointer;
+    padding: 0;
+    width: 20px;
+    height: 20px;
+  }
+
+  .btn-close:hover {
+    opacity: 0.8;
+  }
+
+  .btn-close::after {
+    content: '×';
+  }
 
   /* Responsive Design */
   @media (max-width: 768px) {
+    .container {
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    
     .external-album-header {
       padding: 1.5rem;
-      margin: 1rem;
+      margin: 1rem 0;
+      border-radius: 12px;
+    }
+    
+    .album-title {
+      font-size: 1.5rem;
+    }
+    
+    .album-info .badge {
+      font-size: 0.75rem;
+      padding: 0.4rem 0.6rem;
+      margin-bottom: 0.4rem;
+      margin-right: 0.4rem;
     }
     
     .photo-grid {
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
       gap: 10px;
+      padding: 15px 0;
+    }
+    
+    .slideshow-image {
+      width: 95vw;
+      height: 80vh;
     }
     
     .slideshow-nav {
       width: 50px;
       height: 50px;
       font-size: 1.2rem;
+    }
+    
+    .slideshow-prev {
+      left: 15px;
+    }
+    
+    .slideshow-next {
+      right: 15px;
+    }
+    
+    .slideshow-close {
+      top: 15px;
+      right: 15px;
+      width: 45px;
+      height: 45px;
+      font-size: 1.1rem;
+    }
+    
+    .slideshow-info {
+      padding: 12px 15px;
+      margin: 0 1rem;
+      max-width: 90vw;
+      bottom: 15px;
+    }
+    
+    .slideshow-title {
+      font-size: 1.1rem;
+    }
+    
+    .slideshow-description {
+      font-size: 0.9rem;
+    }
+    
+    .slideshow-meta {
+      font-size: 0.8rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+    
+    .external-album-header {
+      padding: 1rem;
+      margin: 0.5rem 0;
+    }
+    
+    .album-title {
+      font-size: 1.3rem;
+    }
+    
+    .album-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+    }
+    
+    .album-info .badge {
+      font-size: 0.7rem;
+      padding: 0.3rem 0.5rem;
+      margin: 0;
+    }
+    
+    .photo-grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 8px;
+      padding: 10px 0;
+    }
+    
+    .slideshow-image {
+      width: 98vw;
+      height: 75vh;
+    }
+    
+    .slideshow-nav {
+      width: 40px;
+      height: 40px;
+      font-size: 1rem;
     }
     
     .slideshow-prev {
@@ -404,21 +575,72 @@
     .slideshow-close {
       top: 10px;
       right: 10px;
-      width: 40px;
-      height: 40px;
-      font-size: 1rem;
+      width: 35px;
+      height: 35px;
+      font-size: 0.9rem;
     }
     
     .slideshow-info {
-      padding: 12px 20px;
-      margin: 0 1rem;
+      padding: 8px 12px;
+      margin: 0 0.5rem;
+      max-width: 95vw;
+      bottom: 10px;
+    }
+    
+    .slideshow-title {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+    
+    .slideshow-description {
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+    
+    .slideshow-meta {
+      font-size: 0.75rem;
     }
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 320px) {
+    .container {
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+    
+    .external-album-header {
+      padding: 0.75rem;
+    }
+    
+    .album-title {
+      font-size: 1.2rem;
+    }
+    
     .photo-grid {
-      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 6px;
+    }
+    
+    .slideshow-nav {
+      width: 35px;
+      height: 35px;
+      font-size: 0.9rem;
+    }
+    
+    .slideshow-prev {
+      left: 5px;
+    }
+    
+    .slideshow-next {
+      right: 5px;
+    }
+    
+    .slideshow-close {
+      top: 5px;
+      right: 5px;
+      width: 30px;
+      height: 30px;
+      font-size: 0.8rem;
     }
   }
 </style>

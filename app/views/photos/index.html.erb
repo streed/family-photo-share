@@ -1,7 +1,10 @@
 <div class="container">
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>My Photos</h1>
-    <%= link_to "Upload New Photo", new_photo_path, class: "btn btn-primary" %>
+    <div>
+      <%= link_to "Upload New Photo", new_photo_path, class: "btn btn-primary me-2" %>
+      <%= link_to "Bulk Upload", new_bulk_upload_path, class: "btn btn-success" %>
+    </div>
   </div>
 
   <% if @photos.any? %>
@@ -11,12 +14,12 @@
           <div class="photo-item" onclick="window.location.href='<%= edit_photo_path(photo) %>'">
             <div class="photo-container">
               <% if photo.image.attached? %>
-                <%= image_tag photo.short_small_url, alt: photo.title, 
+                <%= image_tag photo.short_small_url, alt: photo_title_or_default(photo), 
                               class: "photo-thumbnail" %>
               <% end %>
               <div class="photo-overlay">
                 <div class="photo-info">
-                  <div class="photo-title"><%= truncate(photo.title, length: 25) %></div>
+                  <div class="photo-title"><%= truncated_photo_title(photo, length: 25) %></div>
                   <div class="photo-meta">
                     <% if photo.taken_at.present? %>
                       <%= photo.taken_at.strftime("%b %d, %Y") %>

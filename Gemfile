@@ -36,6 +36,9 @@ gem "thruster", require: false
 gem "image_processing", "~> 1.2"
 gem "active_storage_validations"
 
+# EXIF data extraction
+gem "mini_exiftool"
+
 # QR Code generation
 gem "rqrcode", "~> 3.0"
 

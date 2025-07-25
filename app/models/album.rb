@@ -50,7 +50,7 @@ class Album < ApplicationRecord
     Photo.select('photos.*, album_photos.position')
          .joins(:album_photos)
          .where(album_photos: { album_id: id })
-         .order('album_photos.position ASC')
+         .order('photos.taken_at ASC NULLS LAST, photos.created_at ASC')
   end
   
   def add_photo(photo, position = nil)

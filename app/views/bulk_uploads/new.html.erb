@@ -1,0 +1,753 @@
+<div class="container" data-controller="bulk-upload">
+  <div class="row">
+    
+    <!-- Left Column: Add Photos -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h2>Select Photos</h2>
+        </div>
+        <div class="card-body">
+          
+          <!-- Multiple Files Input -->
+          <div class="form-group mb-4">
+            <label class="form-label">Select Photos</label>
+            <input type="file" 
+                   multiple 
+                   class="file-input" 
+                   accept="image/*"
+                   data-bulk-upload-target="multipleFileInput"
+                   data-action="change->bulk-upload#addMultiplePhotos" />
+            <div class="form-text">
+              Select one or multiple photos to upload (PNG, JPEG, or GIF format, max 10MB each).
+            </div>
+          </div>
+          
+          <!-- Album Selection -->
+          <div class="form-group mb-4">
+            <label class="form-label">Add to Album</label>
+            <span class="text-muted">(Optional)</span>
+            <select class="form-input" data-bulk-upload-target="albumSelect">
+              <option value="">No album - just upload</option>
+              <% current_user.albums.each do |album| %>
+                <option value="<%= album.id %>"><%= album.name %></option>
+              <% end %>
+            </select>
+            <div class="form-text">
+              Choose an album to add all selected photos to when uploading.
+            </div>
+          </div>
+          
+          <!-- Selection Summary -->
+          <div class="alert alert-info" data-bulk-upload-target="stagingSummary" style="display: none;">
+            <h6><i class="fas fa-images"></i> Selection Summary</h6>
+            <div class="row">
+              <div class="col-6">
+                <strong><span data-bulk-upload-target="stagedCount">0</span></strong> photos selected
+              </div>
+              <div class="col-6">
+                <strong><span data-bulk-upload-target="totalSize">0 MB</span></strong> total size
+              </div>
+            </div>
+          </div>
+          
+          <!-- Upload Actions -->
+          <div class="d-flex gap-2">
+            <button type="button" 
+                    class="btn btn-success btn-lg flex-grow-1" 
+                    data-bulk-upload-target="uploadButton"
+                    data-action="click->bulk-upload#startBulkUpload"
+                    disabled>
+              Upload (<span data-bulk-upload-target="uploadCount">0</span> photos)
+            </button>
+            <button type="button" 
+                    class="btn btn-outline-danger btn-lg" 
+                    data-action="click->bulk-upload#clearAllStaged"
+                    data-bulk-upload-target="bulkActionsBtn">
+              Clear All
+            </button>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!-- Tips Card -->
+      <div class="card mt-4">
+        <div class="card-body">
+          <h5>How to Use Photo Upload</h5>
+          <ol class="mb-0">
+            <li>Select one or multiple photos using the file selector</li>
+            <li>Edit titles and descriptions for each photo</li>
+            <li>Choose an album (optional)</li>
+            <li>Click "Upload" to start the upload process</li>
+          </ol>
+          <hr>
+          <ul class="mb-0">
+            <li>Each photo must be under 10MB in size</li>
+            <li>Supported formats: JPEG, PNG, GIF</li>
+            <li>You can select up to 100 photos</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Right Column: Selected Photos -->
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Selected Photos</h2>
+          <span class="badge bg-primary fs-6" data-bulk-upload-target="stagingBadge" style="display: none;">
+            <span data-bulk-upload-target="stagedCountBadge">0</span> selected
+          </span>
+        </div>
+        <div class="card-body">
+          
+          <!-- Empty State -->
+          <div data-bulk-upload-target="emptyState" class="text-center py-5">
+            <div class="mb-3">
+              <i class="fas fa-images text-muted" style="font-size: 3rem;"></i>
+            </div>
+            <h5 class="text-muted">No photos selected yet</h5>
+            <p class="text-muted">Choose photos using the file selector on the left.</p>
+          </div>
+          
+          <!-- Staged Photos -->
+          <div data-bulk-upload-target="stagingContainer" style="display: none;">
+            <div data-bulk-upload-target="stagedPhotosGrid" class="staged-photos-list"></div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <!-- Upload Progress Modal -->
+  <div class="upload-modal" data-bulk-upload-target="uploadModal" style="display: none;">
+    <div class="upload-modal-overlay"></div>
+    <div class="upload-modal-content">
+      <div class="upload-modal-header">
+        <h3>Uploading Photos</h3>
+      </div>
+      <div class="upload-modal-body">
+        <div class="upload-progress">
+          <div class="progress-container">
+            <div class="progress-bar" data-bulk-upload-target="progressBar" style="width: 0%">
+              <span data-bulk-upload-target="progressText">0%</span>
+            </div>
+          </div>
+          <div class="upload-status">
+            <p class="current-file">
+              Uploading: <span data-bulk-upload-target="currentFileName">...</span>
+            </p>
+            <p class="upload-count">
+              <span data-bulk-upload-target="uploadedCount">0</span> of 
+              <span data-bulk-upload-target="totalUploadCount">0</span> photos uploaded
+            </p>
+            <div data-bulk-upload-target="uploadErrors" class="upload-errors" style="display: none;">
+              <h4>Upload Errors:</h4>
+              <ul data-bulk-upload-target="errorsList"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="upload-modal-footer">
+        <p>Please don't close this page while uploading.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Confirmation Modals -->
+  <div class="confirmation-modal" data-bulk-upload-target="confirmModal" style="display: none;">
+    <div class="confirmation-modal-overlay"></div>
+    <div class="confirmation-modal-content">
+      <div class="confirmation-modal-header">
+        <h3 data-bulk-upload-target="confirmTitle">Confirm Action</h3>
+      </div>
+      <div class="confirmation-modal-body">
+        <p data-bulk-upload-target="confirmMessage">Are you sure?</p>
+      </div>
+      <div class="confirmation-modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="click->bulk-upload#cancelConfirm">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-primary" data-action="click->bulk-upload#acceptConfirm" data-bulk-upload-target="confirmButton">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden form for actual upload -->
+<%= form_with model: @bulk_upload, local: true, multipart: true,
+              class: "d-none",
+              data: { 
+                "bulk-upload-target": "uploadForm"
+              } do |form| %>
+  <%= form.hidden_field :album_id, data: { "bulk-upload-target": "hiddenAlbumId" } %>
+  <div data-bulk-upload-target="hiddenFilesContainer"></div>
+<% end %>
+
+<style>
+  /* Staging Photos List */
+  .staged-photos-list {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+  }
+  
+  .staged-photo-item {
+    transition: all 0.3s ease;
+  }
+  
+  .staged-photo-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  /* Photo Preview in Staging */
+  .photo-preview {
+    position: relative;
+    height: 120px;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .staged-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px 0 0 8px;
+  }
+  
+  .remove-photo-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(220, 53, 69, 0.9);
+    border: none;
+    color: white;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+    font-size: 12px;
+  }
+  
+  .remove-photo-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    background: rgba(220, 53, 69, 1);
+    color: white;
+  }
+  
+  /* Photo Card Styling */
+  .photo-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+  }
+  
+  .photo-row {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .photo-col-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+  }
+  
+  .photo-col-8 {
+    flex: 0 0 66.666667%;
+    max-width: 66.666667%;
+  }
+  
+  .photo-content {
+    padding: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .form-label {
+    display: block;
+    margin-bottom: 4px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #495057;
+  }
+  
+  .optional-text {
+    font-weight: 400;
+    color: #6c757d;
+  }
+  
+  .form-input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    line-height: 1.2;
+  }
+  
+  .form-input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+  
+  .file-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px dashed #ced4da;
+    border-radius: 8px;
+    background: #f8f9fa;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .file-input:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+  }
+  
+  .file-input:focus {
+    outline: none;
+    border-color: #007bff;
+    background: #e3f2fd;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+  }
+  
+  /* File Info Styling */
+  .file-info {
+    background: #f8f9fa;
+    padding: 6px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+  }
+  
+  .file-info div {
+    margin-bottom: 2px;
+  }
+  
+  .file-info div:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Form Controls in Staging */
+  .staged-photo-item .form-control-sm {
+    font-size: 0.8rem;
+  }
+  
+  .staged-photo-item .form-label {
+    margin-bottom: 0.25rem;
+    font-size: 0.75rem;
+  }
+  
+  /* Empty State */
+  .text-muted i {
+    opacity: 0.5;
+  }
+  
+  /* Progress Modal Styling */
+  .upload-progress .progress {
+    border-radius: 12px;
+  }
+  
+  .upload-progress .progress-bar {
+    border-radius: 12px;
+  }
+  
+  /* Card Styling */
+  .card {
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  
+  .card-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 12px 12px 0 0 !important;
+  }
+  
+  /* Button Styling */
+  .btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+  }
+  
+  .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+  }
+  
+  .btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+  }
+  
+  .btn-success:disabled {
+    background: #6c757d;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Badge Styling */
+  .badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
+  /* Alert Styling */
+  .alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    border: 1px solid #b6d4d9;
+    border-radius: 8px;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .container {
+      padding: 0 10px;
+    }
+    
+    .staged-photos-list {
+      max-height: 60vh;
+    }
+    
+    .photo-preview {
+      height: 100px;
+    }
+    
+    .staged-photo-item .row .col-4 {
+      flex: 0 0 35%;
+      max-width: 35%;
+    }
+    
+    .staged-photo-item .row .col-8 {
+      flex: 0 0 65%;
+      max-width: 65%;
+    }
+    
+    .card-body {
+      padding: 1rem;
+    }
+    
+    .btn-lg {
+      padding: 0.6rem 1.2rem;
+      font-size: 0.95rem;
+    }
+  }
+  
+  @media (max-width: 576px) {
+    .staged-photo-item .row .col-4 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+    
+    .staged-photo-item .row .col-8 {
+      flex: 0 0 100%;
+      max-width: 100%;
+    }
+    
+    .photo-preview {
+      height: 150px;
+      border-radius: 8px 8px 0 0;
+    }
+    
+    .staged-photo-img {
+      border-radius: 8px 8px 0 0;
+    }
+  }
+  
+  /* Animation */
+  .staged-photo-item {
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Scrollbar Styling */
+  .staged-photos-list::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .staged-photos-list::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+  
+  .staged-photos-list::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  .staged-photos-list::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+  }
+  
+  /* Upload Modal Styling */
+  .upload-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1050;
+  }
+  
+  .upload-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+  }
+  
+  .upload-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    margin: 10% auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  
+  .upload-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  }
+  
+  .upload-modal-header h3 {
+    margin: 0;
+    color: #495057;
+  }
+  
+  .upload-modal-body {
+    padding: 30px;
+  }
+  
+  .progress-container {
+    background: #e9ecef;
+    border-radius: 25px;
+    height: 30px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    background: linear-gradient(90deg, #28a745, #20c997);
+    height: 100%;
+    border-radius: 25px;
+    transition: width 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .upload-status {
+    text-align: center;
+  }
+  
+  .current-file {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #495057;
+  }
+  
+  .upload-count {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 15px;
+  }
+  
+  .upload-errors {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: left;
+  }
+  
+  .upload-errors h4 {
+    color: #856404;
+    margin-bottom: 10px;
+    font-size: 1rem;
+  }
+  
+  .upload-errors ul {
+    margin: 0;
+    color: #856404;
+    font-size: 0.9rem;
+  }
+  
+  .upload-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 12px 12px;
+    background: #f8f9fa;
+    text-align: center;
+  }
+  
+  .upload-modal-footer p {
+    margin: 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+  }
+  
+  /* Confirmation Modal Styling */
+  .confirmation-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1060;
+  }
+  
+  .confirmation-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s ease-out;
+  }
+  
+  .confirmation-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 12px;
+    max-width: 400px;
+    margin: 15% auto;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    animation: slideIn 0.3s ease-out;
+  }
+  
+  .confirmation-modal-header {
+    padding: 20px 20px 10px 20px;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 12px 12px 0 0;
+  }
+  
+  .confirmation-modal-header h3 {
+    margin: 0;
+    color: #495057;
+    font-size: 1.25rem;
+  }
+  
+  .confirmation-modal-body {
+    padding: 20px;
+  }
+  
+  .confirmation-modal-body p {
+    margin: 0;
+    color: #6c757d;
+    line-height: 1.5;
+  }
+  
+  .confirmation-modal-footer {
+    padding: 15px 20px;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 12px 12px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  
+  .confirmation-modal-footer .btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    min-width: 80px;
+    border: none;
+    transition: all 0.2s ease;
+  }
+  
+  .confirmation-modal-footer .btn-secondary {
+    background: #6c757d;
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-secondary:hover {
+    background: #5a6268;
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-primary {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-primary:hover {
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-success:hover {
+    background: linear-gradient(135deg, #1e7e34 0%, #1a9470 100%);
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-danger {
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
+  }
+  
+  .confirmation-modal-footer .btn-danger:hover {
+    background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+    color: white;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideIn {
+    from { 
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+</style>

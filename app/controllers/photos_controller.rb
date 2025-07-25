@@ -42,10 +42,22 @@ class PhotosController < ApplicationController
     @photo = current_user.photos.build(photo_params)
     
     if @photo.save
-      redirect_to @photo, notice: 'Photo was successfully uploaded!'
+      # Add to album if specified
+      if params[:photo][:album_id].present?
+        album = current_user.albums.find_by(id: params[:photo][:album_id])
+        album&.add_photo(@photo)
+      end
+      
+      respond_to do |format|
+        format.html { redirect_to @photo, notice: 'Photo was successfully uploaded!' }
+        format.json { render json: { id: @photo.id, status: 'success', url: photo_path(@photo) } }
+      end
     else
       handle_validation_errors(@photo)
-      render :new, status: :unprocessable_entity
+      respond_to do |format|
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: { errors: @photo.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -63,9 +75,24 @@ class PhotosController < ApplicationController
 
   def destroy
     begin
+      album_count = @photo.albums.count
+      album_names = @photo.albums.limit(3).pluck(:name)
+      
       @photo.destroy!
-      redirect_to photos_path, notice: 'Photo was successfully deleted!'
-    rescue ActiveRecord::RecordNotDestroyed
+      
+      if album_count > 0
+        album_text = album_count == 1 ? "album" : "albums"
+        if album_count <= 3
+          notice_text = "Photo was successfully deleted and removed from #{album_count} #{album_text}: #{album_names.join(', ')}."
+        else
+          notice_text = "Photo was successfully deleted and removed from #{album_count} #{album_text}."
+        end
+        redirect_to photos_path, notice: notice_text
+      else
+        redirect_to photos_path, notice: 'Photo was successfully deleted!'
+      end
+    rescue ActiveRecord::RecordNotDestroyed => e
+      Rails.logger.error "Failed to delete photo #{@photo.id}: #{e.message}"
       redirect_to @photo, alert: 'Unable to delete photo. Please try again.'
     end
   end

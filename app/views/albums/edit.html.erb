@@ -127,11 +127,11 @@
               <div class="current-cover mb-4">
                 <h5>Current Cover Photo:</h5>
                 <div class="d-flex align-items-center">
-                  <%= image_tag @album.cover_photo.short_thumbnail_url, alt: @album.cover_photo.title, 
+                  <%= image_tag @album.cover_photo.short_thumbnail_url, alt: photo_title_or_default(@album.cover_photo), 
                                 class: "img-fluid me-3", 
                                 style: "max-height: 100px; border-radius: 8px;" %>
                   <div>
-                    <strong><%= @album.cover_photo.title %></strong>
+                    <strong><%= photo_title_or_default(@album.cover_photo) %></strong>
                     <br>
                     <small class="text-muted">You can change this from the album view</small>
                   </div>

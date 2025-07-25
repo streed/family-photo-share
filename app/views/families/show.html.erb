@@ -37,11 +37,11 @@
                 <div class="family-photo-tile">
                   <div class="family-photo-item" onclick="window.location.href='<%= photo_path(photo) %>'">
                     <div class="family-photo-container">
-                      <%= image_tag photo.short_thumbnail_url, alt: photo.title, 
+                      <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                                     class: "family-photo-thumbnail" %>
                       <div class="family-photo-overlay">
                         <div class="family-photo-info">
-                          <div class="family-photo-title"><%= truncate(photo.title, length: 20) %></div>
+                          <div class="family-photo-title"><%= truncated_photo_title(photo, length: 20) %></div>
                           <div class="family-photo-meta">by <%= photo.user.display_name_or_full_name %></div>
                           <div class="family-photo-date">
                             <%= photo.taken_at.present? ? photo.taken_at.strftime("%b %d") : time_ago_in_words(photo.created_at) + " ago" %>

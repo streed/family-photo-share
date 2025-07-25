@@ -1,0 +1,201 @@
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-md-10">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h2>Bulk Upload Status</h2>
+          <span class="badge badge-<%= status_badge_class(@bulk_upload.status) %> fs-6">
+            <%= @bulk_upload.status.titleize %>
+          </span>
+        </div>
+        <div class="card-body">
+          
+          <!-- Progress Summary -->
+          <div class="row mb-4">
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="h3 text-primary"><%= @bulk_upload.total_count %></div>
+                <div class="text-muted">Total Files</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="h3 text-success"><%= @bulk_upload.processed_count - @bulk_upload.failed_count %></div>
+                <div class="text-muted">Processed</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="h3 text-danger"><%= @bulk_upload.failed_count %></div>
+                <div class="text-muted">Failed</div>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <div class="text-center">
+                <div class="h3 text-info"><%= @bulk_upload.success_rate %>%</div>
+                <div class="text-muted">Success Rate</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Progress Bar -->
+          <% if @bulk_upload.processing? %>
+            <div class="progress mb-4" style="height: 20px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                   role="progressbar" 
+                   style="width: <%= (@bulk_upload.processed_count.to_f / @bulk_upload.total_count * 100).round(1) %>%">
+                <%= (@bulk_upload.processed_count.to_f / @bulk_upload.total_count * 100).round(1) %>%
+              </div>
+            </div>
+            <div class="text-center">
+              <i class="fas fa-spinner fa-spin"></i> Processing photos... This page will auto-refresh.
+            </div>
+            <meta http-equiv="refresh" content="5">
+          <% else %>
+            <div class="progress mb-4" style="height: 20px;">
+              <div class="progress-bar bg-<%= progress_bar_class(@bulk_upload.status) %>" 
+                   role="progressbar" 
+                   style="width: 100%">
+                Complete
+              </div>
+            </div>
+          <% end %>
+          
+          <!-- Album Info -->
+          <% if @bulk_upload.album.present? %>
+            <div class="alert alert-info">
+              <i class="fas fa-images"></i>
+              Photos were added to album: 
+              <%= link_to @bulk_upload.album.name, album_path(@bulk_upload.album), class: "fw-bold" %>
+            </div>
+          <% end %>
+          
+          <!-- Error Messages -->
+          <% if @bulk_upload.error_messages.present? %>
+            <div class="alert alert-warning">
+              <h5><i class="fas fa-exclamation-triangle"></i> Processing Errors</h5>
+              <pre class="mb-0" style="white-space: pre-wrap;"><%= @bulk_upload.error_messages %></pre>
+            </div>
+          <% end %>
+          
+          <!-- Action Buttons -->
+          <div class="text-center mt-4">
+            <% if @bulk_upload.album.present? %>
+              <%= link_to "View Album", album_path(@bulk_upload.album), class: "btn btn-primary me-2" %>
+            <% end %>
+            <%= link_to "View All Photos", photos_path, class: "btn btn-secondary me-2" %>
+            <%= link_to "Upload More Photos", new_bulk_upload_path, class: "btn btn-success me-2" %>
+            <%= link_to "Upload History", bulk_uploads_path, class: "btn btn-outline-primary" %>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Successfully Processed Photos -->
+      <% if @processed_photos.any? %>
+        <div class="card mt-4">
+          <div class="card-header">
+            <h4>Successfully Processed Photos (<%= @processed_photos.count %>)</h4>
+          </div>
+          <div class="card-body">
+            <div class="photos-grid">
+              <% @processed_photos.each do |photo| %>
+                <div class="photo-tile">
+                  <div class="photo-item" onclick="window.location.href='<%= photo_path(photo) %>'">
+                    <div class="photo-container">
+                      <% if photo.image.attached? %>
+                        <%= image_tag photo.short_thumbnail_url, 
+                                      alt: photo_title_or_default(photo), 
+                                      class: "photo-thumbnail" %>
+                      <% end %>
+                      <div class="photo-overlay">
+                        <div class="photo-info">
+                          <div class="photo-title"><%= truncated_photo_title(photo, length: 15) %></div>
+                          <div class="photo-meta">
+                            <%= time_ago_in_words(photo.created_at) %> ago
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<style>
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .photo-tile {
+    position: relative;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+  
+  .photo-tile:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+  }
+  
+  .photo-item {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  
+  .photo-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .photo-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  .photo-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    color: white;
+    padding: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .photo-tile:hover .photo-overlay {
+    opacity: 1;
+  }
+  
+  .photo-title {
+    font-weight: 600;
+    font-size: 0.8rem;
+    margin-bottom: 2px;
+  }
+  
+  .photo-meta {
+    font-size: 0.7rem;
+    opacity: 0.9;
+  }
+</style>
