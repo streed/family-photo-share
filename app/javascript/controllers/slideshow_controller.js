@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="slideshow"
 export default class extends Controller {
-  static targets = ["modal", "image", "title", "description", "user", "counter"]
+  static targets = ["modal", "image", "title", "description", "user", "counter", "takenAt"]
   static values = { trackUrl: String }
 
   connect() {
@@ -27,6 +27,7 @@ export default class extends Controller {
         title: img.dataset.title || img.alt || 'Untitled',
         description: img.dataset.description || '',
         user: img.dataset.user || 'Unknown',
+        takenAt: img.dataset.takenAt || '',
         alt: img.alt || ''
       }
     }).filter(photo => photo !== null)
@@ -112,6 +113,15 @@ export default class extends Controller {
     
     if (this.hasCounterTarget) {
       this.counterTarget.textContent = index + 1
+    }
+    
+    if (this.hasTakenAtTarget) {
+      if (photo.takenAt) {
+        this.takenAtTarget.textContent = ` • ${photo.takenAt}`
+        this.takenAtTarget.style.display = 'inline'
+      } else {
+        this.takenAtTarget.style.display = 'none'
+      }
     }
     
     // Track photo view if we have a tracking URL

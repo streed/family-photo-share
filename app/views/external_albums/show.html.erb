@@ -65,12 +65,18 @@
                                 large: photo.short_medium_url,
                                 title: photo_title_or_default(photo),
                                 description: photo.description,
-                                user: photo.user.display_name_or_full_name
+                                user: photo.user.display_name_or_full_name,
+                                taken_at: photo.taken_at ? photo.taken_at.strftime('%B %d, %Y') : nil
                               } %>
                 <div class="photo-overlay">
                   <div class="photo-info">
                     <div class="photo-title"><%= truncated_photo_title(photo, length: 30) %></div>
-                    <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
+                    <div class="photo-meta">
+                      <div>by <%= photo.user.display_name_or_full_name %></div>
+                      <% if photo.taken_at %>
+                        <div class="photo-date"><i class="fas fa-calendar-alt"></i> <%= photo.taken_at.strftime('%B %d, %Y') %></div>
+                      <% end %>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -99,6 +105,7 @@
               <p class="slideshow-meta">
                 Photo <span data-slideshow-target="counter"></span> of <%= @photos.size %>
                 • by <span data-slideshow-target="user"></span>
+                <span data-slideshow-target="takenAt" class="slideshow-date"></span>
               </p>
             </div>
           </div>
@@ -234,6 +241,16 @@
     font-size: 0.75rem;
     opacity: 0.9;
   }
+  
+  .photo-date {
+    font-size: 0.7rem;
+    margin-top: 2px;
+    opacity: 0.8;
+  }
+  
+  .photo-date i {
+    margin-right: 3px;
+  }
 
   /* Slideshow Modal Styles (reuse from album show) */
   .slideshow-modal {
@@ -325,6 +342,10 @@
     margin: 0;
     color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
+  }
+  
+  .slideshow-date {
+    color: rgba(255, 255, 255, 0.8);
   }
 
   .slideshow-close {
