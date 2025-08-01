@@ -22,7 +22,7 @@ This guide covers various deployment options for Family Photo Share, from develo
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/family-photo-share.git
+git clone https://github.com/streed/family-photo-share.git
 cd family-photo-share
 cp .env.example .env
 
@@ -397,9 +397,9 @@ cat > app.json << EOF
   "name": "Family Photo Share",
   "description": "A family photo sharing application",
   "keywords": ["rails", "photos", "family"],
-  "website": "https://github.com/yourusername/family-photo-share",
-  "repository": "https://github.com/yourusername/family-photo-share",
-  "logo": "https://example.com/logo.png",
+  "website": "https://github.com/streed/family-photo-share",
+  "repository": "https://github.com/streed/family-photo-share",
+  "logo": "https://raw.githubusercontent.com/streed/family-photo-share/main/app/assets/images/logo.png",
   "success_url": "/",
   "env": {
     "RAILS_MASTER_KEY": {
@@ -463,7 +463,7 @@ DATABASE_URL=postgresql://user:password@host:5432/database
 REDIS_URL=redis://localhost:6379/0
 
 # Application
-APP_HOST=yourdomain.com
+APP_HOST=your-domain.com
 FORCE_SSL=true
 RAILS_SERVE_STATIC_FILES=true
 RAILS_LOG_TO_STDOUT=true
@@ -481,9 +481,9 @@ AWS_BUCKET=your-bucket-name
 # Email (SMTP)
 SMTP_ADDRESS=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USERNAME=your-gmail@gmail.com
+SMTP_USERNAME=your-smtp-username
 SMTP_PASSWORD=your-app-password
-SMTP_DOMAIN=yourdomain.com
+SMTP_DOMAIN=your-domain.com
 
 # Monitoring
 SENTRY_DSN=https://your-sentry-dsn
@@ -513,7 +513,7 @@ RAILS_ENV=production
 RAILS_SERVE_STATIC_FILES=true
 RAILS_LOG_TO_STDOUT=true
 FORCE_SSL=true
-APP_HOST=yourdomain.com
+APP_HOST=your-domain.com
 DATABASE_URL=postgresql://user:password@host:5432/database
 REDIS_URL=redis://host:6379/0
 RAILS_MASTER_KEY=your-production-master-key
@@ -528,7 +528,7 @@ AWS_BUCKET=your-bucket
 # Email
 SMTP_ADDRESS=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USERNAME=your-email@gmail.com
+SMTP_USERNAME=your-smtp-username
 SMTP_PASSWORD=your-app-password
 ```
 
@@ -1051,4 +1051,4 @@ docker system df
 docker system prune -a
 ```
 
-For more troubleshooting help, see the [GitHub Issues](https://github.com/yourusername/family-photo-share/issues) or check the application logs.
+For more troubleshooting help, see the [GitHub Issues](https://github.com/streed/family-photo-share/issues) or check the application logs.

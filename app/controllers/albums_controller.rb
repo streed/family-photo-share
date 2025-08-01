@@ -73,13 +73,36 @@ class AlbumsController < ApplicationController
     begin
       photo = Photo.find(params[:photo_id])
       
+      Rails.logger.info "Attempting to remove photo #{photo.id} from album #{@album.id}"
+      
       if @album.remove_photo(photo)
-        redirect_to @album, notice: 'Photo removed from album!'
+        Rails.logger.info "Successfully removed photo #{photo.id} from album #{@album.id}"
+        respond_to do |format|
+          format.html { redirect_to album_path(@album), notice: 'Photo removed from album!' }
+          format.turbo_stream { 
+            render turbo_stream: turbo_stream.replace("photo_#{photo.id}", "")
+          }
+        end
       else
-        redirect_to @album, alert: 'Unable to remove photo from album.'
+        Rails.logger.warn "Failed to remove photo #{photo.id} from album #{@album.id}"
+        respond_to do |format|
+          format.html { redirect_to @album, alert: 'Unable to remove photo from album.' }
+          format.turbo_stream { redirect_to @album, alert: 'Unable to remove photo from album.' }
+        end
       end
-    rescue ActiveRecord::RecordNotFound
-      redirect_to @album, alert: 'Photo not found.'
+    rescue ActiveRecord::RecordNotFound => e
+      Rails.logger.error "Photo not found when trying to remove from album: #{e.message}"
+      respond_to do |format|
+        format.html { redirect_to @album, alert: 'Photo not found.' }
+        format.turbo_stream { redirect_to @album, alert: 'Photo not found.' }
+      end
+    rescue => e
+      Rails.logger.error "Unexpected error removing photo from album: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      respond_to do |format|
+        format.html { redirect_to @album, alert: 'An error occurred while removing the photo.' }
+        format.turbo_stream { redirect_to @album, alert: 'An error occurred while removing the photo.' }
+      end
     end
   end
 

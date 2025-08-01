@@ -144,7 +144,7 @@
     <div class="album-photos-container" data-controller="slideshow">
       <div class="photo-grid">
         <% @photos.each_with_index do |photo, index| %>
-          <div class="photo-tile">
+          <div class="photo-tile" id="photo_<%= photo.id %>">
             <div class="photo-item position-relative" 
                  data-action="click->slideshow#open" 
                  data-slideshow-index-value="<%= index %>"
@@ -187,12 +187,18 @@
                       </span>
                     <% end %>
                     
-                    <%= link_to remove_photo_album_path(@album, photo_id: photo.id), method: :delete, 
-                                class: "btn btn-sm btn-danger btn-action",
-                                title: "Remove photo from album",
-                                confirm: "Remove this photo from the album?",
-                                data: { "turbo-method": :delete },
-                                onclick: "event.stopPropagation();" do %>
+                    <%= button_to remove_photo_album_path(@album, photo_id: photo.id), 
+                                  method: :delete,
+                                  class: "btn btn-sm btn-danger btn-action",
+                                  title: "Remove photo from album",
+                                  data: { 
+                                    turbo_method: :delete,
+                                    turbo_confirm: "Remove this photo from the album?"
+                                  },
+                                  form: { 
+                                    onclick: "event.stopPropagation();",
+                                    style: "display: inline;"
+                                  } do %>
                       <i class="fas fa-trash-alt"></i>
                     <% end %>
                   </div>

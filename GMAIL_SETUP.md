@@ -34,7 +34,7 @@ Add these to your `.env` file:
 SMTP_ADDRESS=smtp.gmail.com
 SMTP_PORT=587
 SMTP_DOMAIN=gmail.com
-SMTP_USERNAME=your.email@gmail.com
+SMTP_USERNAME=your-gmail-username
 SMTP_PASSWORD=xxxx xxxx xxxx xxxx  # Your 16-character app password
 SMTP_AUTHENTICATION=plain
 SMTP_ENABLE_STARTTLS_AUTO=true
@@ -44,10 +44,10 @@ SMTP_ENABLE_STARTTLS_AUTO=true
 
 ```bash
 # For local development
-TEST_EMAIL=your@email.com rails email:test
+rails email:test TEST_EMAIL=recipient-username
 
 # For Docker
-docker-compose exec web rails email:test TEST_EMAIL=your@email.com
+docker-compose exec web rails email:test TEST_EMAIL=recipient-username
 ```
 
 ## Troubleshooting

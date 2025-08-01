@@ -17,7 +17,13 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Instead, please report them via email to the project maintainers. You should receive a response within 48 hours.
+Instead, please use GitHub's private vulnerability reporting feature:
+
+1. Go to the Security tab in the repository
+2. Click on "Report a vulnerability"
+3. Follow the private disclosure process
+
+You should receive a response within 48 hours.
 
 ### What to Include
 

@@ -1,7 +1,7 @@
 # Family Photo Share
 
 [![Ruby](https://img.shields.io/badge/ruby-3.4.2-red.svg)](https://www.ruby-lang.org/)
-[![Rails](https://img.shields.io/badge/rails-7.1.5-red.svg)](https://rubyonrails.org/)
+[![Rails](https://img.shields.io/badge/rails-8.0.2-red.svg)](https://rubyonrails.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-red.svg)](https://redis.io/)
 [![Docker](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
@@ -63,7 +63,7 @@ A modern, secure photo-sharing platform designed for families. Built with Ruby o
 
 ## Tech Stack
 
-- **Backend Framework**: Ruby on Rails 7.1.5
+- **Backend Framework**: Ruby on Rails 8.0.2
 - **Ruby Version**: 3.4.2
 - **Database**: PostgreSQL 15
 - **Cache/Queue**: Redis 7
@@ -96,7 +96,7 @@ A modern, secure photo-sharing platform designed for families. Built with Ruby o
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/yourusername/family-photo-share.git
+git clone https://github.com/streed/family-photo-share.git
 cd family-photo-share
 
 # 2. Copy and configure environment variables
@@ -120,7 +120,7 @@ docker-compose exec web rails db:create db:migrate db:seed
 
 ```bash
 # 1. Clone and install dependencies
-git clone https://github.com/yourusername/family-photo-share.git
+git clone https://github.com/streed/family-photo-share.git
 cd family-photo-share
 bundle install
 yarn install
@@ -246,9 +246,9 @@ docker-compose -f docker-compose.production.yml exec web rails db:migrate
 |----------|-------------|---------|
 | `SMTP_ADDRESS` | SMTP server | `smtp.gmail.com` |
 | `SMTP_PORT` | SMTP port | `587` |
-| `SMTP_USERNAME` | SMTP username | `your@email.com` |
+| `SMTP_USERNAME` | SMTP username | `your-smtp-username` |
 | `SMTP_PASSWORD` | SMTP password | `app-specific-password` |
-| `SMTP_DOMAIN` | SMTP domain | `yourdomain.com` |
+| `SMTP_DOMAIN` | SMTP domain | `your-domain.com` |
 
 ### 📊 Monitoring & Maintenance
 
@@ -432,7 +432,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### 🐛 Reporting Security Issues
 
-Please report security vulnerabilities to: security@example.com
+Please report security vulnerabilities through GitHub's private vulnerability reporting feature. See SECURITY.md for details.
 
 Do not open public issues for security concerns.
 
@@ -451,9 +451,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Support
 
 - 📚 [Documentation](docs/)
-- 💬 [Discussions](https://github.com/yourusername/family-photo-share/discussions)
-- 🐛 [Issue Tracker](https://github.com/yourusername/family-photo-share/issues)
-- 📧 [Email Support](mailto:support@example.com)
+- 💬 [Discussions](https://github.com/streed/family-photo-share/discussions)
+- 🐛 [Issue Tracker](https://github.com/streed/family-photo-share/issues)
+- 💬 [GitHub Discussions](https://github.com/streed/family-photo-share/discussions)
 
 ---
 

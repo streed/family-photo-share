@@ -145,7 +145,7 @@ To send invitation emails, add these to your `.env`:
 SMTP_ADDRESS=smtp.gmail.com
 SMTP_PORT=587
 SMTP_DOMAIN=gmail.com
-SMTP_USERNAME=your-email@gmail.com
+SMTP_USERNAME=your-gmail-username
 SMTP_PASSWORD=your-app-password  # 16-character app password from Google
 SMTP_AUTHENTICATION=plain
 SMTP_ENABLE_STARTTLS_AUTO=true
@@ -153,7 +153,7 @@ SMTP_ENABLE_STARTTLS_AUTO=true
 
 Test email sending:
 ```bash
-docker-compose exec web rails email:test TEST_EMAIL=test@example.com
+docker-compose exec web rails email:test TEST_EMAIL=recipient-username
 ```
 
 ## Docker Compose Commands Reference

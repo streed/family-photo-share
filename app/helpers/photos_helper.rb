@@ -39,4 +39,35 @@ module PhotosHelper
   def truncated_photo_title(photo, length: 30)
     truncate(photo_title_or_default(photo), length: length)
   end
+  
+  def robust_photo_url(photo, variant = :xl)
+    return nil unless photo&.image&.attached?
+    
+    # Always return original if processing isn't complete
+    unless photo.background_processing_complete?
+      return photo.short_original_url
+    end
+    
+    # Return the requested variant URL
+    case variant.to_sym
+    when :thumbnail
+      photo.short_thumbnail_url
+    when :small
+      photo.short_small_url
+    when :medium
+      photo.short_medium_url
+    when :large
+      photo.short_large_url
+    when :xl
+      photo.short_xl_url
+    when :original
+      photo.short_original_url
+    else
+      photo.short_original_url
+    end
+  rescue => e
+    Rails.logger.warn "Error getting photo URL for variant #{variant}: #{e.message}"
+    # Fallback to original
+    photo.short_original_url
+  end
 end
