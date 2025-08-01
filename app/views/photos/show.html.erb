@@ -110,9 +110,9 @@
         </div>
         <div class="card-body">
           <div class="d-grid gap-2">
-            <%= link_to "View Full Size", @photo.short_original_url, 
+            <%= link_to "View Full Size", robust_photo_url(@photo, :original), 
                         class: "btn btn-outline-primary", target: "_blank" %>
-            <%= link_to "Download", @photo.short_original_url, 
+            <%= link_to "Download", robust_photo_url(@photo, :original), 
                         class: "btn btn-outline-secondary" %>
             <%= link_to "Back to Photos", photos_path, class: "btn btn-secondary" %>
           </div>
