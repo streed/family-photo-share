@@ -23,7 +23,7 @@ class CustomFailureApp < Devise::FailureApp
   def redirect
     store_location!
     message = warden.message || warden_options[:message]
-    
+
     # Don't set flash messages - our custom controllers will handle error messaging
     if request.format.html?
       redirect_to redirect_url

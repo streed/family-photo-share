@@ -3,9 +3,9 @@ class AlbumViewEvent < ApplicationRecord
   belongs_to :photo, optional: true
 
   EVENT_TYPES = {
-    password_entry: 'password_entry',
-    password_attempt_failed: 'password_attempt_failed',
-    photo_view: 'photo_view'
+    password_entry: "password_entry",
+    password_attempt_failed: "password_attempt_failed",
+    photo_view: "photo_view"
   }.freeze
 
   validates :event_type, presence: true, inclusion: { in: EVENT_TYPES.values }
@@ -36,7 +36,7 @@ class AlbumViewEvent < ApplicationRecord
       ip_address: request.remote_ip,
       user_agent: request.user_agent,
       referrer: request.referrer,
-      session_id: request.session.id&.to_s || 'anonymous',
+      session_id: request.session.id&.to_s || "anonymous",
       occurred_at: Time.current
     )
   end

@@ -31,7 +31,7 @@ RSpec.describe PhotosController, type: :controller do
 
     context 'with valid photo data' do
       let(:image) { fixture_file_upload('spec/fixtures/test_image.jpg', 'image/jpeg') }
-      
+
       it 'creates photo and redirects' do
         post :create, params: { photo: { title: 'Test Photo', image: image } }
         expect(response).to redirect_to(Photo.last)

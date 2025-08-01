@@ -5,7 +5,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
   let(:admin_user) { create(:user) }
   let(:non_member) { create(:user) }
   let(:family) { create(:family, created_by: admin_user) }
-  
+
   before do
     # Set up family memberships
     family.family_memberships.find_by(user: admin_user).update!(role: 'admin')
@@ -74,7 +74,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
             patch family_path(family), params: { family: valid_attributes }
             expect(response).to redirect_to(family_path(family))
             expect(flash[:notice]).to eq("Family was successfully updated!")
-            
+
             family.reload
             expect(family.name).to eq("Updated Family Name")
             expect(family.description).to eq("Updated description")
@@ -97,7 +97,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
           patch family_path(family), params: { family: valid_attributes }
           expect(response).to redirect_to(family_path(family))
           expect(flash[:alert]).to eq("Only family admins can perform this action.")
-          
+
           family.reload
           expect(family.name).not_to eq("Updated Family Name")
         end
@@ -118,7 +118,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
   describe "Family deletion" do
     context "when user is the creator and only member" do
       let(:solo_family) { create(:family, created_by: admin_user) }
-      
+
       before do
         sign_in admin_user
         # Ensure only one member
@@ -134,7 +134,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
         expect {
           delete family_path(solo_family)
         }.to change(Family, :count).by(-1)
-        
+
         expect(response).to redirect_to(families_path)
         expect(flash[:notice]).to eq("Family was successfully deleted!")
       end

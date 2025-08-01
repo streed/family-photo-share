@@ -151,7 +151,7 @@ RSpec.describe "Albums", type: :request do
 
   describe "PATCH /albums/:id/add_photo" do
     let(:photo) { create(:photo, user: user) }
-    
+
     context "when user owns the album" do
       before { sign_in user }
 

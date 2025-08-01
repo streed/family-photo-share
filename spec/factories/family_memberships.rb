@@ -4,7 +4,7 @@ FactoryBot.define do
     association :family
     role { 'member' }
     joined_at { Time.current }
-    
+
     trait :admin do
       role { 'admin' }
     end

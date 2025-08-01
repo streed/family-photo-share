@@ -1,0 +1,43 @@
+# Brakeman configuration file
+# See https://brakemanscanner.org/docs/options/
+
+# Application path
+app_path: "."
+
+# Output format
+output_format: table
+
+# Suppress warnings in brakeman.ignore
+#ignore_file: config/brakeman.ignore
+
+# Skip certain checks
+skip_checks:
+  # Skip checks that are less relevant for this application
+  # - SkipBeforeFilter  # We use skip_before_action which is safer
+
+# Check all files, not just tracked ones
+only_files: 
+
+# Additional paths to scan
+additional_libs_path:
+
+# Gems to skip
+skip_gems:
+
+# Output file
+output_file: 
+
+# Only report confident warnings
+minimum_confidence: 2
+
+# Check routes
+check_arguments: true
+
+# More verbose output
+verbose: false
+
+# Parallel processing
+parallel_checks: true
+
+# Github formatting (useful for CI)
+github_repo: streed/family-photo-share

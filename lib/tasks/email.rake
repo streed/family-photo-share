@@ -1,14 +1,14 @@
 namespace :email do
   desc "Test email configuration by sending a test email"
   task test: :environment do
-    if ENV['TEST_EMAIL'].blank?
+    if ENV["TEST_EMAIL"].blank?
       puts "Please provide a TEST_EMAIL environment variable"
       puts "Usage: TEST_EMAIL=your@email.com rails email:test"
       exit 1
     end
 
-    test_email = ENV['TEST_EMAIL']
-    
+    test_email = ENV["TEST_EMAIL"]
+
     puts "Sending test email to: #{test_email}"
     puts "Using SMTP settings:"
     puts "  Address: #{ENV['SMTP_ADDRESS'] || 'Not configured (using letter_opener)'}"
@@ -35,19 +35,19 @@ namespace :email do
   desc "Test family invitation emails"
   task test_invitations: :environment do
     puts "Testing invitation email templates..."
-    
+
     # Create test data
     family = Family.first || Family.create!(name: "Test Family", created_by: User.first)
     inviter = family.created_by
     invitation = family.family_invitations.build(
-      email: ENV.fetch('TEST_EMAIL', 'test@example.com'),
+      email: ENV.fetch("TEST_EMAIL", "test@example.com"),
       inviter: inviter
     )
     invitation.save(validate: false) # Skip validation for test
-    
+
     puts "Testing invitation email..."
     FamilyInvitationMailer.invitation_email(invitation).deliver_now
-    
+
     puts "Testing acceptance notification email..."
     test_member = User.new(
       email: invitation.email,
@@ -55,10 +55,10 @@ namespace :email do
       last_name: "User"
     )
     FamilyInvitationMailer.acceptance_notification(invitation, test_member).deliver_now
-    
+
     puts "✅ Invitation email templates tested!"
     puts "Check your email client or letter_opener for the test emails"
-    
+
     # Clean up
     invitation.destroy
   end

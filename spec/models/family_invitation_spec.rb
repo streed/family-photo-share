@@ -12,13 +12,13 @@ RSpec.describe FamilyInvitation, type: :model do
     it { should validate_presence_of(:email) }
     it { should validate_presence_of(:status) }
     it { should validate_inclusion_of(:status).in_array(%w[pending accepted declined expired]) }
-    
+
     it 'ensures token is generated automatically' do
       invitation = build(:family_invitation, token: nil)
       invitation.valid?
       expect(invitation.token).to be_present
     end
-    
+
     it 'validates email format' do
       invitation = build(:family_invitation, email: 'invalid-email')
       expect(invitation).not_to be_valid

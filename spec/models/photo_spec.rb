@@ -9,12 +9,12 @@ RSpec.describe Photo, type: :model do
     subject { build(:photo) }
 
     it { should validate_length_of(:title).is_at_most(255).allow_nil }
-    
+
     it 'allows photos without titles' do
       photo = build(:photo, title: nil)
       expect(photo).to be_valid
     end
-    
+
     it 'allows photos with blank titles' do
       photo = build(:photo, title: '')
       expect(photo).to be_valid
@@ -46,7 +46,7 @@ RSpec.describe Photo, type: :model do
 
     describe '.recent' do
       it 'orders photos by creation date descending' do
-        expect(Photo.recent).to eq([recent_photo, old_photo])
+        expect(Photo.recent).to eq([ recent_photo, old_photo ])
       end
     end
 
@@ -55,8 +55,8 @@ RSpec.describe Photo, type: :model do
       let!(:photo_taken_last_week) { create(:photo, taken_at: 1.week.ago) }
 
       it 'orders photos by taken date descending' do
-        photos = Photo.where(id: [photo_taken_yesterday.id, photo_taken_last_week.id]).by_date_taken
-        expect(photos).to eq([photo_taken_yesterday, photo_taken_last_week])
+        photos = Photo.where(id: [ photo_taken_yesterday.id, photo_taken_last_week.id ]).by_date_taken
+        expect(photos).to eq([ photo_taken_yesterday, photo_taken_last_week ])
       end
     end
   end
@@ -100,7 +100,7 @@ RSpec.describe Photo, type: :model do
     it 'extracts metadata before save' do
       photo = build(:photo, original_filename: nil)
       photo.save!
-      
+
       expect(photo.original_filename).to eq('test_image.jpg')
       expect(photo.content_type).to eq('image/jpeg')
       expect(photo.file_size).to be > 0
@@ -117,7 +117,7 @@ RSpec.describe Photo, type: :model do
       # Add photo to both albums
       album1.add_photo(photo)
       album2.add_photo(photo)
-      
+
       # Set photo as cover for album1
       album1.update!(cover_photo: photo)
     end
@@ -131,7 +131,7 @@ RSpec.describe Photo, type: :model do
 
       album1.reload
       album2.reload
-      
+
       expect(album1.photos.count).to eq(0)
       expect(album2.photos.count).to eq(0)
     end
@@ -148,7 +148,7 @@ RSpec.describe Photo, type: :model do
     it 'sets new cover photo if other photos exist in album' do
       other_photo = create(:photo, user: user)
       album1.add_photo(other_photo)
-      
+
       expect(album1.cover_photo).to eq(photo)
       expect(album1.photos.count).to eq(2)
 
@@ -162,22 +162,22 @@ RSpec.describe Photo, type: :model do
     it 'reorders album photo positions after deletion' do
       photo2 = create(:photo, user: user)
       photo3 = create(:photo, user: user)
-      
+
       album1.add_photo(photo2)
       album1.add_photo(photo3)
-      
+
       # Verify initial positions
-      expect(album1.album_photos.order(:position).pluck(:position)).to eq([1, 2, 3])
-      
+      expect(album1.album_photos.order(:position).pluck(:position)).to eq([ 1, 2, 3 ])
+
       # Find which photo is in position 2
       photo_in_position_2 = album1.album_photos.find_by(position: 2).photo
-      
+
       # Delete the middle photo (position 2)
       photo_in_position_2.destroy!
-      
+
       album1.reload
       positions = album1.album_photos.order(:position).pluck(:position)
-      expect(positions).to eq([1, 2])
+      expect(positions).to eq([ 1, 2 ])
     end
   end
 end

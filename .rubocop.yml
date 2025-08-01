@@ -1,8 +1,13 @@
+inherit_from: .rubocop_todo.yml
+
+inherit_gem:
+  rubocop-rails-omakase: rubocop.yml
+
 plugins:
   - rubocop-rails
 
 AllCops:
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.4
   NewCops: enable
   Exclude:
     - 'bin/**/*'
@@ -13,6 +18,7 @@ AllCops:
     - 'tmp/**/*'
     - 'log/**/*'
     - 'storage/**/*'
+    - 'spec/fixtures/**/*'
 
 # Rails-specific cops
 Rails:

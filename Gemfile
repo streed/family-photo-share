@@ -43,12 +43,12 @@ gem "mini_exiftool"
 gem "rqrcode", "~> 3.0"
 
 # Authentication
-gem 'devise'
+gem "devise"
 
 # Background jobs
-gem 'sidekiq'
-gem 'sidekiq-cron'
-gem 'redis', '~> 4.0'
+gem "sidekiq"
+gem "sidekiq-cron"
+gem "redis", "~> 4.0"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
@@ -56,32 +56,35 @@ group :development, :test do
 
   # Static analysis for security vulnerabilities [https://brakemanscanner.org/]
   gem "brakeman", require: false
+  
+  # Gem vulnerability scanner [https://github.com/rubysec/bundler-audit]
+  gem "bundler-audit", require: false
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
   # Testing framework
-  gem 'rspec-rails'
-  gem 'factory_bot_rails'
-  gem 'faker'
-  gem 'pry-rails'
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+  gem "faker"
+  gem "pry-rails"
 end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
-  
+
   # Development tools
-  gem 'rubocop-rails', require: false
-  gem 'bullet'  # N+1 query detection
-  gem 'letter_opener'  # Preview emails in browser
+  gem "rubocop-rails", require: false
+  gem "bullet"  # N+1 query detection
+  gem "letter_opener"  # Preview emails in browser
 end
 
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"
   gem "selenium-webdriver"
-  gem 'shoulda-matchers'
-  gem 'database_cleaner-active_record'
-  gem 'rails-controller-testing'
+  gem "shoulda-matchers"
+  gem "database_cleaner-active_record"
+  gem "rails-controller-testing"
 end

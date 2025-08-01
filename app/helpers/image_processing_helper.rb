@@ -1,6 +1,6 @@
 module ImageProcessingHelper
   def processing_status_badge(photo)
-    return '' unless photo.image.attached?
+    return "" unless photo.image.attached?
 
     if photo.all_variants_ready?
       content_tag :span, "✅ Processed", class: "badge bg-success"
@@ -12,27 +12,27 @@ module ImageProcessingHelper
   end
 
   def image_with_fallback(photo, size, options = {})
-    return '' unless photo.image.attached?
+    return "" unless photo.image.attached?
 
     begin
       variant = photo.best_variant(size)
       image_tag variant, options
     rescue StandardError => e
       Rails.logger.error "Failed to load image variant for Photo #{photo.id}: #{e.message}"
-      
+
       # Fallback to a placeholder or smaller variant
       placeholder_options = options.merge(
-        src: asset_path('placeholder-image.png'),
+        src: asset_path("placeholder-image.png"),
         alt: "Image loading...",
         class: "#{options[:class]} image-placeholder"
       )
-      
+
       image_tag placeholder_options[:src], placeholder_options
     end
   end
 
   def responsive_image_tag(photo, sizes = {}, html_options = {})
-    return '' unless photo.image.attached?
+    return "" unless photo.image.attached?
 
     # Default sizes for responsive images
     default_sizes = {
@@ -41,9 +41,9 @@ module ImageProcessingHelper
       large: :medium,
       xl: :large
     }
-    
+
     sizes = default_sizes.merge(sizes)
-    
+
     # Generate srcset
     srcset_parts = []
     sizes.each do |breakpoint, variant_size|
@@ -58,9 +58,9 @@ module ImageProcessingHelper
 
     # Use the largest available variant as src
     src_variant = photo.best_variant(sizes.values.last)
-    
+
     html_options = html_options.merge(
-      srcset: srcset_parts.join(', '),
+      srcset: srcset_parts.join(", "),
       sizes: "(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
     ) if srcset_parts.any?
 

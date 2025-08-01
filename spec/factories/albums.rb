@@ -5,15 +5,15 @@ FactoryBot.define do
     description { Faker::Lorem.paragraph }
     privacy { 'private' }
     cover_photo { nil }
-    
+
     trait :family do
       privacy { 'family' }
     end
-    
+
     trait :public do
       privacy { 'public' }
     end
-    
+
     trait :with_photos do
       after(:create) do |album|
         photos = create_list(:photo, 5, user: album.user)

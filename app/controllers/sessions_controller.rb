@@ -12,13 +12,13 @@ class SessionsController < Devise::SessionsController
       self.resource = resource_class.new(sign_in_params)
       render :new and return
     end
-    
+
     # Store email before attempting authentication
     attempted_email = params.dig(:user, :email)
-    
+
     # Try authentication with Devise
     self.resource = warden.authenticate!(auth_options)
-    
+
     if resource && resource.persisted?
       # Successful authentication
       clear_failed_attempts unless Rails.env.development?
@@ -27,14 +27,14 @@ class SessionsController < Devise::SessionsController
       yield resource if block_given?
       respond_with resource, location: after_sign_in_path_for(resource)
     end
-    
+
   rescue Warden::NotAuthenticated
     # Authentication failed
     increment_failed_attempts unless Rails.env.development?
-    
+
     # Set up resource for form redisplay
     self.resource = resource_class.new(email: attempted_email)
-    
+
     # Add custom error message
     if Rails.env.development?
       flash.now[:alert] = "Invalid email or password. Please try again."
@@ -49,7 +49,7 @@ class SessionsController < Devise::SessionsController
         flash.now[:alert] = "Too many failed login attempts. Your account is temporarily locked. Please try again in #{remaining_time} #{'minute'.pluralize(remaining_time)} or reset your password."
       end
     end
-    
+
     render :new
   end
 
@@ -57,7 +57,7 @@ class SessionsController < Devise::SessionsController
 
   def check_rate_limit
     return unless rate_limit_exceeded?
-    
+
     remaining_time = lockout_remaining_time
     flash[:alert] = "Too many failed login attempts. Please try again in #{remaining_time} minutes."
     redirect_to new_user_session_path
@@ -103,7 +103,7 @@ class SessionsController < Devise::SessionsController
     else
       # Provide specific error messages based on remaining attempts in production
       attempts_left = MAX_ATTEMPTS - failed_attempts
-      
+
       if attempts_left == 1
         @alert_message = "Invalid email or password. Warning: You have 1 more attempt before your account is temporarily locked."
       elsif attempts_left > 0
@@ -131,7 +131,7 @@ class SessionsController < Devise::SessionsController
   def rate_limit_info
     {
       failed_attempts: failed_attempts,
-      remaining_attempts: [MAX_ATTEMPTS - failed_attempts, 0].max,
+      remaining_attempts: [ MAX_ATTEMPTS - failed_attempts, 0 ].max,
       locked_out: rate_limit_exceeded?,
       lockout_remaining_minutes: lockout_remaining_time
     }

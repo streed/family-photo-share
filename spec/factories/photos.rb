@@ -9,7 +9,7 @@ FactoryBot.define do
     # Attach a test image file
     after(:build) do |photo|
       photo.image.attach(
-        io: File.open(Rails.root.join('spec', 'fixtures', 'files', 'test_image.jpg')),
+        io: File.open(Rails.root.join("spec/fixtures/files/test_image.jpg")),
         filename: 'test_image.jpg',
         content_type: 'image/jpeg'
       )
@@ -26,7 +26,7 @@ FactoryBot.define do
     trait :old do
       taken_at { 1.year.ago }
     end
-    
+
     trait :without_title do
       title { nil }
     end

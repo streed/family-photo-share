@@ -1,10 +1,10 @@
 class BulkImageProcessingJob
   include Sidekiq::Job
-  sidekiq_options retry: 1, queue: 'bulk_processing'
+  sidekiq_options retry: 1, queue: "bulk_processing"
 
   def perform(batch_size = 10)
     Rails.logger.info "Starting bulk image processing"
-    
+
     # Find photos that haven't been processed yet
     unprocessed_photos = Photo.joins(:image_attachment)
                               .where(processing_completed_at: nil)
@@ -16,7 +16,7 @@ class BulkImageProcessingJob
     end
 
     Rails.logger.info "Processing #{unprocessed_photos.count} photos"
-    
+
     unprocessed_photos.find_each do |photo|
       begin
         ImageProcessingJob.perform_async(photo.id)

@@ -1,6 +1,6 @@
 class ProfilesController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_user, only: [:show, :edit, :update]
+  before_action :set_user, only: [ :show, :edit, :update ]
 
   def show
     # Load user's accessible albums
@@ -24,7 +24,7 @@ class ProfilesController < ApplicationController
 
   def update
     if @user.update(profile_params)
-      redirect_to profile_path(@user), notice: 'Profile updated successfully.'
+      redirect_to profile_path(@user), notice: "Profile updated successfully."
     else
       render :edit, status: :unprocessable_entity
     end

@@ -1,5 +1,5 @@
 class RegistrationsController < Devise::RegistrationsController
-  before_action :set_invitation, only: [:new, :create]
+  before_action :set_invitation, only: [ :new, :create ]
 
   def new
     # Allow both public signup and invitation-based signup
@@ -58,7 +58,7 @@ class RegistrationsController < Devise::RegistrationsController
       @invitation = FamilyInvitation.find_by(token: token)
       if @invitation.nil? || @invitation.expired? || !@invitation.pending?
         session.delete(:invitation_token)
-        redirect_to root_path, alert: 'Invalid or expired invitation.'
+        redirect_to root_path, alert: "Invalid or expired invitation."
       else
         # Store token in session for the registration process
         session[:invitation_token] = token

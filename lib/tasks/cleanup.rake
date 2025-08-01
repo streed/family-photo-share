@@ -4,14 +4,14 @@ namespace :cleanup do
     puts "Starting cleanup of expired guest sessions..."
     CleanupExpiredSessionsJob.perform_now
   end
-  
+
   desc "Clean up all expired data (sessions, old jobs, etc.)"
   task all: :environment do
     puts "Running comprehensive cleanup..."
-    
+
     # Clean up expired guest sessions
     Rake::Task["cleanup:expired_sessions"].invoke
-    
+
     # Clean up old Sidekiq jobs (older than 30 days)
     if defined?(Sidekiq::Stats)
       stats = Sidekiq::Stats.new
@@ -19,13 +19,13 @@ namespace :cleanup do
       puts "  Processed: #{stats.processed}"
       puts "  Failed: #{stats.failed}"
     end
-    
+
     # You can add more cleanup tasks here as needed
     # For example:
     # - Old image processing artifacts
     # - Temporary files
     # - Old logs
-    
+
     puts "Cleanup completed!"
   end
 end

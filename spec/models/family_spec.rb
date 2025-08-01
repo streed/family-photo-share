@@ -21,7 +21,7 @@ RSpec.describe Family, type: :model do
     it 'adds creator as admin after creation' do
       user = create(:user)
       family = create(:family, created_by: user)
-      
+
       membership = family.family_memberships.find_by(user: user)
       expect(membership).to be_present
       expect(membership.role).to eq('admin')
@@ -32,7 +32,7 @@ RSpec.describe Family, type: :model do
     let(:family) { create(:family) }
     let(:admin_user) { family.created_by }
     let(:member_user) { create(:user) }
-    
+
     before do
       create(:family_membership, family: family, user: member_user, role: 'member')
     end

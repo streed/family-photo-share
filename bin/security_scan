@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -e
+
+echo "=== Family Photo Share Security Scan ==="
+echo ""
+
+echo "1. Running Brakeman (Ruby static analysis)..."
+echo "============================================"
+bin/brakeman --no-pager --confidence-level 2
+echo ""
+
+echo "2. Running bundler-audit (Gem vulnerabilities)..."
+echo "================================================"
+bundle exec bundler-audit check --update
+echo ""
+
+echo "3. Running importmap audit (JavaScript dependencies)..."
+echo "======================================================="
+bin/importmap audit
+echo ""
+
+echo "4. Running RuboCop security cops..."
+echo "==================================="
+bundle exec rubocop --only Security
+echo ""
+
+echo "✅ Security scan completed!"
+echo ""
+echo "Summary:"
+echo "- Brakeman: Static analysis for Rails security vulnerabilities"
+echo "- bundler-audit: Checks for vulnerable gems"
+echo "- importmap audit: Checks for vulnerable JavaScript packages"
+echo "- RuboCop Security: Security-focused code style checks"
+echo ""
+echo "Review any findings above and address them appropriately."

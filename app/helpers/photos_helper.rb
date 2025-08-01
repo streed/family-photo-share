@@ -18,7 +18,7 @@ module PhotosHelper
     return content_tag(:div, "No image", class: "no-image") unless photo&.image&.attached?
 
     options[:alt] ||= photo.title
-    options[:class] = [options[:class], "photo-image", "photo-#{variant}"].compact.join(" ")
+    options[:class] = [ options[:class], "photo-image", "photo-#{variant}" ].compact.join(" ")
 
     if photo.image_processed?
       image_tag(photo_url(photo, variant), options)
@@ -31,23 +31,23 @@ module PhotosHelper
     date = photo.taken_at || photo.created_at
     date.strftime("%B %d, %Y at %I:%M %p")
   end
-  
+
   def photo_title_or_default(photo)
     photo.title.presence || "Untitled Photo"
   end
-  
+
   def truncated_photo_title(photo, length: 30)
     truncate(photo_title_or_default(photo), length: length)
   end
-  
+
   def robust_photo_url(photo, variant = :xl)
     return nil unless photo&.image&.attached?
-    
+
     # Always return original if processing isn't complete
     unless photo.background_processing_complete?
       return photo.short_original_url
     end
-    
+
     # Return the requested variant URL
     case variant.to_sym
     when :thumbnail

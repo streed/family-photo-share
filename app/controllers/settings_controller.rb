@@ -7,9 +7,9 @@ class SettingsController < ApplicationController
 
   def update_profile
     @user = current_user
-    
+
     if @user.update(profile_params)
-      redirect_to settings_path, notice: 'Profile updated successfully.'
+      redirect_to settings_path, notice: "Profile updated successfully."
     else
       render :show, status: :unprocessable_entity
     end
@@ -17,7 +17,7 @@ class SettingsController < ApplicationController
 
   def update_account
     @user = current_user
-    
+
     # Handle account updates (email/password changes)
     if account_params[:password].blank?
       # If no password change, just update email (may require current password for email changes)
@@ -25,18 +25,18 @@ class SettingsController < ApplicationController
         # Email change requires current password verification
         if @user.valid_password?(account_params[:current_password])
           if @user.update(account_params.except(:password, :password_confirmation, :current_password))
-            redirect_to settings_path, notice: 'Account updated successfully.'
+            redirect_to settings_path, notice: "Account updated successfully."
           else
             render :show, status: :unprocessable_entity
           end
         else
-          @user.errors.add(:current_password, 'is incorrect')
+          @user.errors.add(:current_password, "is incorrect")
           render :show, status: :unprocessable_entity
         end
       else
         # No email change, just update other allowed fields
         if @user.update(account_params.except(:password, :password_confirmation, :current_password, :email))
-          redirect_to settings_path, notice: 'Account updated successfully.'
+          redirect_to settings_path, notice: "Account updated successfully."
         else
           render :show, status: :unprocessable_entity
         end
@@ -45,7 +45,7 @@ class SettingsController < ApplicationController
       # Password change requires current password verification
       if @user.update_with_password(account_params)
         bypass_sign_in(@user) # Keep user signed in after password change
-        redirect_to settings_path, notice: 'Account updated successfully.'
+        redirect_to settings_path, notice: "Account updated successfully."
       else
         render :show, status: :unprocessable_entity
       end
@@ -54,12 +54,12 @@ class SettingsController < ApplicationController
 
   def destroy_account
     @user = current_user
-    
+
     if @user.valid_password?(params[:current_password])
       @user.destroy
-      redirect_to root_path, notice: 'Your account has been successfully deleted.'
+      redirect_to root_path, notice: "Your account has been successfully deleted."
     else
-      @user.errors.add(:current_password, 'is incorrect')
+      @user.errors.add(:current_password, "is incorrect")
       render :show, status: :unprocessable_entity
     end
   end

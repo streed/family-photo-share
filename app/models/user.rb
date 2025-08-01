@@ -17,11 +17,11 @@ class User < ApplicationRecord
   has_many :photos, dependent: :destroy
   has_many :albums, dependent: :destroy
   has_many :bulk_uploads, dependent: :destroy
-  has_many :created_families, class_name: 'Family', foreign_key: 'created_by_id', dependent: :destroy
+  has_many :created_families, class_name: "Family", foreign_key: "created_by_id", dependent: :destroy
   has_one :family_membership, dependent: :destroy
   has_one :family, through: :family_membership
-  has_many :sent_invitations, class_name: 'FamilyInvitation', foreign_key: 'inviter_id', dependent: :destroy
-  has_many :received_invitations, class_name: 'FamilyInvitation', primary_key: 'email', foreign_key: 'email'
+  has_many :sent_invitations, class_name: "FamilyInvitation", foreign_key: "inviter_id", dependent: :destroy
+  has_many :received_invitations, class_name: "FamilyInvitation", primary_key: "email", foreign_key: "email"
 
   # Callbacks
   before_save :set_display_name
@@ -105,5 +105,4 @@ class User < ApplicationRecord
   def password_required?
     !persisted? || password.present? || password_confirmation.present?
   end
-
 end

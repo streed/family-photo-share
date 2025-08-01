@@ -24,25 +24,25 @@ class ImageProcessingService
 
     # Update photo processing status
     @photo.update_column(:processing_completed_at, Time.current)
-    
+
     Rails.logger.info "All variants processed for Photo #{@photo.id}"
   end
 
   def process_variant(size_name, dimensions)
     start_time = Time.current
-    
+
     variant = @photo.image.variant(
-      resize_to_limit: [dimensions[:width], dimensions[:height]],
+      resize_to_limit: [ dimensions[:width], dimensions[:height] ],
       format: :jpeg,
       quality: size_name == :thumbnail ? 85 : 90
     )
-    
+
     # Force processing by calling processed
     variant.processed
-    
+
     processing_time = Time.current - start_time
     Rails.logger.info "Processed #{size_name} variant for Photo #{@photo.id} in #{processing_time.round(2)}s"
-    
+
     variant
   rescue StandardError => e
     Rails.logger.error "Failed to process #{size_name} variant for Photo #{@photo.id}: #{e.message}"
@@ -60,14 +60,14 @@ class ImageProcessingService
   # Class method to get variant for a specific size
   def self.variant_for_size(photo, size)
     return nil unless photo.image.attached?
-    
+
     dimensions = THUMBNAIL_SIZES[size.to_sym]
     return nil unless dimensions
 
     quality = size.to_sym == :thumbnail ? 85 : 90
-    
+
     photo.image.variant(
-      resize_to_limit: [dimensions[:width], dimensions[:height]],
+      resize_to_limit: [ dimensions[:width], dimensions[:height] ],
       format: :jpeg,
       quality: quality
     )
@@ -77,7 +77,7 @@ class ImageProcessingService
   def self.all_variants_processed?(photo)
     return false unless photo.image.attached?
     return false unless photo.processing_completed_at.present?
-    
+
     THUMBNAIL_SIZES.keys.all? do |size_name|
       variant = variant_for_size(photo, size_name)
       variant&.processed&.attached?
@@ -96,10 +96,10 @@ class ImageProcessingService
 
     # Fallback to smaller sizes if requested size isn't ready
     fallback_order = case requested_size.to_sym
-    when :xl then [:large, :medium, :small, :thumbnail]
-    when :large then [:medium, :small, :thumbnail]
-    when :medium then [:small, :thumbnail]
-    when :small then [:thumbnail]
+    when :xl then [ :large, :medium, :small, :thumbnail ]
+    when :large then [ :medium, :small, :thumbnail ]
+    when :medium then [ :small, :thumbnail ]
+    when :small then [ :thumbnail ]
     else []
     end
 
@@ -116,7 +116,7 @@ class ImageProcessingService
 
   def self.variant_ready?(variant)
     return false unless variant
-    
+
     variant.processed.attached?
   rescue StandardError
     false
