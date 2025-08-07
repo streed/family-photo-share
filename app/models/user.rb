@@ -96,6 +96,19 @@ class User < ApplicationRecord
     albums.recent.limit(limit)
   end
 
+  # Admin methods for console use
+  def reset_password!(new_password)
+    self.password = new_password
+    self.password_confirmation = new_password
+    save(validate: false)
+  end
+
+  def reset_password_with_validation!(new_password)
+    self.password = new_password
+    self.password_confirmation = new_password
+    save!
+  end
+
   private
 
   def set_display_name

@@ -49,3 +49,6 @@ Dockerfile*
 # Node (if using)
 node_modules/
 yarn-error.log
+
+# Rails config
+config/master.key

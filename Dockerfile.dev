@@ -28,19 +28,21 @@ ENV RAILS_ENV="development" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT=""
 
-# Install application gems as root first
+# Create rails user first
+RUN groupadd --system --gid 1000 rails && \
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
+
+# Install application gems and set proper ownership
 COPY Gemfile Gemfile.lock ./
-RUN bundle install
+RUN bundle install && \
+    chown -R rails:rails "${BUNDLE_PATH}" && \
+    chown -R rails:rails /rails
 
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p tmp/pids log storage
-
-# Create rails user and set permissions
-RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
+# Create necessary directories and set permissions
+RUN mkdir -p tmp/pids log storage && \
     chown -R rails:rails /rails
 
 USER 1000:1000

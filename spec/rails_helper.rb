@@ -80,6 +80,16 @@ RSpec.configure do |config|
   config.include Devise::Test::IntegrationHelpers, type: :feature
   config.include Devise::Test::IntegrationHelpers, type: :request
   config.include Devise::Test::ControllerHelpers, type: :controller
+
+  # Configure Sidekiq for testing
+  config.before(:each) do
+    Sidekiq::Testing.fake!
+    Sidekiq::Job.clear_all
+  end
+
+  config.after(:each) do
+    Sidekiq::Job.clear_all
+  end
 end
 
 # Configure Shoulda matchers
