@@ -6,7 +6,7 @@ SimpleCov.start 'rails' do
   add_filter '/vendor/'
   add_filter '/bin/'
   add_filter '/db/'
-  
+
   add_group 'Models', 'app/models'
   add_group 'Controllers', 'app/controllers'
   add_group 'Jobs', 'app/jobs'
@@ -14,7 +14,7 @@ SimpleCov.start 'rails' do
   add_group 'Services', 'app/services'
   add_group 'Mailers', 'app/mailers'
   add_group 'Libraries', 'lib'
-  
+
   minimum_coverage 90
 end
 
