@@ -108,6 +108,11 @@ jobs:
     needs: [scan_ruby, scan_js, lint, test]
     if: github.ref == 'refs/heads/main'
     
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
