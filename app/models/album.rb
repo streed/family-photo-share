@@ -65,28 +65,21 @@ class Album < ApplicationRecord
     album_photo = album_photos.find_by(photo: photo)
     return false unless album_photo
 
-    Rails.logger.info "Found album_photo record #{album_photo.id} for photo #{photo.id} in album #{id}"
 
     # If removing cover photo, set new cover
     if cover_photo == photo
-      Rails.logger.info "Removing cover photo, setting new cover"
       new_cover = ordered_photos.where.not(id: photo.id).first
       if new_cover
         update!(cover_photo: new_cover)
-        Rails.logger.info "Set new cover photo to #{new_cover.id}"
       else
         update!(cover_photo: nil)
-        Rails.logger.info "No other photos available, cleared cover photo"
       end
     end
 
-    Rails.logger.info "Destroying album_photo record #{album_photo.id}"
     album_photo.destroy!
 
-    Rails.logger.info "Reordering positions after photo removal"
     reorder_positions
 
-    Rails.logger.info "Successfully removed photo #{photo.id} from album #{id}"
     true
   rescue => e
     Rails.logger.error "Error in remove_photo: #{e.message}"

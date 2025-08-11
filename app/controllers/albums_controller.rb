@@ -73,10 +73,7 @@ class AlbumsController < ApplicationController
     begin
       photo = Photo.find(params[:photo_id])
 
-      Rails.logger.info "Attempting to remove photo #{photo.id} from album #{@album.id}"
-
       if @album.remove_photo(photo)
-        Rails.logger.info "Successfully removed photo #{photo.id} from album #{@album.id}"
         respond_to do |format|
           format.html { redirect_to album_path(@album), notice: "Photo removed from album!" }
           format.turbo_stream {

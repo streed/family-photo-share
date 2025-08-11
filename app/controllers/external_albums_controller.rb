@@ -29,8 +29,6 @@ class ExternalAlbumsController < ApplicationController
       end
     end
 
-    puts @album.external_password, params[:password]
-
     if @album.accessible_externally_with_password?(params[:password])
       # Create access session
       access_session = @album.create_access_session(request.remote_ip)

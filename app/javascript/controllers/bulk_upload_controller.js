@@ -89,7 +89,7 @@ export default class extends Controller {
       this.renderStagedPhoto(stagedPhoto);
     };
     reader.onerror = (e) => {
-      console.error('FileReader error:', e);
+      // FileReader error occurred
     };
     reader.readAsDataURL(file);
     
@@ -276,7 +276,7 @@ export default class extends Controller {
         photo.uploadStatus = 'uploaded';
         
       } catch (error) {
-        console.error('Upload failed for', photo.filename, error);
+        // Upload failed
         failedUploads.push(`${photo.filename}: ${error.message}`);
         photo.uploadStatus = 'failed';
       }
