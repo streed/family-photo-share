@@ -7,26 +7,18 @@ class Album < ApplicationRecord
   has_many :album_access_sessions, dependent: :destroy
   has_many :album_view_events, dependent: :destroy
 
-  # External sharing with password protection
-  has_secure_password :password, validations: false
+  # Virtual attribute for password
+  attr_accessor :password
 
-  # Virtual attribute for password that saves both hashed and plain text versions
-  attr_reader :password_for_storage
-
-  def password=(unencrypted_password)
-    if unencrypted_password.present?
-      @password_for_storage = unencrypted_password
-      self.external_password = unencrypted_password
-    end
-    super # Call the original has_secure_password method
-  end
+  # Save password as plain text
+  before_save :set_external_password, if: :password
 
   # Validations
   validates :name, presence: true, length: { maximum: 100 }
   validates :description, length: { maximum: 1000 }
   validates :privacy, presence: true, inclusion: { in: %w[private family] }
   validates :name, uniqueness: { scope: :user_id }
-  validates :password, length: { minimum: 6 }, if: :allow_external_access?
+  validates :password, length: { minimum: 6 }, if: -> { allow_external_access? && password.present? }
   validates :sharing_token, uniqueness: true, allow_nil: true
 
   # Scopes
@@ -47,7 +39,7 @@ class Album < ApplicationRecord
   end
 
   def ordered_photos
-    Photo.select("photos.*, album_photos.position")
+    Photo.select("photos.*")
          .joins(:album_photos)
          .where(album_photos: { album_id: id })
          .order("photos.taken_at DESC NULLS LAST, photos.created_at DESC")
@@ -134,8 +126,8 @@ class Album < ApplicationRecord
   end
 
   def accessible_externally_with_password?(password_attempt)
-    return false unless allow_external_access? && password_digest.present?
-    authenticate_password(password_attempt)
+    return false unless allow_external_access? && external_password.present?
+    external_password == password_attempt
   end
 
   def create_access_session(ip_address)
@@ -170,7 +162,6 @@ class Album < ApplicationRecord
   def disable_external_access!
     update!(
       allow_external_access: false,
-      password_digest: nil,
       external_password: nil,
       sharing_token: nil
     )
@@ -208,10 +199,13 @@ class Album < ApplicationRecord
 
   def clear_sharing_data
     return unless allow_external_access_changed_to_false?
-    self.password_digest = nil
     self.external_password = nil
     self.sharing_token = nil
     revoke_all_access_sessions
+  end
+
+  def set_external_password
+    self.external_password = password if password.present?
   end
 
   def allow_external_access_changed_to_false?

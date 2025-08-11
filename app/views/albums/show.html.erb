@@ -119,20 +119,16 @@
             <% end %>
           </div>
           
-          <% if @album.password_digest.present? %>
+          <% if @album.external_password.present? %>
             <div class="alert alert-info mt-3 mb-0">
               <i class="fas fa-lock"></i> This album is password protected.
-              <% if @album.external_password.present? %>
-                <div class="mt-2">
-                  <strong>Password:</strong> <code class="album-password"><%= @album.external_password %></code>
-                  <button class="btn btn-sm btn-outline-secondary ms-2 copy-password-btn" type="button">
-                    <i class="fas fa-copy"></i>
-                  </button>
-                </div>
-                <small class="text-muted mt-2 d-block">Share this password with people who need access to the album.</small>
-              <% else %>
-                <br><small class="text-muted mt-2 d-block">Password was set before this feature was added. Update the password in album settings to see it here.</small>
-              <% end %>
+              <div class="mt-2">
+                <strong>Password:</strong> <code class="album-password"><%= @album.external_password %></code>
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-password-btn" type="button">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <small class="text-muted mt-2 d-block">Share this password with people who need access to the album.</small>
             </div>
           <% end %>
         </div>

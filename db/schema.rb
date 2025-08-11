@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_23_021502) do
+ActiveRecord::Schema[8.0].define(version: 2025_08_11_071515) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -96,7 +96,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_23_021502) do
     t.bigint "cover_photo_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "password_digest"
     t.boolean "allow_external_access", default: false, null: false
     t.string "sharing_token"
     t.string "external_password"
