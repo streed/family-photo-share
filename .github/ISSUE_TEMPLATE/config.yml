@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📧 Security Vulnerability (Private)
+    url: mailto:security@example.com
+    about: Report security vulnerabilities privately via email for responsible disclosure
+  - name: 💬 Discussions
+    url: https://github.com/your-username/family-photo-share/discussions
+    about: Ask questions, share ideas, or discuss the project with the community
+  - name: 📖 Documentation
+    url: https://github.com/your-username/family-photo-share/blob/main/README.md
+    about: Check out the README and other documentation before creating an issue

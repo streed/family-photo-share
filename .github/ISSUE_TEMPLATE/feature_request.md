@@ -1,8 +1,8 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: '[FEATURE] '
-labels: 'enhancement'
+name: ✨ Feature Request
+about: Suggest an idea or enhancement for the Family Photo Share application
+title: '[FEATURE] Brief description of the feature'
+labels: 'enhancement, needs-triage'
 assignees: ''
 ---
 
@@ -47,4 +47,20 @@ Are there any technical considerations or constraints we should be aware of?
 Add any other context, screenshots, or examples about the feature request here.
 
 ## Related Issues
-Link any related issues or discussions here.
+Link any related issues or discussions here using #issue_number
+
+## Potential Challenges
+Are there any potential technical or UX challenges we should consider?
+
+## Success Metrics
+How will we know if this feature is successful?
+- [ ] User engagement metrics
+- [ ] Performance improvements
+- [ ] User feedback/satisfaction
+- [ ] Other: ___________
+
+## Checklist
+- [ ] I have searched existing issues to ensure this hasn't been requested before
+- [ ] I have provided clear user stories and acceptance criteria
+- [ ] I have considered the impact on existing users
+- [ ] I have thought about potential implementation challenges
