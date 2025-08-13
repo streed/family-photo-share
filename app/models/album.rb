@@ -18,7 +18,7 @@ class Album < ApplicationRecord
   validates :description, length: { maximum: 1000 }
   validates :privacy, presence: true, inclusion: { in: %w[private family] }
   validates :name, uniqueness: { scope: :user_id }
-  validates :password, length: { minimum: 6 }, if: -> { allow_external_access? && password.present? }
+  validates :password, length: { minimum: 3 }, if: -> { allow_external_access? && password.present? }
   validates :sharing_token, uniqueness: true, allow_nil: true
 
   # Scopes
