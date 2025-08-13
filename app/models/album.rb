@@ -120,7 +120,7 @@ class Album < ApplicationRecord
 
   def accessible_externally_with_password?(password_attempt)
     return false unless allow_external_access? && external_password.present?
-    external_password == password_attempt
+    external_password.downcase == password_attempt.downcase
   end
 
   def create_access_session(ip_address)

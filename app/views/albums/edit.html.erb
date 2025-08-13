@@ -62,7 +62,7 @@
                                           class: "form-control", 
                                           placeholder: "Enter a password for guest access",
                                           autocomplete: "new-password" %>
-                  <div class="form-text">Minimum 6 characters. Leave blank to keep current password.</div>
+                  <div class="form-text">Minimum 3 characters. Leave blank to keep current password.</div>
                   <% if @album.external_password.present? %>
                     <div class="alert alert-warning mt-2">
                       <small>Current password: <strong><%= @album.external_password %></strong></small>
