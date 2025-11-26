@@ -1,8 +1,8 @@
 class AlbumsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_album, only: [ :show, :edit, :update, :destroy, :add_photo, :add_photos, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
-  before_action :ensure_access, only: [ :show ]
-  before_action :ensure_owner, only: [ :edit, :update, :destroy, :add_photo, :add_photos, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
+  before_action :set_album, only: %i[show edit update destroy add_photo add_photos remove_photo set_cover view_events guest_sessions revoke_guest_session revoke_all_guest_sessions]
+  before_action :ensure_access, only: %i[show]
+  before_action :ensure_owner, only: %i[edit update destroy add_photo add_photos remove_photo set_cover view_events guest_sessions revoke_guest_session revoke_all_guest_sessions]
 
   def index
     @albums = current_user.albums.recent.includes(:cover_photo)
