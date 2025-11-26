@@ -1,8 +1,8 @@
 class AlbumsController < ApplicationController
   before_action :authenticate_user!
-  before_action :set_album, only: [ :show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
-  before_action :ensure_access, only: [ :show ]
-  before_action :ensure_owner, only: [ :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
+  before_action :set_album, only: %i[show edit update destroy add_photo add_photos remove_photo set_cover view_events guest_sessions revoke_guest_session revoke_all_guest_sessions]
+  before_action :ensure_access, only: %i[show]
+  before_action :ensure_owner, only: %i[edit update destroy add_photo add_photos remove_photo set_cover view_events guest_sessions revoke_guest_session revoke_all_guest_sessions]
 
   def index
     @albums = current_user.albums.recent.includes(:cover_photo)
@@ -67,6 +67,39 @@ class AlbumsController < ApplicationController
     rescue ActiveRecord::RecordNotFound
       redirect_to @album, alert: "Photo not found."
     end
+  end
+
+  def add_photos
+    photo_ids = params[:photo_ids] || []
+
+    if photo_ids.empty?
+      redirect_to @album, alert: "No photos selected."
+      return
+    end
+
+    photos = Photo.where(id: photo_ids, user: current_user)
+
+    if photos.count != photo_ids.count
+      redirect_to @album, alert: "Some photos were not found or you don't have permission to add them."
+      return
+    end
+
+    added_count = 0
+    photos.each do |photo|
+      added_count += 1 if @album.add_photo(photo)
+    end
+
+    if added_count.positive?
+      redirect_to @album, notice: "Successfully added #{added_count} photo#{'s' if added_count > 1} to album!"
+    else
+      redirect_to @album, alert: "No new photos were added. They may already be in the album."
+    end
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error "Photo not found when adding to album: #{e.message}"
+    redirect_to @album, alert: "One or more photos could not be found."
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error "Invalid record when adding photos to album: #{e.message}"
+    redirect_to @album, alert: "Unable to add photos to album."
   end
 
   def remove_photo
