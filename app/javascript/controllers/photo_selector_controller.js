@@ -69,12 +69,14 @@ export default class extends Controller {
     form.action = `/albums/${this.albumIdValue}/add_photos`
     
     // Add CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').content
-    const csrfInput = document.createElement('input')
-    csrfInput.type = 'hidden'
-    csrfInput.name = 'authenticity_token'
-    csrfInput.value = csrfToken
-    form.appendChild(csrfInput)
+    const csrfTokenElement = document.querySelector('meta[name="csrf-token"]')
+    if (csrfTokenElement) {
+      const csrfInput = document.createElement('input')
+      csrfInput.type = 'hidden'
+      csrfInput.name = 'authenticity_token'
+      csrfInput.value = csrfTokenElement.content
+      form.appendChild(csrfInput)
+    }
     
     // Add photo IDs
     selectedPhotoIds.forEach(photoId => {
