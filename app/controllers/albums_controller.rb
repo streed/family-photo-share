@@ -71,14 +71,14 @@ class AlbumsController < ApplicationController
 
   def add_photos
     photo_ids = params[:photo_ids] || []
-    
+
     if photo_ids.empty?
       redirect_to @album, alert: "No photos selected."
       return
     end
 
     photos = Photo.where(id: photo_ids, user: current_user)
-    
+
     if photos.count != photo_ids.count
       redirect_to @album, alert: "Some photos were not found or you don't have permission to add them."
       return
@@ -86,13 +86,11 @@ class AlbumsController < ApplicationController
 
     added_count = 0
     photos.each do |photo|
-      if @album.add_photo(photo)
-        added_count += 1
-      end
+      added_count += 1 if @album.add_photo(photo)
     end
 
-    if added_count > 0
-      redirect_to @album, notice: "Successfully added #{added_count} photo#{added_count > 1 ? 's' : ''} to album!"
+    if added_count.positive?
+      redirect_to @album, notice: "Successfully added #{added_count} photo#{'s' if added_count > 1} to album!"
     else
       redirect_to @album, alert: "No new photos were added. They may already be in the album."
     end
