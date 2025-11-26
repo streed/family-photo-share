@@ -167,4 +167,67 @@ RSpec.describe "Albums", type: :request do
       end
     end
   end
+
+  describe "POST /albums/:id/add_photos" do
+    let!(:photo1) { create(:photo, user: user) }
+    let!(:photo2) { create(:photo, user: user) }
+    let!(:photo3) { create(:photo, user: user) }
+
+    context "when user owns the album" do
+      before { sign_in user }
+
+      it "adds multiple photos to album" do
+        expect {
+          post add_photos_album_path(album), params: { photo_ids: [photo1.id, photo2.id, photo3.id] }
+        }.to change(album.album_photos, :count).by(3)
+      end
+
+      it "redirects to album with success message" do
+        post add_photos_album_path(album), params: { photo_ids: [photo1.id, photo2.id] }
+        expect(response).to redirect_to(album_path(album))
+        expect(flash[:notice]).to match(/Successfully added 2 photos/)
+      end
+
+      it "handles empty photo_ids" do
+        expect {
+          post add_photos_album_path(album), params: { photo_ids: [] }
+        }.not_to change(album.album_photos, :count)
+        expect(response).to redirect_to(album_path(album))
+        expect(flash[:alert]).to eq("No photos selected.")
+      end
+
+      it "does not add photos from other users" do
+        other_user = create(:user)
+        other_photo = create(:photo, user: other_user)
+        
+        expect {
+          post add_photos_album_path(album), params: { photo_ids: [photo1.id, other_photo.id] }
+        }.to change(album.album_photos, :count).by(0)
+        
+        expect(response).to redirect_to(album_path(album))
+        expect(flash[:alert]).to match(/not found or you don't have permission/)
+      end
+
+      it "skips photos already in album" do
+        album.add_photo(photo1)
+        
+        expect {
+          post add_photos_album_path(album), params: { photo_ids: [photo1.id, photo2.id] }
+        }.to change(album.album_photos, :count).by(1)
+        
+        expect(response).to redirect_to(album_path(album))
+        expect(flash[:notice]).to match(/Successfully added 1 photo/)
+      end
+    end
+
+    context "when user does not own the album" do
+      let(:other_user) { create(:user) }
+      before { sign_in other_user }
+
+      it "redirects to album" do
+        post add_photos_album_path(album), params: { photo_ids: [photo1.id] }
+        expect(response).to redirect_to(album_path(album))
+      end
+    end
+  end
 end

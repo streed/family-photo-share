@@ -250,16 +250,37 @@
   <% end %>
 
   <% if @album.editable_by?(current_user) && @user_photos.present? %>
-    <div class="add-photos-section mt-5">
-      <h4>Add Photos to Album</h4>
-      <p class="text-muted">Click on any photo below to add it to this album.</p>
+    <div class="add-photos-section mt-5" data-controller="photo-selector" data-photo-selector-album-id-value="<%= @album.id %>">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+          <h4>Add Photos to Album</h4>
+          <p class="text-muted mb-0">Select multiple photos to add them to this album.</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <span class="text-muted small" data-photo-selector-target="selectedCount">0 selected</span>
+          <button class="btn btn-outline-secondary btn-sm" 
+                  data-photo-selector-target="selectAllButton"
+                  data-action="click->photo-selector#selectAll">
+            Select All
+          </button>
+          <button class="btn btn-primary" 
+                  data-photo-selector-target="submitButton"
+                  data-action="click->photo-selector#submitSelection"
+                  disabled>
+            Add Selected Photos
+          </button>
+        </div>
+      </div>
       
       <div class="add-photos-grid">
-        <% @user_photos.limit(20).each do |photo| %>
+        <% @user_photos.limit(50).each do |photo| %>
           <div class="add-photo-tile">
-            <%= link_to add_photo_album_path(@album, photo_id: photo.id), method: :patch, 
-                        class: "add-photo-link",
-                        data: { "turbo-method": :patch } do %>
+            <label class="add-photo-label">
+              <input type="checkbox" 
+                     class="photo-checkbox" 
+                     value="<%= photo.id %>"
+                     data-photo-selector-target="checkbox"
+                     data-action="change->photo-selector#toggleSelection">
               <div class="add-photo-container">
                 <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                               class: "add-photo-thumbnail" %>
@@ -271,15 +292,18 @@
                     <div class="add-photo-title"><%= truncated_photo_title(photo, length: 20) %></div>
                   </div>
                 </div>
+                <div class="photo-checkbox-indicator">
+                  <i class="fas fa-check"></i>
+                </div>
               </div>
-            <% end %>
+            </label>
           </div>
         <% end %>
       </div>
       
-      <% if @user_photos.count > 20 %>
+      <% if @user_photos.count > 50 %>
         <div class="text-center mt-3">
-          <small class="text-muted">Showing 20 of <%= @user_photos.count %> available photos</small>
+          <small class="text-muted">Showing 50 of <%= @user_photos.count %> available photos</small>
         </div>
       <% end %>
     </div>
@@ -808,6 +832,71 @@
     color: #6b5d4f;
     font-weight: 700;
     margin-bottom: 0.5rem;
+  }
+
+  /* Photo checkbox styles */
+  .add-photo-label {
+    display: block;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+
+  .photo-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .photo-checkbox-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #6b5d4f;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 10;
+  }
+
+  .photo-checkbox-indicator i {
+    color: #6b5d4f;
+    font-size: 14px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+  }
+
+  .add-photo-tile:hover .photo-checkbox-indicator {
+    opacity: 0.7;
+  }
+
+  .photo-checkbox:checked ~ .add-photo-container .photo-checkbox-indicator {
+    opacity: 1;
+    background: #6b5d4f;
+    border-color: #6b5d4f;
+  }
+
+  .photo-checkbox:checked ~ .add-photo-container .photo-checkbox-indicator i {
+    color: white;
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .photo-checkbox:checked ~ .add-photo-container {
+    outline: 3px solid #6b5d4f;
+    outline-offset: -3px;
+  }
+
+  .photo-checkbox:checked ~ .add-photo-container .add-photo-thumbnail {
+    transform: scale(1.05);
   }
 
   /* Responsive Design */

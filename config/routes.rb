@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :albums do
     member do
       patch :add_photo
+      post :add_photos
       delete :remove_photo
       patch :set_cover
       get :view_events
