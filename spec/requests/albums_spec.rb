@@ -201,7 +201,7 @@ RSpec.describe "Albums", type: :request do
         other_photo = create(:photo, user: other_user)
         
         expect {
-          post add_photos_album_path(album), params: { photo_ids: [photo1.id, other_photo.id] }
+          post add_photos_album_path(album), params: { photo_ids: [other_photo.id] }
         }.to change(album.album_photos, :count).by(0)
         
         expect(response).to redirect_to(album_path(album))

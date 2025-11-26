@@ -70,37 +70,38 @@ class AlbumsController < ApplicationController
   end
 
   def add_photos
-    begin
-      photo_ids = params[:photo_ids] || []
-      
-      if photo_ids.empty?
-        redirect_to @album, alert: "No photos selected."
-        return
-      end
-
-      photos = Photo.where(id: photo_ids, user: current_user)
-      
-      if photos.count != photo_ids.count
-        redirect_to @album, alert: "Some photos were not found or you don't have permission to add them."
-        return
-      end
-
-      added_count = 0
-      photos.each do |photo|
-        if @album.add_photo(photo)
-          added_count += 1
-        end
-      end
-
-      if added_count > 0
-        redirect_to @album, notice: "Successfully added #{added_count} photo#{added_count > 1 ? 's' : ''} to album!"
-      else
-        redirect_to @album, alert: "No new photos were added. They may already be in the album."
-      end
-    rescue => e
-      Rails.logger.error "Error adding photos to album: #{e.message}"
-      redirect_to @album, alert: "An error occurred while adding photos."
+    photo_ids = params[:photo_ids] || []
+    
+    if photo_ids.empty?
+      redirect_to @album, alert: "No photos selected."
+      return
     end
+
+    photos = Photo.where(id: photo_ids, user: current_user)
+    
+    if photos.count != photo_ids.count
+      redirect_to @album, alert: "Some photos were not found or you don't have permission to add them."
+      return
+    end
+
+    added_count = 0
+    photos.each do |photo|
+      if @album.add_photo(photo)
+        added_count += 1
+      end
+    end
+
+    if added_count > 0
+      redirect_to @album, notice: "Successfully added #{added_count} photo#{added_count > 1 ? 's' : ''} to album!"
+    else
+      redirect_to @album, alert: "No new photos were added. They may already be in the album."
+    end
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error "Photo not found when adding to album: #{e.message}"
+    redirect_to @album, alert: "One or more photos could not be found."
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error "Invalid record when adding photos to album: #{e.message}"
+    redirect_to @album, alert: "Unable to add photos to album."
   end
 
   def remove_photo

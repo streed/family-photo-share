@@ -260,13 +260,15 @@
           <span class="text-muted small" data-photo-selector-target="selectedCount">0 selected</span>
           <button class="btn btn-outline-secondary btn-sm" 
                   data-photo-selector-target="selectAllButton"
-                  data-action="click->photo-selector#selectAll">
+                  data-action="click->photo-selector#selectAll"
+                  aria-pressed="false">
             Select All
           </button>
           <button class="btn btn-primary" 
                   data-photo-selector-target="submitButton"
                   data-action="click->photo-selector#submitSelection"
-                  disabled>
+                  disabled
+                  aria-disabled="true">
             Add Selected Photos
           </button>
         </div>
@@ -280,7 +282,8 @@
                      class="photo-checkbox" 
                      value="<%= photo.id %>"
                      data-photo-selector-target="checkbox"
-                     data-action="change->photo-selector#toggleSelection">
+                     data-action="change->photo-selector#toggleSelection"
+                     aria-label="Select <%= photo_title_or_default(photo) %>">
               <div class="add-photo-container">
                 <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
                               class: "add-photo-thumbnail" %>

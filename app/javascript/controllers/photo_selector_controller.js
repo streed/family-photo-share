@@ -31,6 +31,7 @@ export default class extends Controller {
     
     if (this.hasSubmitButtonTarget) {
       this.submitButtonTarget.disabled = selectedCount === 0
+      this.submitButtonTarget.setAttribute('aria-disabled', selectedCount === 0 ? 'true' : 'false')
       
       // Update button text
       if (selectedCount === 0) {
@@ -43,6 +44,7 @@ export default class extends Controller {
     if (this.hasSelectAllButtonTarget) {
       const allChecked = this.checkboxTargets.every(checkbox => checkbox.checked)
       this.selectAllButtonTarget.textContent = allChecked ? "Deselect All" : "Select All"
+      this.selectAllButtonTarget.setAttribute('aria-pressed', allChecked ? 'true' : 'false')
     }
 
     if (this.hasSelectedCountTarget) {
@@ -76,6 +78,9 @@ export default class extends Controller {
       csrfInput.name = 'authenticity_token'
       csrfInput.value = csrfTokenElement.content
       form.appendChild(csrfInput)
+    } else {
+      alert("Security token not found. Please reload the page and try again.")
+      return
     }
     
     // Add photo IDs
