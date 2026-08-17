@@ -9,11 +9,10 @@
             <p class="album-header-description"><%= @album.description %></p>
           <% end %>
           <div class="album-header-info">
-            <span class="badge bg-<%= @album.privacy == 'private' ? 'secondary' : (@album.privacy == 'family' ? 'info' : 'success') %>">
-              <%= @album.privacy.capitalize %>
-            </span>
+            <%= album_privacy_badge(@album, detailed: true) %>
+            <%= album_link_sharing_badge(@album) %>
             <small class="text-white ms-2">
-              <i class="fas fa-images"></i> <%= pluralize(@album.photo_count, 'photo') %>
+              <i class="fas fa-images" aria-hidden="true"></i> <%= pluralize(@album.photo_count, 'photo') %>
               • Created <%= time_ago_in_words(@album.created_at) %> ago
             </small>
           </div>
@@ -55,11 +54,10 @@
           <p class="text-muted"><%= @album.description %></p>
         <% end %>
         <div class="album-info">
-          <span class="badge bg-<%= @album.privacy == 'private' ? 'secondary' : (@album.privacy == 'family' ? 'info' : 'success') %>">
-            <%= @album.privacy.capitalize %>
-          </span>
+          <%= album_privacy_badge(@album, detailed: true) %>
+          <%= album_link_sharing_badge(@album) %>
           <small class="text-muted ms-2">
-            <i class="fas fa-images"></i> <%= pluralize(@album.photo_count, 'photo') %>
+            <i class="fas fa-images" aria-hidden="true"></i> <%= pluralize(@album.photo_count, 'photo') %>
             • Created <%= time_ago_in_words(@album.created_at) %> ago
           </small>
         </div>
@@ -94,6 +92,10 @@
     </div>
   <% end %>
 
+  <% if @album.editable_by?(current_user) %>
+    <%= render "albums/audience", album: @album %>
+  <% end %>
+
   <% if @album.allow_external_access? && @album.sharing_url.present? && @album.editable_by?(current_user) %>
     <div class="album-sharing-section mb-4">
       <div class="card">
@@ -103,10 +105,15 @@
           </h5>
           <p class="text-muted mb-3">This album is shared externally. Share the link below to allow others to view this album.</p>
           
-          <div class="input-group">
-            <input type="text" class="form-control sharing-link-input" value="<%= @album.sharing_url %>" readonly>
-            <button class="btn btn-outline-secondary copy-link-btn" type="button" data-clipboard-target=".sharing-link-input">
-              <i class="fas fa-copy"></i> Copy
+          <div class="input-group" data-controller="clipboard">
+            <input type="text" class="form-control sharing-link-input"
+                   data-clipboard-target="source"
+                   aria-label="Album sharing link"
+                   value="<%= @album.sharing_url %>" readonly>
+            <button class="btn btn-outline-secondary copy-link-btn" type="button"
+                    data-clipboard-target="button"
+                    data-action="clipboard#copy">
+              <i class="fas fa-copy" aria-hidden="true"></i> Copy
             </button>
           </div>
           
@@ -119,13 +126,34 @@
             <% end %>
           </div>
           
-          <% if @album.external_password.present? %>
+          <% if @album.external_password.blank? %>
+            <div class="alert alert-warning mt-3 mb-0">
+              <i class="fas fa-triangle-exclamation"></i>
+              <strong>No password set.</strong>
+              Anyone with the link above can open this album. Set a password in
+              <%= link_to "album settings", edit_album_path(@album) %> if you'd rather restrict it.
+            </div>
+          <% elsif @album.external_password_hashed? %>
+            <%# Never print the stored value here — it's a bcrypt digest, and an
+                owner who copies it and sends it locks their guests out. %>
             <div class="alert alert-info mt-3 mb-0">
               <i class="fas fa-lock"></i> This album is password protected.
+              <small class="text-muted mt-2 d-block">
+                The password is stored encrypted and can't be displayed. If you've forgotten it,
+                <%= link_to "set a new one", edit_album_path(@album) %> and share that.
+              </small>
+            </div>
+          <% else %>
+            <div class="alert alert-info mt-3 mb-0" data-controller="clipboard">
+              <i class="fas fa-lock" aria-hidden="true"></i> This album is password protected.
               <div class="mt-2">
-                <strong>Password:</strong> <code class="album-password"><%= @album.external_password %></code>
-                <button class="btn btn-sm btn-outline-secondary ms-2 copy-password-btn" type="button">
-                  <i class="fas fa-copy"></i>
+                <strong>Password:</strong>
+                <code class="album-password" data-clipboard-target="source"><%= @album.external_password %></code>
+                <button class="btn btn-sm btn-outline-secondary ms-2 copy-password-btn" type="button"
+                        data-clipboard-target="button"
+                        data-action="clipboard#copy"
+                        aria-label="Copy album password">
+                  <i class="fas fa-copy" aria-hidden="true"></i>
                 </button>
               </div>
               <small class="text-muted mt-2 d-block">Share this password with people who need access to the album.</small>
@@ -136,84 +164,51 @@
     </div>
   <% end %>
 
+  <%# Anchor for turbo_stream flashes from add/remove. %>
+  <div id="album_flash"></div>
+
+  <div class="album-photos-toolbar">
+    <span class="album-photos-count">
+      <strong id="album_photo_count"><%= @album.photo_count %></strong>
+      <%= "photo".pluralize(@album.photo_count) %> in this album
+    </span>
+
+    <% if @photos.size > 1 %>
+      <span class="album-sort-control">
+        <span class="album-sort-label">Order</span>
+        <%= link_to "Album order", album_path(@album, sort: "position"),
+                    class: "btn btn-sm #{@sort == 'position' ? 'btn-primary' : 'btn-outline-primary'}" %>
+        <%= link_to "Date taken", album_path(@album, sort: "date_taken"),
+                    class: "btn btn-sm #{@sort == 'date_taken' ? 'btn-primary' : 'btn-outline-primary'}" %>
+      </span>
+    <% end %>
+  </div>
+
   <% if @photos.any? %>
     <div class="album-photos-container" data-controller="slideshow">
-      <div class="photo-grid">
+      <%# The grid container renders unconditionally above so turbo_stream always
+          has a stable target, even when the album is empty. %>
+      <div class="photo-grid" id="album_photo_grid">
         <% @photos.each_with_index do |photo, index| %>
-          <div class="photo-tile" id="photo_<%= photo.id %>">
-            <div class="photo-item position-relative" 
-                 data-action="click->slideshow#open" 
-                 data-slideshow-index-value="<%= index %>"
-                 data-slideshow-photo-id="<%= photo.id %>">
-              <div class="photo-container">
-                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
-                              class: "photo-thumbnail", 
-                              data: { 
-                                large: photo.short_large_url,
-                                title: photo_title_or_default(photo),
-                                description: photo.description,
-                                user: photo.user.display_name_or_full_name
-                              } %>
-                <div class="photo-overlay">
-                  <div class="photo-info">
-                    <div class="photo-title"><%= truncated_photo_title(photo, length: 30) %></div>
-                    <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
-                  </div>
-                </div>
-              </div>
-              
-              <% if @album.editable_by?(current_user) %>
-                <div class="photo-actions">
-                  <div class="action-buttons">
-                    <% if @album.cover_photo != photo %>
-                      <%= button_to set_cover_album_path(@album, photo_id: photo.id), 
-                                    method: :patch,
-                                    class: "btn btn-sm btn-light btn-action",
-                                    title: "Set as album cover",
-                                    data: { 
-                                      turbo_method: :patch,
-                                      turbo_confirm: "Set this as the album cover?"
-                                    },
-                                    form: { onclick: "event.stopPropagation();" } do %>
-                        📸
-                      <% end %>
-                    <% else %>
-                      <span class="btn btn-sm btn-warning btn-action" title="Current album cover">
-                        <i class="fas fa-crown"></i>
-                      </span>
-                    <% end %>
-                    
-                    <%= button_to remove_photo_album_path(@album, photo_id: photo.id), 
-                                  method: :delete,
-                                  class: "btn btn-sm btn-danger btn-action",
-                                  title: "Remove photo from album",
-                                  data: { 
-                                    turbo_method: :delete,
-                                    turbo_confirm: "Remove this photo from the album?"
-                                  },
-                                  form: { 
-                                    onclick: "event.stopPropagation();",
-                                    style: "display: inline;"
-                                  } do %>
-                      <i class="fas fa-trash-alt"></i>
-                    <% end %>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-          </div>
+          <%= render "albums/photo_tile",
+                     album: @album,
+                     photo: photo,
+                     index: index,
+                     editable: @album.editable_by?(current_user) %>
         <% end %>
       </div>
 
       <!-- Slideshow Modal -->
-    <div class="slideshow-modal" data-slideshow-target="modal">
-      <div class="slideshow-overlay" data-action="click->slideshow#close"></div>
+    <div class="slideshow-modal" data-slideshow-target="modal"
+     role="dialog" aria-modal="true" aria-hidden="true"
+     aria-label="Photo viewer">
+      <div class="slideshow-overlay" data-action="click->slideshow#close" aria-hidden="true"></div>
       <div class="slideshow-container">
-        <button class="slideshow-close" data-action="click->slideshow#close">
+        <button class="slideshow-close" type="button" aria-label="Close photo viewer" data-action="click->slideshow#close">
           <i class="fas fa-times"></i>
         </button>
         
-        <button class="slideshow-nav slideshow-prev" data-action="click->slideshow#previous">
+        <button class="slideshow-nav slideshow-prev" type="button" aria-label="Previous photo" data-action="click->slideshow#previous">
           <i class="fas fa-chevron-left"></i>
         </button>
         
@@ -229,64 +224,88 @@
           </div>
         </div>
         
-        <button class="slideshow-nav slideshow-next" data-action="click->slideshow#next">
+        <button class="slideshow-nav slideshow-next" type="button" aria-label="Next photo" data-action="click->slideshow#next">
           <i class="fas fa-chevron-right"></i>
         </button>
       </div>
     </div>
     </div>
   <% else %>
+    <div class="photo-grid" id="album_photo_grid"></div>
     <div class="text-center py-5">
       <div class="mb-4">
         <i class="fas fa-images text-muted" style="font-size: 4rem;"></i>
       </div>
       <h3 class="text-muted">No photos in this album</h3>
       <% if @album.editable_by?(current_user) %>
-        <p class="text-muted">Add photos from your library to get started!</p>
+        <p class="text-muted">Pick a photo below to add it to this album.</p>
       <% else %>
         <p class="text-muted">This album is empty.</p>
       <% end %>
     </div>
   <% end %>
 
-  <% if @album.editable_by?(current_user) && @user_photos.present? %>
-    <div class="add-photos-section mt-5">
-      <h4>Add Photos to Album</h4>
-      <p class="text-muted">Click on any photo below to add it to this album.</p>
-      
-      <div class="add-photos-grid">
-        <% @user_photos.limit(20).each do |photo| %>
-          <div class="add-photo-tile">
-            <%= link_to add_photo_album_path(@album, photo_id: photo.id), method: :patch, 
-                        class: "add-photo-link",
-                        data: { "turbo-method": :patch } do %>
-              <div class="add-photo-container">
-                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
-                              class: "add-photo-thumbnail" %>
-                <div class="add-photo-overlay">
-                  <div class="add-photo-icon">
-                    <i class="fas fa-plus"></i>
-                  </div>
-                  <div class="add-photo-info">
-                    <div class="add-photo-title"><%= truncated_photo_title(photo, length: 20) %></div>
-                  </div>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        <% end %>
+  <div id="album_add_photos">
+    <%= render "albums/add_photos",
+               album: @album,
+               pickable_photos: @pickable_photos,
+               addable_photo_count: @addable_photo_count,
+               editable: @album.editable_by?(current_user) %>
+  </div>
+
+  <%# Must live inside the data-controller="album-actions" element — Stimulus
+      only resolves targets within its own scope. %>
+  <div class="confirmation-modal" data-album-actions-target="confirmModal" style="display: none;">
+    <div class="confirmation-modal-overlay" data-action="click->album-actions#cancelDelete"></div>
+    <div class="confirmation-modal-content" role="dialog" aria-modal="true" aria-labelledby="delete-album-heading">
+      <div class="confirmation-modal-header">
+        <h3 id="delete-album-heading">Delete Album</h3>
       </div>
-      
-      <% if @user_photos.count > 20 %>
-        <div class="text-center mt-3">
-          <small class="text-muted">Showing 20 of <%= @user_photos.count %> available photos</small>
+      <div class="confirmation-modal-body">
+        <p data-album-actions-target="confirmMessage">Are you sure you want to delete this album?</p>
+        <div class="alert alert-warning mt-3">
+          <i class="fas fa-exclamation-triangle"></i>
+          <strong>Warning:</strong> This will remove all photos from the album. The photos themselves will not be deleted.
         </div>
-      <% end %>
+      </div>
+      <div class="confirmation-modal-footer">
+        <button type="button" class="btn btn-secondary" data-action="click->album-actions#cancelDelete">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" data-action="click->album-actions#confirmDeleteAction">
+          Delete Album
+        </button>
+      </div>
     </div>
-  <% end %>
+  </div>
 </div>
 
 <style>
+  .album-photos-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+  }
+
+  .album-photos-count {
+    color: #6c757d;
+    font-size: 0.95rem;
+  }
+
+  .album-sort-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .album-sort-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+  }
+
   /* Album Header Styles */
   .album-header-cover {
     position: relative;
@@ -732,6 +751,23 @@
     height: 100%;
     text-decoration: none;
     color: inherit;
+    /* button_to renders a real <button>; strip the chrome so it still reads as a tile. */
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .add-photo-form {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+  }
+
+  .add-photo-link:focus-visible,
+  .photo-item:focus-visible {
+    outline: 3px solid #6b5d4f;
+    outline-offset: 2px;
   }
 
   .add-photo-container {
@@ -953,81 +989,10 @@
   }
 </style>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Copy link functionality
-    const copyLinkButton = document.querySelector('.copy-link-btn');
-    if (copyLinkButton) {
-      copyLinkButton.addEventListener('click', function() {
-        const input = document.querySelector('.sharing-link-input');
-        input.select();
-        input.setSelectionRange(0, 99999); // For mobile devices
-        
-        navigator.clipboard.writeText(input.value).then(function() {
-          // Show success feedback
-          copyLinkButton.classList.add('copied');
-          copyLinkButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
-          
-          // Reset after 2 seconds
-          setTimeout(function() {
-            copyLinkButton.classList.remove('copied');
-            copyLinkButton.innerHTML = '<i class="fas fa-copy"></i> Copy';
-          }, 2000);
-        }).catch(function(err) {
-          console.error('Failed to copy text: ', err);
-        });
-      });
-    }
+<%# Clipboard behaviour lives in the reusable clipboard Stimulus controller.
+    The inline script that used to sit here bound its listeners on
+    DOMContentLoaded, which Turbo Drive never fires again after the first load. %>
 
-    // Copy password functionality
-    const copyPasswordButton = document.querySelector('.copy-password-btn');
-    if (copyPasswordButton) {
-      copyPasswordButton.addEventListener('click', function() {
-        const passwordElement = document.querySelector('.album-password');
-        const password = passwordElement.textContent;
-        
-        navigator.clipboard.writeText(password).then(function() {
-          // Show success feedback
-          copyPasswordButton.classList.add('copied');
-          copyPasswordButton.innerHTML = '<i class="fas fa-check"></i>';
-          
-          // Reset after 2 seconds
-          setTimeout(function() {
-            copyPasswordButton.classList.remove('copied');
-            copyPasswordButton.innerHTML = '<i class="fas fa-copy"></i>';
-          }, 2000);
-        }).catch(function(err) {
-          console.error('Failed to copy password: ', err);
-        });
-      });
-    }
-  });
-</script>
-
-<!-- Album Deletion Confirmation Modal -->
-<div class="confirmation-modal" data-album-actions-target="confirmModal" style="display: none;">
-  <div class="confirmation-modal-overlay"></div>
-  <div class="confirmation-modal-content">
-    <div class="confirmation-modal-header">
-      <h3>Delete Album</h3>
-    </div>
-    <div class="confirmation-modal-body">
-      <p data-album-actions-target="confirmMessage">Are you sure you want to delete this album?</p>
-      <div class="alert alert-warning mt-3">
-        <i class="fas fa-exclamation-triangle"></i>
-        <strong>Warning:</strong> This will remove all photos from the album. The photos themselves will not be deleted.
-      </div>
-    </div>
-    <div class="confirmation-modal-footer">
-      <button type="button" class="btn btn-secondary" data-action="click->album-actions#cancelDelete">
-        Cancel
-      </button>
-      <button type="button" class="btn btn-danger" data-action="click->album-actions#confirmDeleteAction">
-        Delete Album
-      </button>
-    </div>
-  </div>
-</div>
 
 <style>
 /* Confirmation Modal Styling */

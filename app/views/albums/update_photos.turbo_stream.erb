@@ -1,0 +1,49 @@
+<%#
+  Shared response for adding and removing a photo.
+
+  Updates every part of the page that the change affects — the grid, the photo
+  count in the toolbar, and the add-photo picker — so the album's displayed state
+  and its real state never disagree. The old response replaced a single tile and
+  left the count, the cover crown and the picker lying.
+
+  Locals: added_photo / removed_photo (optional), notice
+%>
+
+<%# The grid, so ordering, the cover crown and the tile set are all correct. %>
+<%= turbo_stream.replace "album_photo_grid" do %>
+  <div class="photo-grid" id="album_photo_grid">
+    <% @photos.each_with_index do |photo, index| %>
+      <%= render "albums/photo_tile",
+                 album: @album,
+                 photo: photo,
+                 index: index,
+                 editable: @album.editable_by?(current_user) %>
+    <% end %>
+  </div>
+<% end %>
+
+<%# The count in the toolbar. %>
+<%= turbo_stream.replace "album_photo_count" do %>
+  <strong id="album_photo_count"><%= @album.photo_count %></strong>
+<% end %>
+
+<%# The picker: an added photo must leave it, a removed one must come back. %>
+<%= turbo_stream.replace "album_add_photos" do %>
+  <div id="album_add_photos">
+    <%= render "albums/add_photos",
+               album: @album,
+               pickable_photos: @pickable_photos,
+               addable_photo_count: @addable_photo_count,
+               editable: @album.editable_by?(current_user) %>
+  </div>
+<% end %>
+
+<%= turbo_stream.prepend "album_flash" do %>
+  <div class="alert alert-success alert-dismissible"
+       role="alert"
+       data-controller="alert"
+       data-alert-auto-dismiss-value="4000">
+    <%= notice %>
+    <button type="button" class="alert-close" aria-label="Dismiss" data-action="click->alert#dismiss">&times;</button>
+  </div>
+<% end %>

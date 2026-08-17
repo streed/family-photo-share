@@ -19,7 +19,7 @@
               <h5 class="mb-0">Send New Invitation</h5>
             </div>
             <div class="card-body">
-              <%= form_with model: [@family, @invitation], local: true, class: "invitation-form" do |form| %>
+              <%= form_with model: @invitation, url: family_invitations_path(@family), local: true, class: "invitation-form" do |form| %>
                 <% if @invitation.errors.any? %>
                   <div class="alert alert-danger">
                     <h6><%= pluralize(@invitation.errors.count, "error") %> prohibited this invitation from being sent:</h6>
@@ -72,8 +72,7 @@
                       <%= link_to family_invitation_path(@family, invitation), 
                                   method: :delete,
                                   class: "btn btn-sm btn-outline-danger",
-                                  confirm: "Cancel invitation to #{invitation.email}?",
-                                  data: { "turbo-method": :delete },
+                                  data: { turbo_confirm: "Cancel invitation to #{invitation.email}?", "turbo-method": :delete },
                                   title: "Cancel invitation" do %>
                         <i class="fas fa-times"></i>
                       <% end %>

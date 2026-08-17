@@ -28,13 +28,13 @@ RSpec.describe "ExternalAlbums", type: :request do
         # Follow redirect and verify we can now access the album
         follow_redirect!
         expect(response).to have_http_status(:success)
-        expect(response.body).to include(album.name)
+        expect(response.body).to include(ERB::Util.html_escape(album.name))
       end
 
       it "rejects incorrect password" do
         post external_album_authenticate_path(album.sharing_token), params: { password: 'wrong' }
 
-        expect(response).to have_http_status(:success)
+        expect(response).to have_http_status(:unprocessable_entity)
         expect(response.body).to include('Incorrect password')
       end
 

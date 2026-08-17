@@ -21,9 +21,6 @@ class ShortUrlsController < ApplicationController
       return
     end
 
-    # Track access
-    @short_url.track_access!
-
     # Authentication and access control
     if user_signed_in?
       # Authenticated user - verify they can access this photo
@@ -46,6 +43,11 @@ class ShortUrlsController < ApplicationController
       end
     end
 
+    # Count the access only once the viewer is actually allowed to see it. This
+    # used to run before the authorization checks, so the counter also tallied
+    # denied requests and every sign-in redirect.
+    @short_url.track_access!
+
     # Serve the image content directly
     serve_image_content
   end
@@ -56,87 +58,31 @@ class ShortUrlsController < ApplicationController
     photo = @short_url.resource
     return render_not_found unless photo&.image&.attached?
 
-    # Get the appropriate variant based on the short URL
-    variant_attachment = get_variant_attachment(photo)
-    return render_not_found unless variant_attachment
+    result = PhotoVariantStreamer.call(photo: photo, variant: @short_url.variant)
+    return render_not_found unless result
 
-    # Set caching headers
-    expires_in 1.hour, public: true
-
-    # Set content type
-    response.headers["Content-Type"] = variant_attachment.content_type
-    response.headers["Content-Disposition"] = "inline"
-
-    # Set additional headers for better caching and security
-    response.headers["Cache-Control"] = "public, max-age=3600"
+    # These bytes are authorized per-viewer, so they must never land in a shared
+    # proxy or CDN cache. The browser may still hold onto them privately.
+    expires_in 1.hour, public: false
+    response.headers["Cache-Control"] = "private, max-age=3600"
     response.headers["X-Content-Type-Options"] = "nosniff"
 
-    # Try to serve the variant, but fallback to original if variant doesn't exist
-    begin
-      # For better performance with large files, use streaming if blob service allows it
-      if variant_attachment.service.respond_to?(:path_for)
-        # For disk storage, we can send the file directly
-        file_path = variant_attachment.service.send(:path_for, variant_attachment.key)
-        if File.exist?(file_path)
-          send_file file_path,
-                    type: variant_attachment.content_type,
-                    disposition: "inline",
-                    filename: "#{photo.title.parameterize}.#{get_file_extension(variant_attachment.content_type)}"
-          return
-        end
-      end
-
-      # Fallback to downloading and sending data
-      send_data variant_attachment.download,
-                type: variant_attachment.content_type,
-                disposition: "inline",
-                filename: "#{photo.title.parameterize}.#{get_file_extension(variant_attachment.content_type)}"
-    rescue ActiveStorage::FileNotFoundError => e
-      Rails.logger.warn "Variant not found for ShortUrl #{@short_url.id}, falling back to original image: #{e.message}"
-      # Fallback to original image
-      original_image = photo.image
-      send_data original_image.download,
-                type: original_image.content_type,
-                disposition: "inline",
-                filename: "#{photo.title.parameterize}.#{get_file_extension(original_image.content_type)}"
+    if result.disk?
+      send_file result.path, type: result.content_type, disposition: "inline", filename: result.filename
+    else
+      send_data result.data, type: result.content_type, disposition: "inline", filename: result.filename
     end
-  rescue => e
-    Rails.logger.error "Error serving image content for ShortUrl #{@short_url.id}: #{e.message}"
+  rescue ActiveStorage::FileNotFoundError, Errno::ENOENT => e
+    # The blob really is gone — a 404 is the honest answer.
+    Rails.logger.error "Missing file for ShortUrl #{@short_url.id}: #{e.class}: #{e.message}"
     render_not_found
-  end
-
-  def get_variant_attachment(photo)
-    case @short_url.variant
-    when "thumbnail"
-      photo.thumbnail
-    when "small"
-      photo.small
-    when "medium"
-      photo.medium
-    when "large"
-      photo.large
-    when "xl"
-      photo.xl
-    when "original"
-      photo.image
-    else
-      photo.image
-    end
-  end
-
-  def get_file_extension(content_type)
-    case content_type
-    when "image/jpeg"
-      "jpg"
-    when "image/png"
-      "png"
-    when "image/gif"
-      "gif"
-    when "image/webp"
-      "webp"
-    else
-      "jpg"
-    end
+  rescue => e
+    # Anything else is a bug. A blanket rescue here turned NoMethodError into a
+    # 404, which is how unprocessed variants silently rendered as broken tiles
+    # for months with nothing but a 404 in the logs to show for it.
+    Rails.logger.error "Error serving image content for ShortUrl #{@short_url.id}: #{e.class}: #{e.message}"
+    Rails.logger.error e.backtrace&.first(10)&.join("\n")
+    raise
   end
 
   def photo_belongs_to_external_album?
@@ -145,8 +91,7 @@ class ShortUrlsController < ApplicationController
     photo = @short_url.resource
     return false unless photo
 
-    # Check if photo belongs to any album with external access
-    photo.albums.any?(&:allow_external_access?)
+    photo.albums.exists?(allow_external_access: true)
   end
 
 
@@ -182,29 +127,35 @@ class ShortUrlsController < ApplicationController
     true
   end
 
+  # Only ever point a visitor back at the album they already arrived through.
+  # Picking an arbitrary shared album containing this photo would hand out a
+  # sharing_token the visitor was never given.
   def redirect_to_album_password
-    photo = @short_url.resource
-    album = photo.albums.find(&:allow_external_access?)
+    album = album_from_access_cookie
 
-    if album&.sharing_token
+    if album&.allow_external_access? && album.sharing_token.present? && album.photos.exists?(@short_url.resource_id)
       redirect_to external_album_password_path(album.sharing_token)
     else
       render_forbidden
     end
   end
 
+  def album_from_access_cookie
+    session_data = cookies.signed[:album_access]
+    return nil unless session_data.is_a?(Hash)
+
+    album_id = session_data["album_id"] || session_data[:album_id]
+    album_id && Album.find_by(id: album_id)
+  end
+
   def user_can_access_photo?
     photo = @short_url.resource
     return false unless photo
 
-    # Photo owner can always access
-    return true if photo.user == current_user
-
-    # Check if user is in any family that has access to photo's albums
-    photo.albums.any? do |album|
-      album.user == current_user ||
-      (album.user.family && album.user.family.users.include?(current_user))
-    end
+    # Owning the photo is enough; otherwise it has to reach the viewer through
+    # an album they can see. Sharing a family with the owner is NOT sufficient —
+    # that would expose photos sitting in the owner's private albums.
+    photo.viewable_by?(current_user)
   end
 
   def render_not_found

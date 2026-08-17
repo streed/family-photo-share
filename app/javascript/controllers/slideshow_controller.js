@@ -50,14 +50,20 @@ export default class extends Controller {
     }
     
     this.currentIndex = Math.max(0, Math.min(index, this.photos.length - 1))
-    
+
+    // Remember where focus came from so it can be restored on close.
+    this.previouslyFocused = document.activeElement
+
     this.showPhoto(this.currentIndex)
     this.modalTarget.classList.add('show')
+    this.modalTarget.removeAttribute('aria-hidden')
     document.body.style.overflow = 'hidden'
-    
+
     // Add keyboard event listener
     document.addEventListener('keydown', this.boundKeydown)
-    
+
+    this.focusFirstControl()
+
     // Extend session when opening slideshow
     this.extendGuestSession()
   }
@@ -65,11 +71,19 @@ export default class extends Controller {
   close() {
     if (this.hasModalTarget) {
       this.modalTarget.classList.remove('show')
+      this.modalTarget.setAttribute('aria-hidden', 'true')
     }
     document.body.style.overflow = ''
-    
+
     // Remove keyboard event listener
     document.removeEventListener('keydown', this.boundKeydown)
+
+    // Return focus to whatever opened the slideshow, so keyboard users are not
+    // dumped back at the top of the document.
+    if (this.previouslyFocused && this.previouslyFocused.focus) {
+      this.previouslyFocused.focus()
+      this.previouslyFocused = null
+    }
   }
 
   next() {
@@ -132,16 +146,20 @@ export default class extends Controller {
   
   trackPhotoView(photoId) {
     if (!this.trackUrlValue) return
-    
+
+    const headers = { 'Content-Type': 'application/json' }
+
+    // Send the CSRF token so the endpoint doesn't have to skip verification.
+    const token = document.querySelector('meta[name="csrf-token"]')?.content
+    if (token) headers['X-CSRF-Token'] = token
+
     fetch(this.trackUrlValue, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: headers,
       body: JSON.stringify({ photo_id: photoId }),
       credentials: 'same-origin'
-    }).catch(error => {
-      // Silently handle errors - tracking is not critical for functionality
+    }).catch(() => {
+      // Tracking is best-effort; the slideshow works without it.
     })
   }
 
@@ -158,16 +176,57 @@ export default class extends Controller {
         event.preventDefault()
         this.previous()
         break
+      case 'Tab':
+        this.trapFocus(event)
+        break
     }
   }
 
+  // Keep Tab inside the dialog. Without this, tabbing walked out of an open
+  // slideshow into the page behind it, which is still visually covered.
+  trapFocus(event) {
+    const focusable = this.focusableElements()
+    if (focusable.length === 0) return
+
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first.focus()
+    }
+  }
+
+  focusableElements() {
+    if (!this.hasModalTarget) return []
+    return Array.from(
+      this.modalTarget.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+    ).filter((el) => el.offsetParent !== null)
+  }
+
+  focusFirstControl() {
+    const focusable = this.focusableElements()
+    if (focusable.length > 0) focusable[0].focus()
+  }
+
+  // Only meaningful for guest sessions, and only worth doing occasionally.
+  // This used to fire a HEAD request on every open and every arrow keypress,
+  // for signed-in users too — who have no guest session to extend at all.
   extendGuestSession() {
-    // Extend guest session by making a HEAD request
+    if (!this.hasTrackUrlValue) return
+
+    const now = Date.now()
+    if (this.lastSessionPing && now - this.lastSessionPing < 60000) return
+    this.lastSessionPing = now
+
     fetch(window.location.href, {
       method: 'HEAD',
       credentials: 'same-origin'
-    }).catch(error => {
-      // Silently handle errors - session extension is not critical for slideshow functionality
+    }).catch(() => {
+      // Session extension is best-effort; the slideshow keeps working without it.
     })
   }
 

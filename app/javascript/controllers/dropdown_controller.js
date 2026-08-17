@@ -5,7 +5,11 @@ export default class extends Controller {
   static targets = ["menu"]
 
   connect() {
+    // Both handlers must be bound ONCE and reused. `fn.bind(this)` returns a new
+    // function every call, so binding inline at removeEventListener time removed
+    // nothing — every open leaked another keydown listener for the page's life.
     this.boundCloseOnClickOutside = this.closeOnClickOutside.bind(this)
+    this.boundCloseOnEscape = this.closeOnEscape.bind(this)
   }
 
   toggle(event) {
@@ -22,13 +26,13 @@ export default class extends Controller {
   open() {
     this.menuTarget.classList.add("show")
     document.addEventListener("click", this.boundCloseOnClickOutside)
-    document.addEventListener("keydown", this.closeOnEscape.bind(this))
+    document.addEventListener("keydown", this.boundCloseOnEscape)
   }
 
   close() {
     this.menuTarget.classList.remove("show")
     document.removeEventListener("click", this.boundCloseOnClickOutside)
-    document.removeEventListener("keydown", this.closeOnEscape.bind(this))
+    document.removeEventListener("keydown", this.boundCloseOnEscape)
   }
 
   closeOnClickOutside(event) {
@@ -45,6 +49,6 @@ export default class extends Controller {
 
   disconnect() {
     document.removeEventListener("click", this.boundCloseOnClickOutside)
-    document.removeEventListener("keydown", this.closeOnEscape.bind(this))
+    document.removeEventListener("keydown", this.boundCloseOnEscape)
   }
 }

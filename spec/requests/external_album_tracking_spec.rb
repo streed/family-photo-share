@@ -55,7 +55,7 @@ RSpec.describe "External Album Tracking", type: :request do
 
       it "renders password form with error" do
         post external_album_authenticate_path(album.sharing_token), params: { password: 'wrongpass' }
-        expect(response).to have_http_status(:ok)
+        expect(response).to have_http_status(:unprocessable_entity)
         expect(response.body).to include('Incorrect password')
       end
     end

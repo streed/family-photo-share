@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_08_11_071515) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -76,7 +76,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_071515) do
     t.string "ip_address"
     t.text "user_agent"
     t.string "referrer"
-    t.string "session_id"
+    t.string "session_id", null: false
     t.datetime "occurred_at", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -99,6 +99,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_071515) do
     t.boolean "allow_external_access", default: false, null: false
     t.string "sharing_token"
     t.string "external_password"
+    t.integer "album_photos_count", default: 0, null: false
     t.index ["allow_external_access"], name: "index_albums_on_allow_external_access"
     t.index ["cover_photo_id"], name: "index_albums_on_cover_photo_id"
     t.index ["created_at"], name: "index_albums_on_created_at"
@@ -199,7 +200,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_08_11_071515) do
     t.decimal "longitude", precision: 10, scale: 6
     t.string "camera_make"
     t.string "camera_model"
+    t.string "processing_state", default: "pending", null: false
+    t.text "processing_error"
+    t.integer "processing_attempts", default: 0, null: false
     t.index ["created_at"], name: "index_photos_on_created_at"
+    t.index ["processing_state"], name: "index_photos_on_processing_state"
     t.index ["taken_at"], name: "index_photos_on_taken_at"
     t.index ["user_id", "created_at"], name: "index_photos_on_user_id_and_created_at"
     t.index ["user_id", "taken_at"], name: "index_photos_on_user_id_and_taken_at"

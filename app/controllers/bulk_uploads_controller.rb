@@ -13,7 +13,16 @@ class BulkUploadsController < ApplicationController
   end
 
   def create
-    @bulk_upload = current_user.bulk_uploads.build(bulk_upload_params.except(:titles, :descriptions))
+    attrs = bulk_upload_params.except(:titles, :descriptions)
+    @bulk_upload = current_user.bulk_uploads.build(attrs)
+
+    # album_id arrives from the form, so it has to be checked against the
+    # uploader — otherwise photos can be pushed into anyone's album by id.
+    if attrs[:album_id].present? && !current_user.albums.exists?(id: attrs[:album_id])
+      @bulk_upload.errors.add(:album_id, "is not one of your albums")
+      handle_validation_errors(@bulk_upload)
+      return render :new, status: :unprocessable_entity
+    end
 
     if @bulk_upload.save
       # Store individual photo metadata temporarily

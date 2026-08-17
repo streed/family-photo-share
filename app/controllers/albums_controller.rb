@@ -5,13 +5,40 @@ class AlbumsController < ApplicationController
   before_action :ensure_owner, only: [ :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
 
   def index
-    @albums = current_user.albums.recent.includes(:cover_photo)
+    @albums = current_user.albums.recent.includes(cover_photo: { image_attachment: :blob })
     @albums = @albums.by_privacy(params[:privacy]) if params[:privacy].present?
+    @albums = @albums.to_a
+
+    # Albums a family member has shared with you. Without this, album sharing has
+    # no recipient-side surface at all.
+    @family_albums = if current_user.family.present?
+      Album.family_albums
+           .where(user_id: current_user.family.users.select(:id))
+           .where.not(user_id: current_user.id)
+           .recent
+           .includes(:user, cover_photo: { image_attachment: :blob })
+           .to_a
+    else
+      []
+    end
+
+    ShortUrl.warm_for_photos(
+      (@albums + @family_albums).filter_map(&:cover_photo),
+      [ :medium ]
+    )
   end
 
   def show
-    @photos = @album.ordered_photos.includes(:user)
-    @user_photos = current_user.photos.where.not(id: @album.photo_ids) if @album.editable_by?(current_user)
+    @sort = @album.sort_order_for(params[:sort])
+    @photos = @album.ordered_photos(sort: @sort).includes(:user, image_attachment: :blob).to_a
+
+    if @album.editable_by?(current_user)
+      @user_photos = current_user.photos.where.not(id: @album.photo_ids).recent
+      @addable_photo_count = @user_photos.count
+      @pickable_photos = @user_photos.limit(20).includes(image_attachment: :blob).to_a
+    end
+
+    warm_short_urls
   end
 
   def new
@@ -52,15 +79,19 @@ class AlbumsController < ApplicationController
 
   def add_photo
     begin
-      photo = Photo.find(params[:photo_id])
-
-      if photo.user != current_user
-        redirect_to @album, alert: "You can only add your own photos to albums."
-        return
-      end
+      photo = current_user.photos.find(params[:photo_id])
 
       if @album.add_photo(photo)
-        redirect_to @album, notice: "Photo added to album!"
+        respond_to do |format|
+          format.html { redirect_to @album, notice: "Photo added to album!" }
+          format.turbo_stream do
+            load_album_photo_state
+            render :update_photos, locals: {
+              added_photo: photo,
+              notice: "Added to album."
+            }
+          end
+        end
       else
         redirect_to @album, alert: "Photo is already in this album."
       end
@@ -71,14 +102,18 @@ class AlbumsController < ApplicationController
 
   def remove_photo
     begin
-      photo = Photo.find(params[:photo_id])
+      photo = @album.photos.find(params[:photo_id])
 
       if @album.remove_photo(photo)
         respond_to do |format|
           format.html { redirect_to album_path(@album), notice: "Photo removed from album!" }
-          format.turbo_stream {
-            render turbo_stream: turbo_stream.replace("photo_#{photo.id}", "")
-          }
+          format.turbo_stream do
+            load_album_photo_state
+            render :update_photos, locals: {
+              removed_photo: photo,
+              notice: "Removed from album."
+            }
+          end
         end
       else
         Rails.logger.warn "Failed to remove photo #{photo.id} from album #{@album.id}"
@@ -105,7 +140,7 @@ class AlbumsController < ApplicationController
 
   def set_cover
     begin
-      photo = Photo.find(params[:photo_id])
+      photo = @album.photos.find(params[:photo_id])
 
       if @album.set_cover_photo(photo)
         redirect_to @album, notice: "Cover photo updated!"
@@ -171,13 +206,37 @@ class AlbumsController < ApplicationController
     end
 
     @album.revoke_all_access_sessions
-    redirect_to guest_sessions_album_path(@album), notice: "Success! #{pluralize(count, 'active guest session')} revoked. All guest users have been logged out."
+    # pluralize is a view helper, not a controller method — calling it bare here
+    # raised NoMethodError and 500'd the whole revoke action.
+    revoked = view_context.pluralize(count, "active guest session")
+    redirect_to guest_sessions_album_path(@album), notice: "Success! #{revoked} revoked. All guest users have been logged out."
   end
 
   private
 
   def set_album
     @album = Album.find(params[:id])
+  end
+
+  # Everything the album page shows about its photos, reloaded after a change so
+  # a turbo_stream response can keep the grid, the count and the picker in sync
+  # instead of updating one tile and leaving the rest stale.
+  def load_album_photo_state
+    @album.reload
+    @sort = @album.sort_order_for(params[:sort])
+    @photos = @album.ordered_photos(sort: @sort).includes(:user, image_attachment: :blob).to_a
+    @user_photos = current_user.photos.where.not(id: @album.photo_ids).recent
+    @addable_photo_count = @user_photos.count
+    @pickable_photos = @user_photos.limit(20).includes(image_attachment: :blob).to_a
+    warm_short_urls
+  end
+
+  # Resolve every short URL the page needs up front, instead of one query (and
+  # sometimes an INSERT) per photo per variant while rendering.
+  def warm_short_urls
+    ShortUrl.warm_for_photos(@photos, [ :thumbnail, :large ])
+    ShortUrl.warm_for_photos(@pickable_photos, [ :thumbnail ]) if @pickable_photos.present?
+    ShortUrl.warm_for_photos([ @album.cover_photo ].compact, [ :large ])
   end
 
   def ensure_access

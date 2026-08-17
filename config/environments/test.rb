@@ -20,7 +20,13 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+  # Not :null_store — the login and guest-album rate limiters are backed by
+  # Rails.cache, and a null store silently turns them into no-ops that no spec
+  # can exercise. spec/support/cache.rb clears this between examples.
+  config.cache_store = :memory_store
+
+  # Enqueue into an inspectable in-memory queue rather than reaching for Redis.
+  config.active_job.queue_adapter = :test
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

@@ -38,6 +38,7 @@ Rails.application.routes.draw do
   resources :photos do
     member do
       get :processing_status
+      patch :retry_processing
     end
   end
   

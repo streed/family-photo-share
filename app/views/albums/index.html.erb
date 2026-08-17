@@ -32,10 +32,7 @@
                 <div class="album-overlay-info">
                   <div class="album-stats">
                     <span class="photo-count-overlay">
-                      <i class="fas fa-images"></i> <%= album.photo_count %>
-                    </span>
-                    <span class="privacy-badge privacy-<%= album.privacy %>">
-                      <%= album.privacy.capitalize %>
+                      <i class="fas fa-images" aria-hidden="true"></i> <%= album.photo_count %>
                     </span>
                   </div>
                 </div>
@@ -67,9 +64,17 @@
             <h6 class="album-title">
               <%= link_to album.name, album_path(album), class: "text-decoration-none text-dark" %>
             </h6>
+            <%# Always visible. These badges used to live inside .album-overlay,
+                which is opacity:0 until :hover — so on any touch device there was
+                no way to tell a Private album from a shared one. %>
+            <div class="album-badges">
+              <%= album_privacy_badge(album, detailed: true) %>
+              <%= album_link_sharing_badge(album) %>
+            </div>
             <div class="album-meta">
               <small class="text-muted">
-                Updated <%= time_ago_in_words(album.updated_at) %> ago
+                <%= pluralize(album.photo_count, "photo") %>
+                • updated <%= time_ago_in_words(album.updated_at) %> ago
               </small>
             </div>
           </div>
@@ -86,7 +91,81 @@
       <%= link_to "Create Your First Album", new_album_path, class: "btn btn-primary btn-lg" %>
     </div>
   <% end %>
+
+  <%# Albums other family members have shared. Without this the recipient side of
+      "Family" sharing has no surface anywhere in the app. %>
+  <% if @family_albums.any? %>
+    <div class="shared-albums-section">
+      <h2 class="shared-albums-heading">Shared with you</h2>
+      <p class="text-muted">Albums your family has shared with everyone.</p>
+
+      <div class="albums-grid">
+        <% @family_albums.each do |album| %>
+          <div class="album-tile">
+            <%= link_to album_path(album), class: "album-item shared-album-item" do %>
+              <div class="album-cover-container">
+                <% if album.cover_photo&.image&.attached? %>
+                  <%= image_tag album.cover_photo.short_medium_url, alt: album.name,
+                                class: "album-cover-image", loading: "lazy" %>
+                <% else %>
+                  <div class="album-placeholder">
+                    <i class="fas fa-images" aria-hidden="true"></i>
+                    <div class="photo-count"><%= pluralize(album.photo_count, 'photo') %></div>
+                  </div>
+                <% end %>
+
+                <div class="album-overlay">
+                  <div class="album-overlay-info">
+                    <div class="album-stats">
+                      <span class="photo-count-overlay">
+                        <i class="fas fa-images" aria-hidden="true"></i> <%= album.photo_count %>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="album-title-section">
+              <h6 class="album-title">
+                <%= link_to album.name, album_path(album), class: "text-decoration-none text-dark" %>
+              </h6>
+              <div class="album-badges">
+                <%= album_privacy_badge(album) %>
+              </div>
+              <div class="album-meta">
+                <small class="text-muted">
+                  by <%= album.user.display_name_or_full_name %>
+                  • <%= pluralize(album.photo_count, "photo") %>
+                  • updated <%= time_ago_in_words(album.updated_at) %> ago
+                </small>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
 </div>
+
+<style>
+  .shared-albums-section {
+    margin-top: 48px;
+    padding-top: 28px;
+    border-top: 1px solid rgba(107, 93, 79, 0.18);
+  }
+
+  .shared-albums-heading {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+
+  .shared-album-item {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+  }
+</style>
 
 <style>
   /* Albums Grid Layout */
@@ -189,24 +268,7 @@
     font-weight: 600;
   }
 
-  .privacy-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .privacy-private {
-    background: rgba(108, 117, 125, 0.9);
-    color: white;
-  }
-
-  .privacy-family {
-    background: rgba(13, 202, 240, 0.9);
-    color: white;
-  }
+  /* .privacy-badge styling is centralized in application.css */
 
 
   .album-actions {

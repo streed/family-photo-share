@@ -163,47 +163,4 @@ namespace :photos do
       puts "Run 'rake photos:update_missing_exif' to process these photos"
     end
   end
-
-  desc "Update EXIF data directly (without queueing individual jobs)"
-  task update_exif_direct: :environment do
-    puts "Starting direct bulk EXIF data update..."
-    puts "This will process photos directly without creating individual Sidekiq jobs."
-
-    total_photos = Photo.count
-    puts "Found #{total_photos} photos to process"
-
-    if total_photos == 0
-      puts "No photos found in database"
-      exit
-    end
-
-    # Queue the direct bulk job
-    job_id = DirectBulkExifUpdateJob.perform_async
-
-    puts "\nDirect bulk EXIF update job queued!"
-    puts "Job ID: #{job_id}"
-    puts "This job will process all photos in batches."
-    puts "Check Sidekiq for processing status."
-  end
-
-  desc "Update EXIF data directly for photos missing taken_at"
-  task update_missing_exif_direct: :environment do
-    puts "Starting direct EXIF update for photos missing taken_at date..."
-
-    missing_count = Photo.where(taken_at: nil).count
-    puts "Found #{missing_count} photos missing taken_at date"
-
-    if missing_count == 0
-      puts "All photos have taken_at dates!"
-      exit
-    end
-
-    # Queue the direct bulk job with only_missing_dates option
-    job_id = DirectBulkExifUpdateJob.perform_async(nil, { "only_missing_dates" => true })
-
-    puts "\nDirect bulk EXIF update job queued!"
-    puts "Job ID: #{job_id}"
-    puts "This job will process only photos missing taken_at dates."
-    puts "Check Sidekiq for processing status."
-  end
 end

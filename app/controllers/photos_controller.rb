@@ -1,37 +1,52 @@
 class PhotosController < ApplicationController
+  PER_PAGE = 60
+
   before_action :authenticate_user!
-  before_action :set_photo, only: [ :show, :edit, :update, :destroy ]
-  before_action :ensure_owner, only: [ :edit, :update, :destroy ]
+  before_action :set_photo, only: [ :show, :edit, :update, :destroy, :processing_status, :retry_processing ]
+  before_action :ensure_viewable, only: [ :show, :processing_status ]
+  before_action :ensure_owner, only: [ :edit, :update, :destroy, :retry_processing ]
 
   def index
     begin
-      @photos = if params[:user_id]
-                  User.find(params[:user_id]).photos
-      else
-                  current_user.photos
-      end
+      @scope_user = resolve_scope_user
+      return if performed?
+
+      @photos = @scope_user ? @scope_user.photos : family_scoped_photos
 
       # Apply search filters
       @photos = apply_search_filters(@photos)
-      @photos = @photos.recent.limit(20)
+      @total_count = @photos.count
+      @page = [ params[:page].to_i, 1 ].max
+      @photos = @photos.recent.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+      @total_pages = (@total_count / PER_PAGE.to_f).ceil
     rescue ActiveRecord::RecordNotFound
       redirect_to photos_path, alert: "User not found."
     end
   end
 
   def show
-    @photo = Photo.find(params[:id])
   end
 
   def processing_status
-    @photo = Photo.find(params[:id])
-    ensure_owner
-
     render json: {
+      state: @photo.processing_state,
+      settled: @photo.processing_settled?,
+      failed: @photo.processing_failed?,
+      retryable: @photo.retryable?,
+      error: @photo.processing_error,
       background_processing_complete: @photo.background_processing_complete?,
       all_variants_ready: @photo.all_variants_ready?,
       processing_completed_at: @photo.processing_completed_at
     }
+  end
+
+  def retry_processing
+    if @photo.retryable?
+      @photo.retry_processing!
+      redirect_to @photo, notice: "Retrying image processing."
+    else
+      redirect_to @photo, alert: "This photo can't be retried right now."
+    end
   end
 
   def new
@@ -105,6 +120,46 @@ class PhotosController < ApplicationController
 
   def ensure_owner
     redirect_to photos_path, alert: "You can only manage your own photos." unless @photo.user == current_user
+  end
+
+  def ensure_viewable
+    return if @photo.viewable_by?(current_user)
+
+    respond_to do |format|
+      format.html { redirect_to photos_path, alert: "You do not have access to that photo." }
+      format.json { render json: { error: "forbidden" }, status: :forbidden }
+    end
+  end
+
+  # ?user_id= may only target someone in your own family. Anything else is an
+  # attempt to enumerate a stranger's library.
+  def resolve_scope_user
+    return nil if params[:user_id].blank?
+
+    target = User.find(params[:user_id])
+    return target if target == current_user
+    return target if current_user.family.present? && target.family == current_user.family
+
+    redirect_to photos_path, alert: "You do not have access to that photo library."
+    nil
+  end
+
+  # Default library view: your own photos, plus anything your family has put
+  # into an album you can actually see.
+  def family_scoped_photos
+    return current_user.photos unless params[:family_id].present? && current_user.family.present?
+    return current_user.photos unless params[:family_id].to_s == current_user.family.id.to_s
+
+    Photo.where(user_id: current_user.family.users.select(:id))
+         .where(
+           "photos.user_id = :uid OR EXISTS (
+              SELECT 1 FROM album_photos
+              INNER JOIN albums ON albums.id = album_photos.album_id
+              WHERE album_photos.photo_id = photos.id AND albums.privacy = 'family'
+            )",
+           uid: current_user.id
+         )
+         .distinct
   end
 
   def photo_params

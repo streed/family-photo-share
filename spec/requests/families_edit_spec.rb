@@ -28,7 +28,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
           get edit_family_path(family)
           expect(response).to have_http_status(:success)
           expect(response.body).to include("Edit Family")
-          expect(response.body).to include(family.name)
+          expect(response.body).to include(ERB::Util.html_escape(family.name))
         end
       end
 
@@ -116,13 +116,18 @@ RSpec.describe "Family Edit Functionality", type: :request do
   end
 
   describe "Family deletion" do
+    # A user may only belong to one family (FamilyMembership validates user_id
+    # uniqueness), so the solo family needs its own creator — reusing admin_user
+    # here made Family#add_creator_as_admin fail validation.
+    let(:solo_creator) { create(:user) }
+
     context "when user is the creator and only member" do
-      let(:solo_family) { create(:family, created_by: admin_user) }
+      let(:solo_family) { create(:family, created_by: solo_creator) }
 
       before do
-        sign_in admin_user
+        sign_in solo_creator
         # Ensure only one member
-        solo_family.family_memberships.where.not(user: admin_user).destroy_all
+        solo_family.family_memberships.where.not(user: solo_creator).destroy_all
       end
 
       it "shows delete button on edit page" do

@@ -42,9 +42,18 @@ class Photo < ApplicationRecord
   validates :image, presence: true, content_type: [ "image/png", "image/jpeg", "image/gif" ],
                     size: { less_than: 50.megabytes }
 
+  # Image processing lifecycle. "pending" and "processing" are transient;
+  # "ready" and "failed" are terminal, so the UI knows when to stop waiting.
+  PROCESSING_STATES = %w[pending processing ready failed].freeze
+  MAX_PROCESSING_ATTEMPTS = 3
+
+  validates :processing_state, inclusion: { in: PROCESSING_STATES }
+
   # Scopes
   scope :recent, -> { order(created_at: :desc) }
   scope :by_date_taken, -> { order(taken_at: :desc, created_at: :desc) }
+  scope :processing_failed, -> { where(processing_state: "failed") }
+  scope :awaiting_processing, -> { where(processing_state: %w[pending processing]) }
 
   before_save :extract_basic_metadata
   # Callbacks
@@ -52,6 +61,66 @@ class Photo < ApplicationRecord
   after_destroy :reorder_album_positions
   after_create_commit :process_image_variants
   after_create_commit :extract_metadata_async
+
+  def processing_pending?
+    processing_state == "pending"
+  end
+
+  def processing?
+    processing_state == "processing"
+  end
+
+  def processing_ready?
+    processing_state == "ready"
+  end
+
+  def processing_failed?
+    processing_state == "failed"
+  end
+
+  # True once the outcome is known either way — the signal the UI needs to stop
+  # polling. Previously photos/show polled every 2s forever.
+  def processing_settled?
+    processing_ready? || processing_failed?
+  end
+
+  def retryable?
+    processing_failed? && processing_attempts < MAX_PROCESSING_ATTEMPTS
+  end
+
+  def mark_processing!
+    update_columns(
+      processing_state: "processing",
+      processing_attempts: processing_attempts + 1,
+      updated_at: Time.current
+    )
+  end
+
+  def mark_processing_ready!
+    update_columns(
+      processing_state: "ready",
+      processing_error: nil,
+      processing_completed_at: Time.current,
+      updated_at: Time.current
+    )
+  end
+
+  def mark_processing_failed!(error)
+    update_columns(
+      processing_state: "failed",
+      processing_error: error.to_s.truncate(1000),
+      updated_at: Time.current
+    )
+  end
+
+  def retry_processing!
+    update_columns(
+      processing_state: "pending",
+      processing_error: nil,
+      updated_at: Time.current
+    )
+    ImageProcessingJob.perform_async(id)
+  end
 
   # Image variants for different display sizes using the service
   def thumbnail
@@ -68,6 +137,31 @@ class Photo < ApplicationRecord
 
   def large
     ImageProcessingService.variant_for_size(self, :large)
+  end
+
+  # Per-instance cache of resolved short URLs, populated either lazily or in bulk
+  # by ShortUrl.warm_for_photos. Without it a grid re-queried short_urls for every
+  # photo and every variant on every render.
+  def cached_short_url(variant)
+    record = short_url_cache[variant.to_s]
+    return nil if record.nil?
+
+    # Never hand back a stale entry: a long-lived Photo object could otherwise
+    # keep serving a short URL that has since expired.
+    if record.expired?
+      short_url_cache.delete(variant.to_s)
+      return nil
+    end
+
+    record
+  end
+
+  def cache_short_url(variant, record)
+    short_url_cache[variant.to_s] = record
+  end
+
+  def short_url_cache
+    @short_url_cache ||= {}
   end
 
   # Short URL methods for variants
@@ -129,6 +223,17 @@ class Photo < ApplicationRecord
     "#{metadata['width']} × #{metadata['height']}"
   end
 
+  # A photo is visible to its owner, and to anyone who can reach it through an
+  # album they are allowed to see. Photos that sit in no shared album stay private.
+  def viewable_by?(viewer)
+    return false unless viewer
+    return true if user_id == viewer.id
+
+    Album.accessible_to(viewer)
+         .joins(:album_photos)
+         .exists?(album_photos: { photo_id: id })
+  end
+
   # Get formatted file size
   def formatted_file_size
     return nil unless file_size
@@ -152,14 +257,21 @@ class Photo < ApplicationRecord
     # Don't extract EXIF data here - let the background job handle it
   end
 
+  # These run after commit, so the Photo row already exists. Letting a queue
+  # outage raise here returned HTTP 500 for an upload that had actually
+  # succeeded, and the user re-uploaded and created silent duplicates. Leave the
+  # photo in its pending state instead — it stays visible (the streamer builds
+  # variants on demand) and can be retried.
   def extract_metadata_async
-    # Schedule background job to extract EXIF metadata
     ExtractPhotoMetadataJob.perform_async(id)
+  rescue StandardError => e
+    Rails.logger.error "Could not enqueue metadata extraction for Photo #{id}: #{e.class}: #{e.message}"
   end
 
   def process_image_variants
-    # Schedule background image processing
     ImageProcessingJob.perform_async(id)
+  rescue StandardError => e
+    Rails.logger.error "Could not enqueue image processing for Photo #{id}: #{e.class}: #{e.message}"
   end
 
   def remove_cover_photo_references
@@ -177,12 +289,8 @@ class Photo < ApplicationRecord
   end
 
   def reorder_album_positions
-    # Reorder positions in all albums that contained this photo
-    # @albums_to_reorder is set in remove_cover_photo_references
     return unless @albums_to_reorder&.any?
 
-    Album.where(id: @albums_to_reorder).each do |album|
-      album.send(:reorder_positions)
-    end
+    Album.where(id: @albums_to_reorder).find_each(&:reorder_positions!)
   end
 end

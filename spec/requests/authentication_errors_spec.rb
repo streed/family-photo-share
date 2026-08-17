@@ -91,8 +91,11 @@ RSpec.describe "Authentication Errors", type: :request do
     end
   end
 
+  # Devise runs in paranoid mode, so password reset deliberately responds
+  # identically for known and unknown addresses — that is what stops an attacker
+  # from using this form to discover which emails have accounts.
   describe "Password reset error handling" do
-    it "shows success message for valid email" do
+    it "shows the generic message for a valid email" do
       user = create(:user)
 
       post user_password_path, params: {
@@ -101,10 +104,10 @@ RSpec.describe "Authentication Errors", type: :request do
 
       expect(response).to redirect_to(new_user_session_path)
       follow_redirect!
-      expect(response.body).to include("Check your email for password reset instructions")
+      expect(response.body).to include("If an account exists with this email")
     end
 
-    it "shows generic message for non-existent email" do
+    it "shows the same generic message for a non-existent email" do
       post user_password_path, params: {
         user: { email: "nonexistent@example.com" }
       }
@@ -112,6 +115,20 @@ RSpec.describe "Authentication Errors", type: :request do
       expect(response).to redirect_to(new_user_session_path)
       follow_redirect!
       expect(response.body).to include("If an account exists with this email")
+    end
+
+    it "still sends the reset email when the account exists" do
+      user = create(:user)
+
+      expect {
+        post user_password_path, params: { user: { email: user.email } }
+      }.to change { ActionMailer::Base.deliveries.size }.by(1)
+    end
+
+    it "sends nothing when the account does not exist" do
+      expect {
+        post user_password_path, params: { user: { email: "nonexistent@example.com" } }
+      }.not_to change { ActionMailer::Base.deliveries.size }
     end
   end
 end

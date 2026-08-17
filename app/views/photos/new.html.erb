@@ -24,7 +24,7 @@
               <%= form.label :image, class: "form-label" %>
               <%= form.file_field :image, class: "form-control", accept: "image/*", required: true,
                                   data: { "file-upload-target": "input", action: "change->file-upload#change" } %>
-              <div class="form-text">Choose a photo to upload (PNG, JPEG, or GIF format, max 10MB)</div>
+              <div class="form-text">Choose a photo to upload (PNG, JPEG, or GIF format, max 50MB)</div>
               <div data-file-upload-target="preview" class="mt-3"></div>
             </div>
 

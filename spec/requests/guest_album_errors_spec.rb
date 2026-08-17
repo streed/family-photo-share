@@ -68,24 +68,32 @@ RSpec.describe "Guest Album Error Handling", type: :request do
     end
 
     context "when external access is disabled" do
-      let(:private_album) { create(:album, user: user, allow_external_access: false) }
+      it "returns 404 for a token whose album has had sharing turned off" do
+        # The album must have been shared at some point to have a token at all;
+        # disabling sharing is what the request should then be rejected for.
+        shared_album = create(:album, user: user, allow_external_access: true)
+        token = shared_album.sharing_token
+        expect(token).to be_present
 
-      it "returns 404 for disabled external access" do
-        get external_album_path(private_album.sharing_token)
+        shared_album.update_column(:allow_external_access, false)
+
+        get external_album_path(token)
         expect(response).to have_http_status(:not_found)
       end
     end
   end
 
   describe "Session expiration" do
-    let(:expired_session) { create(:album_access_session, album: album, expires_at: 1.hour.ago) }
-
     it "redirects to password form when session expires" do
-      # Set expired session cookie
-      request.cookies.signed[:album_access] = {
-        'token' => expired_session.session_token,
-        'album_id' => album.id
-      }
+      # Sign in as a guest for real — a request spec's cookie jar can't write the
+      # signed cookie directly — then expire the session behind it.
+      post external_album_authenticate_path(album.sharing_token), params: { password: "secret123" }
+      expect(response).to redirect_to(external_album_path(album.sharing_token))
+
+      get external_album_path(album.sharing_token)
+      expect(response).to have_http_status(:success)
+
+      album.album_access_sessions.update_all(expires_at: 1.hour.ago)
 
       get external_album_path(album.sharing_token)
       expect(response).to redirect_to(external_album_password_path(album.sharing_token))

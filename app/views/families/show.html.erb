@@ -17,8 +17,7 @@
       <% else %>
         <%= link_to "Leave Family", leave_family_path(@family), method: :patch, 
                     class: "btn btn-outline-danger btn-sm",
-                    confirm: "Are you sure you want to leave this family?",
-                    data: { "turbo-method": :patch } %>
+                    data: { turbo_confirm: "Are you sure you want to leave this family?", "turbo-method": :patch } %>
       <% end %>
     </div>
   </div>

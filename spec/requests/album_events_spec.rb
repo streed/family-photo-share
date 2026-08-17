@@ -26,7 +26,7 @@ RSpec.describe "Album Events", type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Guest Activity for")
-        expect(response.body).to include(album.name)
+        expect(response.body).to include(ERB::Util.html_escape(album.name))
         expect(response.body).to include("Password Entry")
         expect(response.body).to include("Failed Attempt")
         expect(response.body).to include("Photo View")

@@ -79,10 +79,7 @@ class ImageProcessingService
     return false unless photo.processing_completed_at.present?
 
     THUMBNAIL_SIZES.keys.all? do |size_name|
-      variant = variant_for_size(photo, size_name)
-      variant&.processed&.attached?
-    rescue StandardError
-      false
+      variant_ready?(variant_for_size(photo, size_name))
     end
   end
 
@@ -112,12 +109,15 @@ class ImageProcessingService
     photo.image
   end
 
-  private
-
+  # A variant is ready when its backing blob exists. `attached?` is NOT defined on
+  # ActiveStorage::VariantWithRecord — calling it raised NoMethodError into the
+  # rescue below, so this returned false even for fully processed variants. That
+  # made all_variants_ready? permanently false and forced best_available_variant
+  # to serve the full-size original every time.
   def self.variant_ready?(variant)
     return false unless variant
 
-    variant.processed.attached?
+    variant.key.present?
   rescue StandardError
     false
   end

@@ -40,6 +40,17 @@ class ExtractPhotoMetadataJob
 
         Rails.logger.info "Successfully extracted metadata for photo #{photo_id}"
       rescue MiniExiftool::Error => e
+        # A missing exiftool binary raises the same error class as "this file has
+        # no EXIF", and both used to be logged as "No EXIF data found". That
+        # reads as a property of the photo when it is really a broken install —
+        # and it means every photo silently loses its date, GPS and camera.
+        if exiftool_missing?(e)
+          Rails.logger.error "exiftool is not installed or not on PATH; cannot extract " \
+                             "metadata for photo #{photo_id}. Install exiftool (the Docker " \
+                             "image already does) and re-run ExtractPhotoMetadataJob."
+          raise
+        end
+
         Rails.logger.warn "No EXIF data found for photo #{photo_id}: #{e.message}"
         # Still save the photo even if no EXIF data
         photo.save!(validate: false)
@@ -51,6 +62,10 @@ class ExtractPhotoMetadataJob
   end
 
   private
+
+  def exiftool_missing?(error)
+    error.message.to_s.match?(/command not found|No such file or directory|not recognized/i)
+  end
 
   def extract_date_taken(photo, exif)
     # Try different EXIF date fields in order of preference

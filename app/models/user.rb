@@ -10,7 +10,7 @@ class User < ApplicationRecord
   validates :display_name, length: { maximum: 50 }
   validates :bio, length: { maximum: 500 }
   validates :phone_number, format: { with: /\A[\+]?[1-9][\d\s\-\(\)]+\z/, message: "Invalid phone format" }, allow_blank: true
-  validates :password, length: { minimum: 6 }, if: :password_required?
+  validates :password, length: { minimum: 8 }, if: :password_required?
 
 
   # Associations

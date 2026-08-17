@@ -99,6 +99,10 @@ class FamiliesController < ApplicationController
   end
 
   def ensure_admin
+    # Check membership first. A non-member told "only admins can do this" is
+    # both misleading and bounced to a family page they cannot view anyway.
+    return ensure_member unless @family.member?(current_user)
+
     redirect_to @family, alert: "Only family admins can perform this action." unless @family.admin?(current_user)
   end
 

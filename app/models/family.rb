@@ -3,6 +3,9 @@ class Family < ApplicationRecord
 
   has_many :family_memberships, dependent: :destroy
   has_many :members, through: :family_memberships, source: :user
+  # Alias for :members. Several callers reach for `family.users`; keeping both
+  # names bound to the same join avoids NoMethodError at those call sites.
+  has_many :users, through: :family_memberships, source: :user
   has_many :family_invitations, dependent: :destroy
   has_many :shared_photos, through: :members, source: :photos
 

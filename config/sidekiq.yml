@@ -15,10 +15,13 @@
   - low
 
 # Redis configuration
+# Keep this default in step with config/initializers/sidekiq.rb — they disagreed
+# (6379 here, 6380 there), so whichever one you read gave the wrong answer.
 :redis:
-  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379/0") %>
+  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6380/0") %>
   pool_timeout: 1
-  
+
+
 # Production settings
 production:
   :concurrency: 10
@@ -44,15 +47,7 @@ test:
     - default
     - image_processing
 
-# Queue-specific worker configurations
-:scheduler:
-  # Clean up old processed jobs every hour
-  cleanup_processed_jobs:
-    cron: '0 * * * *'
-    class: CleanupJob
-    
-  # Daily bulk processing check
-  daily_bulk_check:
-    cron: '0 2 * * *'
-    class: BulkImageProcessingJob
-    args: [50]
+# Scheduled jobs live in config/sidekiq_cron_schedule.yml, which
+# config/initializers/sidekiq_cron.rb loads. A `:scheduler:` block here is not
+# read by sidekiq-cron at all — the one that used to sit here was dead config,
+# and it referenced a CleanupJob class that does not exist.

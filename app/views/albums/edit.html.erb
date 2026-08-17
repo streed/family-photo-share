@@ -62,7 +62,7 @@
                                           class: "form-control", 
                                           placeholder: "Enter a password for guest access",
                                           autocomplete: "new-password" %>
-                  <div class="form-text">Minimum 3 characters. Leave blank to keep current password.</div>
+                  <div class="form-text">Minimum 6 characters. Leave blank to keep current password.</div>
                   <% if @album.external_password.present? %>
                     <div class="alert alert-warning mt-2">
                       <small>Current password: <strong><%= @album.external_password %></strong></small>
@@ -74,17 +74,20 @@
                   <div class="current-sharing-info">
                     <div class="alert alert-info">
                       <h6><i class="fas fa-link"></i> Share Link</h6>
-                      <div class="input-group">
-                        <input type="text" 
-                               class="form-control" 
-                               value="<%= @album.sharing_url %>" 
-                               readonly 
+                      <div class="input-group" data-controller="clipboard">
+                        <input type="text"
+                               class="form-control"
+                               data-clipboard-target="source"
+                               aria-label="Album sharing link"
+                               value="<%= @album.sharing_url %>"
+                               readonly
                                id="sharing-link">
-                        <button class="btn btn-outline-secondary" 
-                                type="button" 
-                                onclick="copyToClipboard()"
+                        <button class="btn btn-outline-secondary"
+                                type="button"
+                                data-clipboard-target="button"
+                                data-action="clipboard#copy"
                                 id="copy-button">
-                          <i class="fas fa-copy"></i> Copy
+                          <i class="fas fa-copy" aria-hidden="true"></i> Copy
                         </button>
                       </div>
                       <small class="text-muted mt-1 d-block">
@@ -162,30 +165,7 @@
     }
   });
   
-  // Copy to clipboard functionality
-  function copyToClipboard() {
-    const linkInput = document.getElementById('sharing-link');
-    const copyButton = document.getElementById('copy-button');
-    
-    linkInput.select();
-    linkInput.setSelectionRange(0, 99999); // For mobile devices
-    
-    navigator.clipboard.writeText(linkInput.value).then(function() {
-      // Visual feedback
-      const originalContent = copyButton.innerHTML;
-      copyButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
-      copyButton.classList.remove('btn-outline-secondary');
-      copyButton.classList.add('btn-success');
-      
-      setTimeout(function() {
-        copyButton.innerHTML = originalContent;
-        copyButton.classList.remove('btn-success');
-        copyButton.classList.add('btn-outline-secondary');
-      }, 2000);
-    }).catch(function(err) {
-      console.error('Could not copy text: ', err);
-    });
-  }
+  // Copying is handled by the shared clipboard Stimulus controller.
 </script>
 
 <style>

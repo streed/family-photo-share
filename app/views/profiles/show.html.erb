@@ -59,9 +59,7 @@
                 <h4 class="album-title"><%= truncate(album.name, length: 30) %></h4>
                 <div class="album-meta">
                   <span class="photo-count"><%= pluralize(album.photo_count, 'photo') %></span>
-                  <span class="privacy-badge privacy-<%= album.privacy %>">
-                    <%= album.privacy.capitalize %>
-                  </span>
+                  <%= album_privacy_badge(album) %>
                 </div>
               </div>
             <% end %>
@@ -195,23 +193,7 @@
     opacity: 0.9;
   }
 
-  .privacy-badge {
-    padding: 0.2rem 0.5rem;
-    border-radius: 0.375rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-  }
-
-  .privacy-private {
-    background: rgba(108, 117, 125, 0.8);
-    color: white;
-  }
-
-  .privacy-family {
-    background: rgba(13, 202, 240, 0.8);
-    color: white;
-  }
+  /* .privacy-badge styling is centralized in application.css */
 
 
   .empty-state {

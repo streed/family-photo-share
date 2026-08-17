@@ -12,6 +12,7 @@ require 'rspec/rails'
 require 'shoulda/matchers'
 require 'capybara/rspec'
 require 'database_cleaner/active_record'
+require 'sidekiq/testing'
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
@@ -75,6 +76,9 @@ RSpec.configure do |config|
 
   # Include FactoryBot methods
   config.include FactoryBot::Syntax::Methods
+
+  # travel_to / freeze_time, for specs that assert on expiry windows.
+  config.include ActiveSupport::Testing::TimeHelpers
 
   # Include Devise test helpers
   config.include Devise::Test::IntegrationHelpers, type: :feature

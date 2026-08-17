@@ -53,7 +53,7 @@ A modern, secure photo-sharing platform designed for families. Built with Ruby o
 - 🔄 **Real-time Updates**: Hotwire (Turbo + Stimulus) for seamless interactions
 - 📊 **Monitoring**: Built-in metrics and health checks
 - 🐳 **Docker Ready**: Complete Docker and Docker Compose setup
-- 🧪 **Comprehensive Testing**: Full RSpec test suite with high coverage
+- 🧪 **Testing**: RSpec test suite covering models, jobs, and key request flows
 
 ## Demo
 
@@ -264,10 +264,10 @@ curl http://localhost:3000/sidekiq/stats
 #### Maintenance Tasks
 ```bash
 # Clean expired sessions
-docker-compose exec web rake sessions:cleanup
+docker-compose exec web rake cleanup:expired_sessions
 
 # Update EXIF data
-docker-compose exec web rake photos:update_exif_direct
+docker-compose exec web rake photos:update_exif
 
 # Clean orphaned storage
 docker-compose exec web rake storage:cleanup
@@ -335,10 +335,13 @@ Album
 ### 🔄 Background Jobs
 
 - `ExtractPhotoMetadataJob`: EXIF data extraction
-- `ProcessPhotoJob`: Image variant generation
+- `ImageProcessingJob`: Image variant generation
 - `BulkUploadProcessingJob`: Batch upload handling
-- `DirectBulkExifUpdateJob`: Bulk metadata updates
-- `ExpiredSessionCleanupJob`: Session maintenance
+- `BulkImageProcessingJob`: Requeues photos whose processing never finished
+- `BulkMetadataBackfillJob`: Bulk metadata updates
+- `CleanupExpiredSessionsJob`: Guest session maintenance
+- `CleanupAlbumViewEventsJob`: Prunes view events older than 7 days
+- `CleanupShortUrlsJob`: Deletes expired short URLs
 
 ### 📁 Directory Structure
 
@@ -374,11 +377,7 @@ See [API Documentation](docs/API.md) for detailed endpoint information.
 
 ### Test Coverage
 
-We maintain high test coverage across:
-- Models (100%)
-- Controllers (95%+)
-- Jobs (90%+)
-- System tests for critical paths
+The suite covers models, jobs, and the core request flows. Coverage is reported by SimpleCov on each run; growing coverage of controllers and services is an ongoing goal. Set `COVERAGE_MIN=<n>` to enforce a minimum line-coverage threshold.
 
 ### Running Tests
 

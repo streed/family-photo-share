@@ -34,13 +34,8 @@ class BulkMetadataBackfillJob
             next
           end
 
-          # Queue individual extraction job
           ExtractPhotoMetadataJob.perform_async(photo.id)
           total_processed += 1
-
-          # Rate limiting to avoid overwhelming the queue
-          sleep(0.1) if total_processed % 10 == 0
-
         rescue => e
           error_msg = "Error processing photo #{photo.id}: #{e.message}"
           Rails.logger.error error_msg

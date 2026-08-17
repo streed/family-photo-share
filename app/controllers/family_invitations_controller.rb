@@ -5,7 +5,9 @@ class FamilyInvitationsController < ApplicationController
   before_action :set_invitation_by_token, only: [ :show, :accept, :decline ]
 
   def show
-    redirect_to root_path, alert: "Invalid invitation." if @invitation.nil?
+    if @invitation.nil?
+      redirect_to root_path, alert: "Invalid invitation." and return
+    end
 
     if @invitation.expired?
       @invitation.expire!

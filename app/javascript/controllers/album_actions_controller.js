@@ -19,22 +19,33 @@ export default class extends Controller {
   }
 
   confirmDelete(event) {
-    // Get album name and delete URL from the button's data attributes
-    const albumName = event.target.dataset.albumActionsAlbumNameValue;
-    const deleteUrl = event.target.dataset.albumActionsDeleteUrlValue;
-    
-    // Store for later use
+    // currentTarget, not target: clicking the <i> icon inside the button would
+    // otherwise read the icon's (empty) dataset.
+    const button = event.currentTarget;
+    const albumName = button.dataset.albumActionsAlbumNameValue;
+    const deleteUrl = button.dataset.albumActionsDeleteUrlValue;
+
+    if (!deleteUrl) return;
+
     this.pendingDeleteUrl = deleteUrl;
-    
-    // Update modal message with album name
+
+    // Views that don't carry the modal markup (e.g. the albums index) still get
+    // a confirmation rather than a dead button.
+    if (!this.hasConfirmModalTarget || !this.hasConfirmMessageTarget) {
+      if (window.confirm(`Are you sure you want to delete "${albumName}"?`)) {
+        this.confirmDeleteAction();
+      } else {
+        this.pendingDeleteUrl = null;
+      }
+      return;
+    }
+
     this.confirmMessageTarget.textContent = `Are you sure you want to delete "${albumName}"?`;
-    
-    // Show the modal
     this.modal.show();
   }
 
   cancelDelete() {
-    this.modal.hide();
+    if (this.hasConfirmModalTarget) this.modal.hide();
     this.pendingDeleteUrl = null;
   }
 
@@ -61,8 +72,8 @@ export default class extends Controller {
       form.appendChild(methodInput);
       
       // Hide modal
-      this.modal.hide();
-      
+      if (this.hasConfirmModalTarget) this.modal.hide();
+
       // Submit form
       document.body.appendChild(form);
       form.submit();

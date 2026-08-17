@@ -682,10 +682,19 @@ google:
   - bulk_processing
   - mailers
 
-:scheduler:
-  cleanup_expired_sessions:
-    cron: '0 2 * * *'  # Daily at 2 AM
-    class: ExpiredSessionCleanupJob
+```
+
+Scheduled jobs are **not** configured in `sidekiq.yml`. sidekiq-cron reads
+`config/sidekiq_cron_schedule.yml`, which `config/initializers/sidekiq_cron.rb`
+loads on boot:
+
+```yaml
+# config/sidekiq_cron_schedule.yml
+cleanup_expired_sessions:
+  cron: "0 * * * *"
+  class: "CleanupExpiredSessionsJob"
+  queue: "default"
+  active_job: true
 ```
 
 ### Production Scaling

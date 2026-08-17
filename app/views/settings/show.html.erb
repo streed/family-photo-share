@@ -161,8 +161,8 @@
           
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" data-action="click->modal#close">Cancel</button>
-            <%= f.submit "Yes, Delete My Account", class: "btn btn-danger", 
-                         data: { confirm: "Are you absolutely sure? This cannot be undone!" } %>
+            <%= f.submit "Yes, Delete My Account", class: "btn btn-danger",
+                         data: { turbo_confirm: "Are you absolutely sure? This cannot be undone!" } %>
           </div>
         <% end %>
       </div>

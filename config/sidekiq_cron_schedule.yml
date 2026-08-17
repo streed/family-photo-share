@@ -17,6 +17,20 @@ cleanup_album_view_events:
   description: "Clean up album view events older than 7 days"
   active_job: true
 
+cleanup_short_urls:
+  cron: "30 3 * * *"  # Daily at 3:30 AM
+  class: "CleanupShortUrlsJob"
+  queue: "low"
+  description: "Delete expired short URLs so the table stops growing forever"
+  active_job: true
+
+sweep_stranded_photo_processing:
+  cron: "15 * * * *"  # Hourly
+  class: "BulkImageProcessingJob"
+  queue: "bulk_processing"
+  description: "Requeue photos whose image processing never completed"
+  active_job: false
+
 # Add more scheduled jobs here as needed
 # Example:
 # daily_report:

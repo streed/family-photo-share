@@ -54,8 +54,11 @@
       <div class="photo-grid">
         <% @photos.each_with_index do |photo, index| %>
           <div class="photo-tile">
-            <div class="photo-item" 
-                 data-action="click->slideshow#open" 
+            <div class="photo-item"
+                 role="button"
+                 tabindex="0"
+                 aria-label="View <%= photo_title_or_default(photo) %>"
+                 data-action="click->slideshow#open keydown.enter->slideshow#open keydown.space->slideshow#open"
                  data-slideshow-index-value="<%= index %>"
                  data-slideshow-photo-id-value="<%= photo.id %>">
               <div class="photo-container">
@@ -86,14 +89,16 @@
       </div>
 
       <!-- Slideshow Modal -->
-      <div class="slideshow-modal" data-slideshow-target="modal">
-        <div class="slideshow-overlay" data-action="click->slideshow#close"></div>
+      <div class="slideshow-modal" data-slideshow-target="modal"
+     role="dialog" aria-modal="true" aria-hidden="true"
+     aria-label="Photo viewer">
+        <div class="slideshow-overlay" data-action="click->slideshow#close" aria-hidden="true"></div>
         <div class="slideshow-container">
-          <button class="slideshow-close" data-action="click->slideshow#close">
+          <button class="slideshow-close" type="button" aria-label="Close photo viewer" data-action="click->slideshow#close">
             <i class="fas fa-times"></i>
           </button>
           
-          <button class="slideshow-nav slideshow-prev" data-action="click->slideshow#previous">
+          <button class="slideshow-nav slideshow-prev" type="button" aria-label="Previous photo" data-action="click->slideshow#previous">
             <i class="fas fa-chevron-left"></i>
           </button>
           
@@ -110,7 +115,7 @@
             </div>
           </div>
           
-          <button class="slideshow-nav slideshow-next" data-action="click->slideshow#next">
+          <button class="slideshow-nav slideshow-next" type="button" aria-label="Next photo" data-action="click->slideshow#next">
             <i class="fas fa-chevron-right"></i>
           </button>
         </div>
@@ -412,21 +417,8 @@
     padding-top: 2rem;
   }
   
-  /* Alert Styles */
-  .alert {
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    position: relative;
-  }
+  /* Alert and .btn-close styling is centralized in application.css */
 
-  .alert i {
-    margin-right: 0.75rem;
-    font-size: 1.1rem;
-  }
 
   .alert-danger {
     background: linear-gradient(135deg, #fee5e5 0%, #fdd8d8 100%);
@@ -440,29 +432,8 @@
     border: 1px solid #c3e6cb;
   }
 
-  .btn-close {
-    position: absolute;
-    right: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 1.2rem;
-    color: inherit;
-    opacity: 0.5;
-    cursor: pointer;
-    padding: 0;
-    width: 20px;
-    height: 20px;
-  }
 
-  .btn-close:hover {
-    opacity: 0.8;
-  }
 
-  .btn-close::after {
-    content: '×';
-  }
 
   /* Responsive Design */
   @media (max-width: 768px) {

@@ -11,8 +11,57 @@
 
 /* Application Styles */
 
+/* ---------------------------------------------------------------------------
+   Design tokens
+
+   The palette was previously spread across ~100 hardcoded hex values and 20+
+   border-radius values inlined in individual views, which is why the same
+   component drifted between pages. New styling should reference these rather
+   than reintroducing literals.
+   --------------------------------------------------------------------------- */
+
+:root {
+  /* Warm neutrals — the app's core identity */
+  --fps-bark: #6b5d4f;
+  --fps-bark-dark: #5a4e42;
+  --fps-clay: #8b7355;
+  --fps-sand: #c9b8a6;
+  --fps-linen: #e8ddd4;
+  --fps-parchment: #f7f5f3;
+
+  /* Text */
+  --fps-ink: #5a5550;
+  --fps-ink-muted: #6c757d;
+
+  /* Accents */
+  --fps-sage: #a8b5a1;
+  --fps-teal: #2f7d92;
+  --fps-danger: #b03a2e;
+
+  /* Shape */
+  --fps-radius-sm: 10px;
+  --fps-radius: 15px;
+  --fps-radius-lg: 20px;
+  --fps-radius-pill: 999px;
+
+  /* Elevation */
+  --fps-shadow-sm: 0 4px 15px rgba(89, 85, 80, 0.12);
+  --fps-shadow: 0 8px 25px rgba(89, 85, 80, 0.2);
+
+  /* Spacing */
+  --fps-gap-sm: 8px;
+  --fps-gap: 15px;
+  --fps-gap-lg: 24px;
+
+  /* The minimum comfortable touch target */
+  --fps-touch-target: 44px;
+}
+
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Quicksand is loaded in the layout; it was being downloaded on every page
+     view without a single rule referencing it. */
+  font-family: "Quicksand", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   margin: 0;
   padding: 0;
   background: linear-gradient(135deg, #f7f5f3 0%, #f0f4f1 50%, #f4f1f0 100%);
@@ -491,6 +540,8 @@ body {
   margin-bottom: 1.5rem;
   border-radius: 20px;
   position: relative;
+  display: flex;
+  align-items: center;
   transition: all 0.3s ease;
   font-weight: 600;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -831,33 +882,36 @@ body {
   margin-top: 4rem;
 }
 
-/* Card styles for child-friendly design */
+/* Card styles for child-friendly design.
+   No !important here: Bootstrap is loaded BEFORE this file in the layout, so
+   these rules already win on order. The flags only served to discard per-view
+   card styling, which several views were writing and silently losing. */
 .card, .card-header, .card-body {
-  border-radius: 25px !important;
-  border: 3px solid #d4c4b0 !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f7f5f3 100%) !important;
-  box-shadow: 0 8px 25px rgba(89, 85, 80, 0.15) !important;
+  border-radius: 25px;
+  border: 3px solid #d4c4b0;
+  background: linear-gradient(135deg, #ffffff 0%, #f7f5f3 100%);
+  box-shadow: 0 8px 25px rgba(89, 85, 80, 0.15);
 }
 
 .card-header {
-  background: linear-gradient(135deg, #e8ddd4 0%, #ddd4e8 100%) !important;
-  border-bottom: 3px solid #a8b5a1 !important;
-  color: #6b5d4f !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-  font-weight: 700 !important;
-  font-size: 1.3rem !important;
-  padding: 1.5rem 2rem !important;
+  background: linear-gradient(135deg, #e8ddd4 0%, #ddd4e8 100%);
+  border-bottom: 3px solid #a8b5a1;
+  color: #6b5d4f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 700;
+  font-size: 1.3rem;
+  padding: 1.5rem 2rem;
 }
 
 .card-header h2, .card-header h3, .card-header h4 {
-  color: #6b5d4f !important;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
-  font-weight: 800 !important;
-  margin: 0 !important;
+  color: #6b5d4f;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
+  margin: 0;
 }
 
 .card-body {
-  padding: 2rem !important;
+  padding: 2rem;
 }
 
 /* Container improvements */
@@ -1398,4 +1452,278 @@ img:hover {
   .modal-body {
     padding: 1.5rem;
   }
+}
+/* ---------------------------------------------------------------------------
+   Image failure states
+
+   Photo grids previously rendered a bare <img>. When the bytes failed to load
+   the tile went blank, which is indistinguishable from "the photo was never
+   added to this album" — the exact confusion behind the reported bug. These
+   give a failed or missing image a visible, labelled state instead.
+   --------------------------------------------------------------------------- */
+
+.photo-unavailable {
+  width: 100%;
+  height: 100%;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: repeating-linear-gradient(
+    45deg,
+    #f2efec,
+    #f2efec 10px,
+    #ece7e2 10px,
+    #ece7e2 20px
+  );
+  color: #8b7355;
+  font-size: 0.8rem;
+  text-align: center;
+  padding: 12px;
+  border-radius: 12px;
+}
+
+.photo-unavailable i {
+  font-size: 1.6rem;
+  opacity: 0.6;
+}
+
+img.photo-thumbnail-failed {
+  object-fit: contain;
+  background: repeating-linear-gradient(
+    45deg,
+    #f2efec,
+    #f2efec 10px,
+    #ece7e2 10px,
+    #ece7e2 20px
+  );
+  padding: 12px;
+}
+
+/* Icon-only controls were 30-34px; lift them to a usable touch target. */
+.btn-action {
+  min-width: var(--fps-touch-target);
+  min-height: var(--fps-touch-target);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pending state for tiles that submit a form (e.g. "add photo to album").
+   Without it, a click produced no feedback at all until the response came back
+   and users clicked twice. */
+.add-photo-tile.is-pending {
+  opacity: 0.55;
+  transform: scale(0.97);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+
+.add-photo-tile.is-pending .add-photo-overlay {
+  opacity: 1;
+}
+
+.add-photo-tile.is-pending .add-photo-icon i::before {
+  content: "\f110"; /* fa-spinner */
+  animation: fps-spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+@keyframes fps-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Hover-only affordances are unreachable on touch devices; the privacy badge
+   and the per-tile actions were both hidden behind :hover. */
+@media (hover: none) {
+  .album-overlay,
+  .photo-overlay,
+  .album-actions,
+  .photo-actions {
+    opacity: 1;
+  }
+}
+
+/* Pager (app/views/shared/_pager.html.erb) */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 32px 0 8px;
+  flex-wrap: wrap;
+}
+
+.pager-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--fps-radius-pill);
+  border: 1px solid var(--fps-sand);
+  background: #fff;
+  color: #6b5d4f;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.pager-link:hover {
+  background: #f4f1ee;
+  border-color: #6b5d4f;
+  color: #6b5d4f;
+}
+
+.pager-link-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.pager-status {
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.photos-count {
+  margin-bottom: 12px;
+  font-size: 0.95rem;
+}
+
+/* Processing-state badge on photo tiles. A photo that will never finish must
+   look different from one that is still working. */
+.photo-state-badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
+  backdrop-filter: blur(2px);
+}
+
+.photo-state-badge-pending {
+  background: rgba(107, 93, 79, 0.85);
+}
+
+.photo-state-badge-failed {
+  background: rgba(176, 58, 46, 0.9);
+}
+
+.processing-notice-failed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(176, 58, 46, 0.92);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+}
+
+.processing-notice-failed form {
+  margin: 0;
+}
+
+/* Clipboard feedback (clipboard_controller.js) */
+.copied {
+  background-color: #d4edda !important;
+  border-color: #28a745 !important;
+  color: #155724 !important;
+}
+
+.copy-failed {
+  background-color: #f8d7da !important;
+  border-color: #dc3545 !important;
+  color: #721c24 !important;
+}
+
+/* ---------------------------------------------------------------------------
+   Album audience badges
+
+   One definition, used by AlbumsHelper#album_privacy_badge everywhere. These
+   were previously hand-rolled per view with different padding, radii and
+   colours, so the same album looked different on the index, the show page and
+   a profile. They also lived inside hover-only overlays, which made an album's
+   privacy invisible on touch devices.
+   --------------------------------------------------------------------------- */
+
+.album-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.privacy-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 1.5;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.privacy-private {
+  background: var(--fps-ink-muted);
+}
+
+.privacy-family {
+  background: var(--fps-teal);
+}
+
+.privacy-link {
+  background: var(--fps-clay);
+}
+
+/* ---------------------------------------------------------------------------
+   Dismiss buttons for the guest and devise pages
+
+   Those views each carried their own copy of these rules. The alert COLOURS are
+   deliberately not redefined here — this app already has a warm palette above
+   (.alert / .alert-success / .alert-danger …), and overriding it would restyle
+   every alert in the signed-in UI.
+   --------------------------------------------------------------------------- */
+
+.alert i {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
+}
+
+.btn-close {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: inherit;
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.btn-close:hover {
+  opacity: 0.8;
+}
+
+.btn-close::after {
+  content: '\00d7';
 }

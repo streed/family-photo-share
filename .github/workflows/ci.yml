@@ -93,7 +93,10 @@ jobs:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432
           # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test test:system
+        # This project's suite is RSpec. The old `rails test test:system` ran
+        # minitest against a test/ directory that no longer exists, so CI passed
+        # without executing a single example.
+        run: bin/rails db:test:prepare && bundle exec rspec
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4

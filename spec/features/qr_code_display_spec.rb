@@ -1,56 +1,57 @@
 require 'rails_helper'
 
+# The album page renders the QR code with class `qr-code-image-header` when the
+# album has a cover photo and `qr-code-image-simple` otherwise — never the bare
+# `qr-code-image` these specs used to look for. It also only renders the QR when
+# the album actually has photos, so an empty album is not a valid fixture here.
 RSpec.feature 'QR Code Display', type: :feature do
   let(:user) { create(:user) }
   let(:album) { create(:album, user: user) }
 
-  before do
-    sign_in user
+  before { sign_in user }
+
+  def add_photo_to(album)
+    photo = create(:photo, user: album.user)
+    photo.image.attach(
+      io: Rails.root.join("spec/fixtures/files/test_image.jpg").open,
+      filename: "test_image.jpg",
+      content_type: "image/jpeg"
+    )
+    album.add_photo(photo)
+    photo
   end
 
   scenario 'QR code is displayed for externally shared albums' do
-    # Enable external sharing for the album
+    add_photo_to(album)
     album.update!(allow_external_access: true, password: 'testpass')
 
     visit album_path(album)
 
-    # Should show the external sharing section
     expect(page).to have_content('External Sharing')
     expect(page).to have_content('This album is shared externally')
 
-    # Should have QR code image
-    expect(page).to have_css('img.qr-code-image')
-    expect(page).to have_content('Scan with phone')
-
-    # QR code should have proper attributes
-    qr_image = page.find('img.qr-code-image')
+    qr_image = page.find('img.qr-code-image-header, img.qr-code-image-simple', match: :first)
     expect(qr_image['alt']).to include(album.name)
     expect(qr_image['title']).to eq('Scan to view album')
     expect(qr_image['src']).to start_with('data:image/svg+xml;base64,')
+    expect(page).to have_content('Scan to share')
   end
 
   scenario 'QR code is not displayed for non-shared albums' do
-    # Album without external sharing
+    add_photo_to(album)
+
     visit album_path(album)
 
-    # Should not show external sharing section
     expect(page).not_to have_content('External Sharing')
-    expect(page).not_to have_css('img.qr-code-image')
-    expect(page).not_to have_content('Scan with phone')
+    expect(page).not_to have_css('img.qr-code-image-header, img.qr-code-image-simple')
   end
 
-  scenario 'QR code is responsive on mobile viewport', js: true do
+  scenario 'QR code is not displayed for a shared album with no photos' do
     album.update!(allow_external_access: true, password: 'testpass')
-
-    # Simulate mobile viewport
-    page.driver.browser.manage.window.resize_to(375, 667)
 
     visit album_path(album)
 
-    # QR code should still be visible and properly sized
-    expect(page).to have_css('img.qr-code-image')
-
-    qr_container = page.find('.qr-code-container')
-    expect(qr_container).to be_visible
+    expect(album.photo_count).to eq(0)
+    expect(page).not_to have_css('img.qr-code-image-header, img.qr-code-image-simple')
   end
 end

@@ -90,7 +90,10 @@ Devise.setup do |config|
   # It will change confirmation, password recovery and other workflows
   # to behave the same regardless if the e-mail provided was right or wrong.
   # Does not affect registerable.
-  # config.paranoid = true
+  # Enabled so password-reset and unlock flows respond identically whether or not
+  # the address exists, closing an account-enumeration leak. The matching copy
+  # already lives at devise.passwords.send_paranoid_instructions.
+  config.paranoid = true
 
   # By default Devise will store the user in session. You can skip storage for
   # particular strategies by setting this option.

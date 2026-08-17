@@ -64,7 +64,7 @@
                       <%= link_to "Remove", "#", 
                                   method: :delete,
                                   class: "btn btn-sm btn-outline-danger",
-                                  confirm: "Are you sure you want to remove #{membership.user.display_name_or_full_name} from the family?",
+                                  data: { turbo_confirm: "Are you sure you want to remove #{membership.user.display_name_or_full_name} from the family?" },
                                   title: "Remove from family" %>
                     </div>
                   <% elsif membership.user == current_user %>
@@ -103,8 +103,7 @@
                   <%= link_to family_invitation_path(@family, invitation), 
                               method: :delete,
                               class: "btn btn-sm btn-outline-danger",
-                              confirm: "Cancel invitation to #{invitation.email}?",
-                              data: { "turbo-method": :delete },
+                              data: { turbo_confirm: "Cancel invitation to #{invitation.email}?", "turbo-method": :delete },
                               title: "Cancel invitation" do %>
                     <i class="fas fa-times"></i>
                   <% end %>

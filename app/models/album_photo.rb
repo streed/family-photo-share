@@ -1,5 +1,5 @@
 class AlbumPhoto < ApplicationRecord
-  belongs_to :album
+  belongs_to :album, counter_cache: :album_photos_count
   belongs_to :photo
 
   # Validations
@@ -21,10 +21,13 @@ class AlbumPhoto < ApplicationRecord
     self.added_at ||= Time.current
   end
 
+  # The column defaults to 0, and 0.blank? is false — so this guard never fired
+  # and creating an AlbumPhoto without an explicit position failed the
+  # "greater than 0" validation instead of being assigned the next slot.
   def set_position
-    if position.blank?
-      max_position = album.album_photos.maximum(:position) || 0
-      self.position = max_position + 1
-    end
+    return if position.to_i.positive?
+
+    max_position = album&.album_photos&.maximum(:position) || 0
+    self.position = max_position + 1
   end
 end

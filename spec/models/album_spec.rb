@@ -15,7 +15,7 @@ RSpec.describe Album, type: :model do
     it { should validate_length_of(:name).is_at_most(100) }
     it { should validate_length_of(:description).is_at_most(1000) }
     it { should validate_presence_of(:privacy) }
-    it { should validate_inclusion_of(:privacy).in_array(%w[private family public]) }
+    it { should validate_inclusion_of(:privacy).in_array(%w[private family]) }
     it { should validate_uniqueness_of(:name).scoped_to(:user_id) }
   end
 
@@ -69,12 +69,19 @@ RSpec.describe Album, type: :model do
         expect(album.accessible_by?(user)).to be true
       end
 
-      it 'allows access to public albums' do
-        album.update!(privacy: 'public')
-        expect(album.accessible_by?(other_user)).to be true
+      it 'denies access to private albums for non-owners' do
+        expect(album.accessible_by?(other_user)).to be false
       end
 
-      it 'denies access to private albums for non-owners' do
+      it 'denies access to anonymous visitors' do
+        expect(album.accessible_by?(nil)).to be false
+      end
+
+      it 'denies access to a family album when neither user belongs to a family' do
+        album.update!(privacy: 'family')
+
+        expect(user.family).to be_nil
+        expect(other_user.family).to be_nil
         expect(album.accessible_by?(other_user)).to be false
       end
 

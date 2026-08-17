@@ -86,14 +86,18 @@ class BulkUploadProcessingJob
       taken_at: extract_date_from_filename(filename) || Time.current
     )
 
-    # Attach the image
-    photo.image.attach(
-      io: image.blob.open,
-      filename: image.filename,
-      content_type: image.blob.content_type
-    )
+    # Attach the image. blob.open only yields the tempfile to a block — calling
+    # it bare raises LocalJumpError, which silently failed every bulk upload.
+    image.blob.open do |file|
+      photo.image.attach(
+        io: file,
+        filename: image.filename,
+        content_type: image.blob.content_type
+      )
 
-    photo.save
+      photo.save
+    end
+
     photo
   end
 

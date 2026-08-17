@@ -50,8 +50,11 @@ Rails.application.configure do
   # config.cache_store = :solid_cache_store
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
-  # config.active_job.queue_adapter = :solid_queue
-  # config.solid_queue.connects_to = { database: { writing: :queue } }
+  # The app already runs Sidekiq for its Sidekiq::Job classes; without this the
+  # ActiveJob-based scheduled cleanups ran on the default :async adapter — an
+  # in-process thread pool with no durability, retries, or visibility, silently
+  # dropping work on every restart.
+  config.active_job.queue_adapter = :sidekiq
 
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.

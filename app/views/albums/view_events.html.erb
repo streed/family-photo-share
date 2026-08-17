@@ -198,15 +198,18 @@
               </p>
               <div class="row">
                 <div class="col-md-8 col-sm-12 mb-3">
-                  <div class="input-group">
-                    <input type="text" 
-                           class="form-control" 
-                           value="<%= external_album_url(@album.sharing_token) %>" 
+                  <div class="input-group" data-controller="clipboard">
+                    <input type="text"
+                           class="form-control"
+                           data-clipboard-target="source"
+                           aria-label="Album sharing link"
+                           value="<%= external_album_url(@album.sharing_token) %>"
                            readonly>
-                    <button class="btn btn-outline-primary" 
-                            type="button" 
-                            onclick="navigator.clipboard.writeText('<%= external_album_url(@album.sharing_token) %>')">
-                      <i class="fas fa-copy me-1"></i>Copy
+                    <button class="btn btn-outline-primary"
+                            type="button"
+                            data-clipboard-target="button"
+                            data-action="clipboard#copy">
+                      <i class="fas fa-copy me-1" aria-hidden="true"></i>Copy
                     </button>
                   </div>
                 </div>

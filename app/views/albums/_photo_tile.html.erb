@@ -1,0 +1,70 @@
+<%#
+  One photo tile in an album grid.
+
+  Extracted so the initial page render and the turbo_stream responses for
+  add/remove produce identical markup — previously the stream hand-wrote a
+  different fragment and the two drifted apart.
+
+  Locals: album, photo, index, editable
+%>
+<div class="photo-tile" id="<%= dom_id(photo) %>">
+  <div class="photo-item position-relative"
+       role="button"
+       tabindex="0"
+       data-action="click->slideshow#open keydown.enter->slideshow#open keydown.space->slideshow#open"
+       data-slideshow-index-value="<%= index %>"
+       data-slideshow-photo-id-value="<%= photo.id %>">
+    <div class="photo-container">
+      <%= photo_thumbnail_tag photo,
+                    data: {
+                      large: photo.short_large_url,
+                      title: photo_title_or_default(photo),
+                      description: photo.description,
+                      user: photo.user.display_name_or_full_name
+                    } %>
+      <%= photo_processing_badge(photo) %>
+      <div class="photo-overlay">
+        <div class="photo-info">
+          <div class="photo-title"><%= truncated_photo_title(photo, length: 30) %></div>
+          <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
+        </div>
+      </div>
+    </div>
+
+    <% if editable %>
+      <div class="photo-actions">
+        <div class="action-buttons">
+          <% if album.cover_photo_id == photo.id %>
+            <span class="btn btn-sm btn-warning btn-action" title="Current album cover">
+              <i class="fas fa-crown" aria-hidden="true"></i>
+              <span class="visually-hidden">Current album cover</span>
+            </span>
+          <% else %>
+            <%= button_to set_cover_album_path(album, photo_id: photo.id),
+                          method: :patch,
+                          class: "btn btn-sm btn-light btn-action",
+                          title: "Set as album cover",
+                          "aria-label": "Set as album cover",
+                          data: { turbo_confirm: "Set this as the album cover?" },
+                          form: { onclick: "event.stopPropagation();" } do %>
+              📸
+            <% end %>
+          <% end %>
+
+          <%= button_to remove_photo_album_path(album, photo_id: photo.id),
+                        method: :delete,
+                        class: "btn btn-sm btn-danger btn-action",
+                        title: "Remove photo from album",
+                        "aria-label": "Remove photo from album",
+                        data: { turbo_confirm: "Remove this photo from the album?" },
+                        form: {
+                          onclick: "event.stopPropagation();",
+                          style: "display: inline;"
+                        } do %>
+            <i class="fas fa-trash-alt" aria-hidden="true"></i>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

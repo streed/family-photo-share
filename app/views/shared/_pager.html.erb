@@ -1,0 +1,34 @@
+<%#
+  A minimal pager. The app has no pagination gem, and controllers were silently
+  capping result sets, so this keeps the truncation visible and navigable.
+
+  Locals:
+    page          - current 1-based page
+    total_pages   - total number of pages
+    path_for_page - lambda taking a page number and returning a URL
+%>
+<% if total_pages.to_i > 1 %>
+  <nav class="pager" aria-label="Pagination">
+    <% if page > 1 %>
+      <%= link_to path_for_page.call(page - 1), class: "pager-link", rel: "prev" do %>
+        <i class="fas fa-chevron-left" aria-hidden="true"></i> Previous
+      <% end %>
+    <% else %>
+      <span class="pager-link pager-link-disabled" aria-disabled="true">
+        <i class="fas fa-chevron-left" aria-hidden="true"></i> Previous
+      </span>
+    <% end %>
+
+    <span class="pager-status">Page <%= page %> of <%= total_pages %></span>
+
+    <% if page < total_pages %>
+      <%= link_to path_for_page.call(page + 1), class: "pager-link", rel: "next" do %>
+        Next <i class="fas fa-chevron-right" aria-hidden="true"></i>
+      <% end %>
+    <% else %>
+      <span class="pager-link pager-link-disabled" aria-disabled="true">
+        Next <i class="fas fa-chevron-right" aria-hidden="true"></i>
+      </span>
+    <% end %>
+  </nav>
+<% end %>
