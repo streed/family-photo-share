@@ -39,5 +39,24 @@ Metrics/BlockLength:
     - 'spec/**/*'
     - 'config/routes.rb'
 
+# Skipping validations is the intent at these call sites, not an oversight:
+# processing-state transitions and position reindexing must not re-run
+# validations or callbacks (a photo's own after_save re-enqueues processing),
+# and the sweep job deliberately rewinds updated_at so a later pass picks the
+# photo back up. Specs use the same calls to plant state — a stale timestamp, an
+# exhausted attempt count — that validations exist to prevent.
+# This lives here rather than in .rubocop_todo.yml because it is a standing
+# decision, not debt: regenerating the todo kept re-listing each new spec file.
+Rails/SkipsModelValidations:
+  Exclude:
+    - 'app/jobs/bulk_image_processing_job.rb'
+    - 'app/models/album.rb'
+    - 'app/models/album_access_session.rb'
+    - 'app/models/photo.rb'
+    - 'app/models/short_url.rb'
+    - 'app/services/image_processing_service.rb'
+    - 'lib/tasks/image_processing.rake'
+    - 'spec/**/*'
+
 Style/ClassAndModuleChildren:
   Enabled: false

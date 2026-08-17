@@ -76,8 +76,13 @@ jobs:
       #   options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
+      # imagemagick and exiftool are runtime dependencies, not build tools: the
+      # variant processor shells out to `convert` and metadata extraction shells
+      # out to `exiftool`. The runner image ships neither, so every spec that
+      # actually processed an image died on `executable not found: "convert"`.
+      # Keep this list in step with the Dockerfile's runtime packages.
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential git libpq-dev libyaml-dev pkg-config google-chrome-stable
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential git imagemagick exiftool libpq-dev libyaml-dev pkg-config google-chrome-stable
 
       - name: Checkout code
         uses: actions/checkout@v5
