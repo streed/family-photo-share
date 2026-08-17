@@ -64,14 +64,19 @@ Rails/RootPathnameMethods:
 # sites are deliberate, so they are a standing exclusion rather than debt to burn
 # down here.
 
-# Offense count: 8
+# Offense count: 9
 # This cop supports unsafe autocorrection (--autocorrect-all).
 # Configuration parameters: Include.
 # Include: **/app/controllers/**/*.rb
+# external_albums_controller.rb is here for a reason beyond "not migrated yet":
+# `params.expect(:photo_id)` raises ParameterMissing (400) where `params[:photo_id]`
+# yields nil -> RecordNotFound, which track_photo_view rescues into a 404. That
+# endpoint is public, so the autocorrection would change its contract.
 Rails/StrongParametersExpect:
   Exclude:
     - 'app/controllers/albums_controller.rb'
     - 'app/controllers/bulk_uploads_controller.rb'
+    - 'app/controllers/external_albums_controller.rb'
     - 'app/controllers/families_controller.rb'
     - 'app/controllers/family_invitations_controller.rb'
     - 'app/controllers/photos_controller.rb'

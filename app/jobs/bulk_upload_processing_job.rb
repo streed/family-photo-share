@@ -20,9 +20,7 @@ class BulkUploadProcessingJob
 
           if photo.persisted?
             # Add to album if specified
-            if bulk_upload.album.present?
-              bulk_upload.album.add_photo(photo)
-            end
+            bulk_upload.album.presence&.add_photo(photo)
 
             # Create the association
             bulk_upload.bulk_upload_photos.create!(photo: photo)

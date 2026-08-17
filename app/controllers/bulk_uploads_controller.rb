@@ -21,7 +21,7 @@ class BulkUploadsController < ApplicationController
     if attrs[:album_id].present? && !current_user.albums.exists?(id: attrs[:album_id])
       @bulk_upload.errors.add(:album_id, "is not one of your albums")
       handle_validation_errors(@bulk_upload)
-      return render :new, status: :unprocessable_entity
+      return render :new, status: :unprocessable_content
     end
 
     if @bulk_upload.save

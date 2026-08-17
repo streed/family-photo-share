@@ -40,7 +40,7 @@ class FamiliesController < ApplicationController
       redirect_to @family, notice: "Family was successfully created!"
     else
       handle_validation_errors(@family)
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -50,7 +50,7 @@ class FamiliesController < ApplicationController
       redirect_to @family, notice: "Family was successfully updated!"
     else
       handle_validation_errors(@family)
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

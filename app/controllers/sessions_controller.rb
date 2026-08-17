@@ -48,7 +48,7 @@ class SessionsController < Devise::SessionsController
     # there — the sessions/new view never reads @alert_message.
     flash.now[:alert] = failed_login_message
 
-    render :new, status: :unprocessable_entity
+    render :new, status: :unprocessable_content
   end
 
   def failed_login_message

@@ -27,7 +27,7 @@ class ExternalAlbumsController < ApplicationController
       if attempts >= MAX_PASSWORD_ATTEMPTS
         remaining_time = rate_limit_remaining_time
         flash.now[:alert] = "Too many incorrect password attempts. Please try again in #{remaining_time} #{'minute'.pluralize(remaining_time)}."
-        render :password_form, status: :unprocessable_entity and return
+        render :password_form, status: :unprocessable_content and return
       end
     end
 
@@ -59,7 +59,7 @@ class ExternalAlbumsController < ApplicationController
         end
       end
 
-      render :password_form, status: :unprocessable_entity
+      render :password_form, status: :unprocessable_content
     end
   end
 

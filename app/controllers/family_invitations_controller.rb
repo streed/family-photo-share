@@ -39,7 +39,7 @@ class FamilyInvitationsController < ApplicationController
     else
       handle_validation_errors(@invitation)
       @pending_invitations = @family.family_invitations.pending.recent
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

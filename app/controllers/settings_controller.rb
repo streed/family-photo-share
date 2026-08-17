@@ -11,7 +11,7 @@ class SettingsController < ApplicationController
     if @user.update(profile_params)
       redirect_to settings_path, notice: "Profile updated successfully."
     else
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 
@@ -27,18 +27,18 @@ class SettingsController < ApplicationController
           if @user.update(account_params.except(:password, :password_confirmation, :current_password))
             redirect_to settings_path, notice: "Account updated successfully."
           else
-            render :show, status: :unprocessable_entity
+            render :show, status: :unprocessable_content
           end
         else
           @user.errors.add(:current_password, "is incorrect")
-          render :show, status: :unprocessable_entity
+          render :show, status: :unprocessable_content
         end
       else
         # No email change, just update other allowed fields
         if @user.update(account_params.except(:password, :password_confirmation, :current_password, :email))
           redirect_to settings_path, notice: "Account updated successfully."
         else
-          render :show, status: :unprocessable_entity
+          render :show, status: :unprocessable_content
         end
       end
     else
@@ -47,7 +47,7 @@ class SettingsController < ApplicationController
         bypass_sign_in(@user) # Keep user signed in after password change
         redirect_to settings_path, notice: "Account updated successfully."
       else
-        render :show, status: :unprocessable_entity
+        render :show, status: :unprocessable_content
       end
     end
   end
@@ -60,7 +60,7 @@ class SettingsController < ApplicationController
       redirect_to root_path, notice: "Your account has been successfully deleted."
     else
       @user.errors.add(:current_password, "is incorrect")
-      render :show, status: :unprocessable_entity
+      render :show, status: :unprocessable_content
     end
   end
 

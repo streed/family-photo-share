@@ -54,7 +54,7 @@ class AlbumsController < ApplicationController
       redirect_to @album, notice: "Album was successfully created!"
     else
       handle_validation_errors(@album)
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -64,7 +64,7 @@ class AlbumsController < ApplicationController
       redirect_to @album, notice: "Album was successfully updated!"
     else
       handle_validation_errors(@album)
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

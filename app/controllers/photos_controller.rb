@@ -72,8 +72,8 @@ class PhotosController < ApplicationController
     else
       handle_validation_errors(@photo)
       respond_to do |format|
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: { errors: @photo.errors.full_messages }, status: :unprocessable_entity }
+        format.html { render :new, status: :unprocessable_content }
+        format.json { render json: { errors: @photo.errors.full_messages }, status: :unprocessable_content }
       end
     end
   end
@@ -84,7 +84,7 @@ class PhotosController < ApplicationController
       redirect_to @photo, notice: "Photo was successfully updated!"
     else
       handle_validation_errors(@photo)
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
