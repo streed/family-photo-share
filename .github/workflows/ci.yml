@@ -93,6 +93,15 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      # app/assets/builds/tailwind.css is generated, not committed. Every view
+      # links it through the layout, so without this step each rendering spec
+      # dies on Propshaft::MissingAssetError instead of testing anything.
+      - name: Build stylesheets
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432
+        run: bin/rails tailwindcss:build
+
       - name: Run tests
         env:
           RAILS_ENV: test

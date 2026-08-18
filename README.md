@@ -123,7 +123,6 @@ docker-compose exec web rails db:create db:migrate db:seed
 git clone https://github.com/streed/family-photo-share.git
 cd family-photo-share
 bundle install
-yarn install
 
 # 2. Install system dependencies (macOS)
 brew install postgresql@15 redis imagemagick exiftool
@@ -133,8 +132,8 @@ cp config/database.yml.example config/database.yml
 rails db:create db:migrate db:seed
 
 # 4. Start services
-# Terminal 1: Rails server
-rails server
+# Terminal 1: Rails server + Tailwind watcher
+bin/dev
 
 # Terminal 2: Sidekiq
 bundle exec sidekiq
@@ -142,6 +141,12 @@ bundle exec sidekiq
 # Terminal 3: Redis (if not running)
 redis-server
 ```
+
+> **Stylesheets are built, not committed.** `bin/dev` runs the Tailwind watcher
+> alongside the server. Running `rails server` on its own against a fresh clone
+> raises `Propshaft::MissingAssetError: The asset 'tailwind.css' was not found` —
+> run `bin/rails tailwindcss:build` once (CI does exactly this before its specs,
+> and `assets:precompile` handles it in the Docker build).
 
 ## Development
 
