@@ -6,6 +6,9 @@ require 'rails_helper'
 # app's customised forms.
 RSpec.feature 'User Authentication', type: :feature do
   scenario 'User signs up successfully' do
+    # Open sign-up is off by default; this scenario is about the form itself.
+    allow(PublicSignup).to receive(:enabled?).and_return(true)
+
     visit new_user_registration_path
 
     fill_in 'First name', with: 'John'

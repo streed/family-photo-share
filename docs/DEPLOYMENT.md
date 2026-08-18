@@ -472,6 +472,10 @@ RAILS_LOG_TO_STDOUT=true
 ### Optional Environment Variables
 
 ```bash
+# Registration — omit this entirely to keep the app invitation-only, which is
+# the default. Invited people can always finish signing up either way.
+ALLOW_PUBLIC_SIGNUP=false
+
 # Storage (AWS S3)
 AWS_ACCESS_KEY_ID=your-access-key
 AWS_SECRET_ACCESS_KEY=your-secret

@@ -53,6 +53,18 @@ module AlbumsHelper
     end
   end
 
+  # Marks an album the whole family can add to, so it reads as a shared space
+  # rather than one person's album that everyone happens to be able to see.
+  def album_contributions_badge(album)
+    return unless album.allow_contributions? && album.privacy == "family"
+
+    tag.span(class: "badge badge-info",
+             title: "Everyone in the family can add their own photos") do
+      concat tag.i("", class: "fas fa-user-plus", "aria-hidden": true)
+      concat " Family can add"
+    end
+  end
+
   # Where a guest appears to be, from their IP.
   #
   # `locations` is the map the controller loaded for the whole page, so this

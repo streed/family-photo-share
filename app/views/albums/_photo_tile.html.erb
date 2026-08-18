@@ -5,8 +5,13 @@
   add/remove produce identical markup — previously the stream hand-wrote a
   different fragment and the two drifted apart.
 
-  Locals: album, photo, index, editable
+  Locals: album, photo, index, editable, contributor
+
+  `editable` is the album owner, who curates everything. `contributor` is a
+  family member the owner has let add photos: they get a remove button on their
+  own photos only, and never the cover-photo control.
 %>
+<% removable = editable || (contributor && photo.user_id == current_user&.id) %>
 <div class="group relative" id="<%= dom_id(photo) %>">
   <div class="tile cursor-zoom-in"
        role="button"
@@ -32,9 +37,11 @@
     </div>
   </div>
 
-  <% if editable %>
+  <% if removable %>
     <div class="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
-      <% if album.cover_photo_id == photo.id %>
+      <% if !editable %>
+        <%# Nothing: a contributor gets the remove button below and no more. %>
+      <% elsif album.cover_photo_id == photo.id %>
         <span class="icon-btn h-9 w-9 cursor-default bg-clay-soft text-clay shadow-[var(--shadow-soft)]"
               title="Album cover">
           <i class="fas fa-star" aria-hidden="true"></i>

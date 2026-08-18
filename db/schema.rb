@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_18_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -100,6 +100,7 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_18_000001) do
     t.string "sharing_token"
     t.string "external_password"
     t.integer "album_photos_count", default: 0, null: false
+    t.boolean "allow_contributions", default: false, null: false
     t.index ["allow_external_access"], name: "index_albums_on_allow_external_access"
     t.index ["cover_photo_id"], name: "index_albums_on_cover_photo_id"
     t.index ["created_at"], name: "index_albums_on_created_at"

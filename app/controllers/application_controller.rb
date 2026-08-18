@@ -8,7 +8,16 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::RecordNotFound, with: :handle_record_not_found
   rescue_from ActionController::ParameterMissing, with: :handle_parameter_missing
 
+  helper_method :signup_available?
+
   protected
+
+  # Whether to offer "create an account" at all. Open sign-up is off by default;
+  # someone part-way through accepting a family invitation always gets the offer,
+  # because that is how people are meant to join.
+  def signup_available?
+    PublicSignup.enabled? || session[:invitation_token].present?
+  end
 
   def handle_record_not_found
     redirect_to root_path, alert: "The requested resource was not found."

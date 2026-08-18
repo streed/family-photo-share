@@ -74,7 +74,10 @@
         </div>
         <div class="flex flex-col gap-2">
           <%= link_to "Sign in to accept", new_user_session_path, class: "btn btn-primary btn-lg btn-block" %>
-          <%= link_to "Create an account", new_user_registration_path, class: "btn btn-secondary btn-block" %>
+          <%# Carry the token: this is the invitation-aware route, which works even
+              when open sign-up is switched off, and joins them to the family. %>
+          <%= link_to "Create an account", invitation_signup_path(@invitation.token),
+                class: "btn btn-secondary btn-block" %>
           <%= button_to "Decline", decline_invitation_path(@invitation.token), method: :patch,
                 class: "btn btn-ghost btn-block", form_class: "contents",
                 data: { turbo_confirm: "Decline this invitation?" } %>

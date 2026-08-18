@@ -10,6 +10,7 @@ class BulkUploadsController < ApplicationController
   end
   def new
     @bulk_upload = BulkUpload.new
+    load_album_choices
   end
 
   def create
@@ -18,9 +19,11 @@ class BulkUploadsController < ApplicationController
 
     # album_id arrives from the form, so it has to be checked against the
     # uploader — otherwise photos can be pushed into anyone's album by id.
-    if attrs[:album_id].present? && !current_user.albums.exists?(id: attrs[:album_id])
-      @bulk_upload.errors.add(:album_id, "is not one of your albums")
+    # Albums a relative has opened up for contributions count as well.
+    if attrs[:album_id].present? && !Album.addable_by(current_user).exists?(id: attrs[:album_id])
+      @bulk_upload.errors.add(:album_id, "is not an album you can add photos to")
       handle_validation_errors(@bulk_upload)
+      load_album_choices
       return render :new, status: :unprocessable_content
     end
 
@@ -32,6 +35,7 @@ class BulkUploadsController < ApplicationController
       BulkUploadProcessingJob.perform_async(@bulk_upload.id)
       redirect_to bulk_upload_path(@bulk_upload), notice: "Your photos are being processed. You will be notified when they are ready."
     else
+      load_album_choices
       render :new
     end
   end
@@ -39,6 +43,17 @@ class BulkUploadsController < ApplicationController
 
 
   private
+
+  # Where these photos can land: your own albums, plus any family album a
+  # relative has opened up for contributions.
+  def load_album_choices
+    @own_albums = current_user.albums.recent.to_a
+    @shared_albums = Album.addable_by(current_user)
+                          .where.not(user_id: current_user.id)
+                          .includes(:user)
+                          .recent
+                          .to_a
+  end
 
   def bulk_upload_params
     params.require(:bulk_upload).permit(:album_id, images: [], titles: [], descriptions: [])

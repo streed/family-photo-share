@@ -17,7 +17,8 @@
                  album: @album,
                  photo: photo,
                  index: index,
-                 editable: @album.editable_by?(current_user) %>
+                 editable: @editable,
+                 contributor: @contributor %>
     <% end %>
   </div>
 <% end %>
@@ -34,7 +35,7 @@
                album: @album,
                pickable_photos: @pickable_photos,
                addable_photo_count: @addable_photo_count,
-               editable: @album.editable_by?(current_user) %>
+               can_add: @can_add_photos %>
   </div>
 <% end %>
 

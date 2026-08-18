@@ -32,6 +32,20 @@ class Album < ApplicationRecord
   scope :by_privacy, ->(privacy) { where(privacy: privacy) }
   scope :private_albums, -> { where(privacy: "private") }
   scope :family_albums, -> { where(privacy: "family") }
+  # Albums this user may put a photo into: their own, plus any family album a
+  # relative has opened up for contributions. Used by every upload path that
+  # takes an album_id, so a shared album is a real destination and not just a
+  # place to look.
+  scope :addable_by, ->(user) {
+    return none unless user
+
+    if user.family
+      where(user_id: user.id)
+        .or(where(privacy: "family", allow_contributions: true, user_id: user.family.users.select(:id)))
+    else
+      where(user_id: user.id)
+    end
+  }
   scope :accessible_to, ->(user) {
     return none unless user
     if user.family
@@ -43,6 +57,7 @@ class Album < ApplicationRecord
     end
   }
 
+  before_save :clear_contributions_unless_family
   before_save :generate_sharing_token, if: :allow_external_access_changed?
   before_save :clear_sharing_data, if: :allow_external_access_changed_to_false?
   after_update :update_cover_photo_if_needed
@@ -167,8 +182,49 @@ class Album < ApplicationRecord
     owner_family.present? && user.family == owner_family
   end
 
+  # Album settings, sharing, analytics and the cover photo stay with the owner.
   def editable_by?(user)
     self.user == user
+  end
+
+  # A contributor is someone other than the owner who may add their own photos
+  # to this album. Only ever family members of the owner, only while the album
+  # is shared with the family, and only when the owner has said yes.
+  def contributable_by?(user)
+    return false unless user
+    return false if user == self.user
+    return false unless allow_contributions? && privacy == "family"
+
+    owner_family = self.user.family
+    owner_family.present? && user.family == owner_family
+  end
+
+  def photos_addable_by?(user)
+    editable_by?(user) || contributable_by?(user)
+  end
+
+  # Who may take a photo back out. The owner curates the whole album; everyone
+  # else may only withdraw what they put in. Photos are always added by their
+  # own uploader (every add path resolves the photo through the adder's own
+  # library), so "yours" and "the one you added" are the same set.
+  def photo_removable_by?(photo, user)
+    return false unless user && photo
+    return true if editable_by?(user)
+
+    contributable_by?(user) && photo.user_id == user.id
+  end
+
+  # The family members who can add to this album, excluding the owner.
+  def contributors
+    return [] unless allow_contributions?
+
+    family_viewers
+  end
+
+  # Everyone who has actually put a photo in, most recent contribution first.
+  # Only meaningful once the album is collaborative, but harmless before that.
+  def contributing_users
+    User.where(id: photos.select(:user_id)).where.not(id: user_id)
   end
 
   # The people who can actually open this album because of its privacy setting,
@@ -272,6 +328,13 @@ class Album < ApplicationRecord
   def generate_sharing_token
     return unless allow_external_access?
     self.sharing_token = SecureRandom.urlsafe_base64(16) while sharing_token.blank? || Album.exists?(sharing_token: sharing_token)
+  end
+
+  # A private album has no family to contribute, so the flag would just sit there
+  # lying about the album's state on the edit form. Turning privacy back to
+  # "family" is an explicit act, and so is re-opening contributions.
+  def clear_contributions_unless_family
+    self.allow_contributions = false unless privacy == "family"
   end
 
   def clear_sharing_data

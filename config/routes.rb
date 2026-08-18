@@ -50,8 +50,15 @@ Rails.application.routes.draw do
     sessions: 'sessions'
   }
   
-  # Invite-based registration route (with token)
-  get 'users/sign_up/:invitation_token', to: 'registrations#new', as: :invitation_signup
+  # Invite-based registration route (with token).
+  #
+  # devise_scope is what puts the :user mapping on the request. Without it this
+  # route reached RegistrationsController with devise_mapping nil, and the form
+  # 500'd on `devise_mapping.validatable?` — the one route an invited person is
+  # sent down, and now the only way to create an account when open sign-up is off.
+  devise_scope :user do
+    get 'users/sign_up/:invitation_token', to: 'registrations#new', as: :invitation_signup
+  end
 
   # Profile routes
   resources :profiles, only: [:show]

@@ -66,7 +66,10 @@ class PhotosController < ApplicationController
     if @photo.save
       # Add to album if specified
       if params[:photo][:album_id].present?
-        album = current_user.albums.find_by(id: params[:photo][:album_id])
+        # addable_by rather than current_user.albums: a family album someone has
+        # opened up for contributions is a legitimate destination too, and this
+        # still refuses any album the uploader has no business writing to.
+        album = Album.addable_by(current_user).find_by(id: params[:photo][:album_id])
         album&.add_photo(@photo)
       end
 

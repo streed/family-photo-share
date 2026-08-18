@@ -1,5 +1,8 @@
 <% content_for :title, "#{@album.name} — Family Memories" %>
-<% editable = @album.editable_by?(current_user) %>
+<%# @editable / @contributor / @can_add_photos are resolved in the controller:
+    working them out per tile would ask the database for the owner's family once
+    per photo in the grid. %>
+<% editable = @editable %>
 <% shareable = @album.allow_external_access? && @album.sharing_url.present? && editable %>
 
 <div class="shell">
@@ -19,6 +22,7 @@
           <% end %>
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <%= album_privacy_badge(@album, detailed: true) %>
+            <%= album_contributions_badge(@album) %>
             <%= album_link_sharing_badge(@album) %>
             <span class="text-sm text-white/85">
               <%= pluralize(@album.photo_count, "photo") %> ·
@@ -46,6 +50,7 @@
           <% end %>
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <%= album_privacy_badge(@album, detailed: true) %>
+            <%= album_contributions_badge(@album) %>
             <%= album_link_sharing_badge(@album) %>
             <span class="meta">
               <%= pluralize(@album.photo_count, "photo") %> ·
@@ -69,6 +74,17 @@
 
   <% if editable %>
     <%= render "albums/audience", album: @album %>
+  <% end %>
+
+  <% if @contributor %>
+    <section class="notice notice-info mb-6">
+      <i class="fas fa-users mt-0.5 shrink-0" aria-hidden="true"></i>
+      <div>
+        <strong><%= @album.user.display_name_or_full_name %> opened this album up to the family.</strong>
+        Add your own photos to it below — they stay in your library, and you can take
+        them back out whenever you like.
+      </div>
+    </section>
   <% end %>
 
   <%# --- External sharing -------------------------------------------------- %>
@@ -193,7 +209,8 @@
                    album: @album,
                    photo: photo,
                    index: index,
-                   editable: editable %>
+                   editable: editable,
+                   contributor: @contributor %>
       <% end %>
     </div>
 
@@ -201,7 +218,7 @@
       <div class="empty">
         <i class="fas fa-images empty-icon" aria-hidden="true"></i>
         <h2 class="section-title">No photos in this album yet</h2>
-        <p class="meta"><%= editable ? "Pick one from your library below." : "This album is empty." %></p>
+        <p class="meta"><%= @can_add_photos ? "Pick one from your library below." : "This album is empty." %></p>
       </div>
     <% end %>
 
@@ -246,6 +263,6 @@
                album: @album,
                pickable_photos: @pickable_photos,
                addable_photo_count: @addable_photo_count,
-               editable: editable %>
+               can_add: @can_add_photos %>
   </div>
 </div>

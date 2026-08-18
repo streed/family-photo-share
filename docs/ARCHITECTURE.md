@@ -350,7 +350,11 @@ end
 ### Authorization
 
 - **Family-Based**: Users can only access their family's content
-- **Owner-Based**: Only photo/album owners can modify content
+- **Owner-Based**: Only photo/album owners can change an album's settings, cover,
+  link sharing or existence
+- **Contributor-Based**: On a family album with `allow_contributions`, any member
+  of the owner's family may add their own photos and withdraw their own photos —
+  `Album#contributable_by?` — and nothing else
 - **Role-Based**: Different permissions for family admins vs members
 
 ```ruby
@@ -360,6 +364,7 @@ class AlbumsController < ApplicationController
   before_action :set_album
   before_action :ensure_access, only: [:show]
   before_action :ensure_owner, only: [:edit, :update, :destroy]
+  before_action :ensure_can_add_photos, only: [:add_photo, :remove_photo]
   
   private
   

@@ -29,6 +29,7 @@
 
       <div class="mt-2 flex flex-wrap gap-1.5">
         <%= album_privacy_badge(album, detailed: owned) %>
+        <%= album_contributions_badge(album) %>
         <%= album_link_sharing_badge(album) if owned %>
       </div>
 

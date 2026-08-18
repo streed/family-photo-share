@@ -4,8 +4,12 @@
     <%= link_to "Sign in", new_session_path(resource_name), class: "link" %>
   <% end %>
 
-  <%- if devise_mapping.registerable? && controller_name != 'registrations' && session[:invitation_token].present? %>
-    <%= link_to "Create an account", invitation_signup_path(session[:invitation_token]), class: "link" %>
+  <%- if devise_mapping.registerable? && controller_name != 'registrations' && signup_available? %>
+    <% if session[:invitation_token].present? %>
+      <%= link_to "Create an account", invitation_signup_path(session[:invitation_token]), class: "link" %>
+    <% else %>
+      <%= link_to "Create an account", new_user_registration_path, class: "link" %>
+    <% end %>
   <% end %>
 
   <%- if devise_mapping.recoverable? && controller_name != 'passwords' && controller_name != 'registrations' %>

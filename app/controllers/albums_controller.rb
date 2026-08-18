@@ -2,7 +2,10 @@ class AlbumsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_album, only: [ :show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
   before_action :ensure_access, only: [ :show ]
-  before_action :ensure_owner, only: [ :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
+  before_action :ensure_owner, only: [ :edit, :update, :destroy, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
+  # Adding and removing photos is no longer owner-only: a family album the owner
+  # has opened up can be added to by any member of that family.
+  before_action :ensure_can_add_photos, only: [ :add_photo, :remove_photo ]
 
   def index
     @albums = current_user.albums.recent.includes(cover_photo: { image_attachment: :blob })
@@ -31,8 +34,9 @@ class AlbumsController < ApplicationController
   def show
     @sort = @album.sort_order_for(params[:sort])
     @photos = @album.ordered_photos(sort: @sort).includes(:user, image_attachment: :blob).to_a
+    load_permissions
 
-    if @album.editable_by?(current_user)
+    if @can_add_photos
       @user_photos = current_user.photos.where.not(id: @album.photo_ids).recent
       @addable_photo_count = @user_photos.count
       @pickable_photos = @user_photos.limit(20).includes(image_attachment: :blob).to_a
@@ -103,6 +107,10 @@ class AlbumsController < ApplicationController
   def remove_photo
     begin
       photo = @album.photos.find(params[:photo_id])
+
+      unless @album.photo_removable_by?(photo, current_user)
+        return redirect_to @album, alert: "You can only remove photos you added to this album."
+      end
 
       if @album.remove_photo(photo)
         respond_to do |format|
@@ -242,6 +250,7 @@ class AlbumsController < ApplicationController
     @album.reload
     @sort = @album.sort_order_for(params[:sort])
     @photos = @album.ordered_photos(sort: @sort).includes(:user, image_attachment: :blob).to_a
+    load_permissions
     @user_photos = current_user.photos.where.not(id: @album.photo_ids).recent
     @addable_photo_count = @user_photos.count
     @pickable_photos = @user_photos.limit(20).includes(image_attachment: :blob).to_a
@@ -264,7 +273,23 @@ class AlbumsController < ApplicationController
     redirect_to @album, alert: "You can only manage your own albums." unless @album.editable_by?(current_user)
   end
 
+  def ensure_can_add_photos
+    return if @album.photos_addable_by?(current_user)
+
+    redirect_to albums_path, alert: "You can't add photos to this album."
+  end
+
+  # Resolved once per request and handed to the views. Both #contributable_by?
+  # and the per-tile remove button need the owner's family, and asking per tile
+  # would be one query per photo in the grid.
+  def load_permissions
+    @editable = @album.editable_by?(current_user)
+    @contributor = @album.contributable_by?(current_user)
+    @can_add_photos = @editable || @contributor
+  end
+
   def album_params
-    params.require(:album).permit(:name, :description, :privacy, :allow_external_access, :password)
+    params.require(:album).permit(:name, :description, :privacy, :allow_external_access,
+                                  :allow_contributions, :password)
   end
 end

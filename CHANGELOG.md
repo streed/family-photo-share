@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Invitation-Only Registration**: Creating an account now requires a family invitation.
+  Open sign-up is off unless `ALLOW_PUBLIC_SIGNUP` is set, and the sign-up links disappear
+  from the landing and auth pages while it is off
+- **Collaborative Albums**: A family album can be opened up (`allow_contributions`) so every
+  member of the owner's family adds their own photos to it. Contributors add and remove their
+  own photos — from the album page or by bulk upload — while the album's name, cover, link
+  sharing, guest analytics and deletion stay with the owner
 - **EXIF Data Processing**: Automatic extraction of photo metadata including date taken, GPS coordinates, and camera information
 - **Bulk EXIF Updates**: Rake tasks for processing existing photos (`photos:update_exif_direct`, `photos:exif_stats`)
 - **Smart Album Sorting**: Albums now sort photos by date taken (extracted from EXIF) with fallback to creation date
@@ -31,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Development Workflow**: Added comprehensive contributing guidelines
 
 ### Fixed
+- **Invited Sign-Up 500**: `users/sign_up/:invitation_token` was declared outside `devise_scope`,
+  so the request carried no Devise mapping and the form raised
+  `undefined method 'validatable?' for nil` — the one link an invited person follows
 - **ExifTool Integration**: Fixed missing exiftool dependency in Docker containers
 - **Authentication Errors**: Fixed `undefined method 'resource_persisted?'` in SessionsController
 - **Album Photo Management**: Improved photo addition/removal from albums

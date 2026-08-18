@@ -91,8 +91,15 @@
       </p>
       <div class="mt-8 flex flex-wrap justify-center gap-3">
         <%= link_to "Sign in", new_user_session_path, class: "btn btn-primary btn-lg" %>
-        <%= link_to "Create an account", new_user_registration_path, class: "btn btn-secondary btn-lg" %>
+        <%# Open sign-up is off unless the operator turned it on, so offering the
+            button by default would send people to a page that turns them away. %>
+        <% if signup_available? %>
+          <%= link_to "Create an account", new_user_registration_path, class: "btn btn-secondary btn-lg" %>
+        <% end %>
       </div>
+      <% unless signup_available? %>
+        <p class="mt-4 text-sm text-muted">Accounts are by invitation from someone already in the family.</p>
+      <% end %>
     </div>
 
     <%# The signature, used once: a print mounted on an album page. %>

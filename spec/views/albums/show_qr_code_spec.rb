@@ -7,6 +7,11 @@ RSpec.describe 'albums/show', type: :view do
   before do
     assign(:album, album)
     assign(:photos, [])
+    # Permissions are resolved once in AlbumsController and handed to the view,
+    # so working out the owner's family costs one query rather than one per tile.
+    assign(:editable, true)
+    assign(:contributor, false)
+    assign(:can_add_photos, true)
     allow(view).to receive(:current_user).and_return(user)
   end
 

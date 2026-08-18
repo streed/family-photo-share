@@ -31,8 +31,19 @@
             <label class="field-label" for="bulk-album">Add them to an album</label>
             <select class="field-input" id="bulk-album" data-bulk-upload-target="albumSelect">
               <option value="">Don't add to an album</option>
-              <% current_user.albums.each do |album| %>
+              <% @own_albums.each do |album| %>
                 <option value="<%= album.id %>"><%= album.name %></option>
+              <% end %>
+              <%# Family albums opened up for contributions — grouped separately so
+                  it's obvious you're dropping photos into someone else's album. %>
+              <% if @shared_albums.any? %>
+                <optgroup label="Shared with your family">
+                  <% @shared_albums.each do |album| %>
+                    <option value="<%= album.id %>">
+                      <%= album.name %> — <%= album.user.display_name_or_full_name %>
+                    </option>
+                  <% end %>
+                </optgroup>
               <% end %>
             </select>
             <p class="field-hint">Optional — you can sort them later.</p>

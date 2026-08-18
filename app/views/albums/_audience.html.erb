@@ -56,6 +56,32 @@
         <% end %>
       </li>
 
+      <% if shared_with_family %>
+        <li class="flex items-start gap-3">
+          <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-paper-deep text-xs text-primary">
+            <i class="fas fa-user-plus" aria-hidden="true"></i>
+          </span>
+          <% if album.allow_contributions? %>
+            <% contributed_by = album.contributing_users.to_a %>
+            <span>
+              <strong class="text-ink">They can add photos, too.</strong>
+              Anyone in <%= album.user.family&.name || "your family" %> can put their own photos
+              in this album and take their own back out.
+              <% if contributed_by.any? %>
+                So far <%= contributed_by.map(&:display_name_or_full_name).to_sentence %>
+                <%= contributed_by.one? ? "has" : "have" %> added to it.
+              <% end %>
+            </span>
+          <% else %>
+            <span>
+              <strong class="text-ink">Only you can add photos.</strong>
+              <%= link_to "Let your family add theirs", edit_album_path(album), class: "link" %>
+              if it's an album you all shot together.
+            </span>
+          <% end %>
+        </li>
+      <% end %>
+
       <li class="flex items-start gap-3">
         <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-paper-deep text-xs text-primary">
           <i class="fas fa-link" aria-hidden="true"></i>

@@ -30,6 +30,31 @@
                   { class: "field-input" } %>
           </div>
 
+          <%# --- Family contributions ------------------------------------ %>
+          <section class="my-6 rounded-[var(--radius-card)] border border-edge-soft bg-paper-deep p-5">
+            <h2 class="section-title mb-3">
+              <i class="fas fa-users mr-1 text-primary" aria-hidden="true"></i> Let your family add photos
+            </h2>
+
+            <div class="check-row">
+              <%= form.check_box :allow_contributions, class: "check-input" %>
+              <div>
+                <%= form.label :allow_contributions,
+                      "Everyone in your family can add their own photos to this album",
+                      class: "font-semibold text-ink" %>
+                <p class="field-hint">
+                  Good for an album everybody shot part of — a holiday, a birthday, a wedding.
+                  They can add and remove their own photos; only you can rename the album,
+                  choose the cover, share it by link or delete it.
+                  <% unless @album.privacy == "family" %>
+                    <strong class="text-ink">This album is private right now</strong>, so nothing
+                    changes until you share it with your family above.
+                  <% end %>
+                </p>
+              </div>
+            </div>
+          </section>
+
           <%# --- Link sharing -------------------------------------------- %>
           <section class="my-6 rounded-[var(--radius-card)] border border-edge-soft bg-paper-deep p-5"
                    data-controller="toggle">

@@ -32,6 +32,7 @@ A modern, secure photo-sharing platform designed for families. Built with Ruby o
 - 📸 **Photo Management**: Upload, organize, and manage photos with automatic metadata extraction
 - 👨‍👩‍👧‍👦 **Family Groups**: Create private family spaces with secure member management
 - 📚 **Smart Albums**: Organize photos with automatic date-based sorting using EXIF data
+- 🤝 **Collaborative Albums**: Open a family album up so everyone adds their own photos to the one shared album
 - 🔒 **Privacy Controls**: Granular privacy settings (private, family, external sharing)
 - 🎯 **Bulk Upload**: Upload up to 100 photos at once with real-time progress tracking
 - 🔗 **External Sharing**: Share albums via password-protected links with guest session tracking
@@ -42,6 +43,7 @@ A modern, secure photo-sharing platform designed for families. Built with Ruby o
 
 ### Security Features
 - 🔐 **Authentication**: Secure user authentication with Devise
+- ✉️ **Invite-Only by Default**: Nobody can create an account unless a family member invites them — set `ALLOW_PUBLIC_SIGNUP=true` to open registration to anyone
 - 🛡️ **Rate Limiting**: Protection against brute force attacks with progressive lockouts
 - 👥 **Session Management**: Track and revoke external access sessions
 - 🔑 **Password Protection**: Optional passwords for shared albums
@@ -236,6 +238,7 @@ docker-compose -f docker-compose.production.yml exec web rails db:migrate
 
 | Variable | Description | Default |
 |----------|-------------|---------|
+| `ALLOW_PUBLIC_SIGNUP` | Let anyone create an account without an invitation | `false` |
 | `RAILS_ENV` | Environment | `production` |
 | `RAILS_LOG_TO_STDOUT` | Log to stdout | `true` |
 | `RAILS_SERVE_STATIC_FILES` | Serve static files | `false` |

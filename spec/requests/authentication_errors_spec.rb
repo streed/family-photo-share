@@ -56,6 +56,10 @@ RSpec.describe "Authentication Errors", type: :request do
   end
 
   describe "Registration error handling" do
+    # These are about the form's validation messages, not about who may reach it:
+    # open sign-up is off by default (see spec/requests/public_signup_spec.rb).
+    before { allow(PublicSignup).to receive(:enabled?).and_return(true) }
+
     context "with invalid data" do
       it "shows error for duplicate email" do
         existing_user = create(:user)
