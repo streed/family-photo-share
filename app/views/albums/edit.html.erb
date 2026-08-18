@@ -1,226 +1,138 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header">
-          <h2>Edit Album</h2>
-        </div>
-        <div class="card-body">
-          <%= form_with model: @album, local: true do |form| %>
-            <% if @album.errors.any? %>
-              <div class="alert alert-danger">
-                <h4><%= pluralize(@album.errors.count, "error") %> prohibited this album from being saved:</h4>
-                <ul class="mb-0">
-                  <% @album.errors.full_messages.each do |message| %>
-                    <li><%= message %></li>
-                  <% end %>
-                </ul>
+<% content_for :title, "Edit #{@album.name} — Family Memories" %>
+
+<div class="shell">
+  <div class="mx-auto max-w-2xl">
+    <h1 class="page-title mb-6">Edit album</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <%= form_with model: @album do |form| %>
+          <%= render "shared/form_errors", record: @album %>
+
+          <div class="field">
+            <%= form.label :name, "Album name", class: "field-label" %>
+            <%= form.text_field :name, class: "field-input", placeholder: "Summer at the lake" %>
+          </div>
+
+          <div class="field">
+            <%= form.label :description, class: "field-label" %>
+            <%= form.text_area :description, class: "field-input", rows: 3, placeholder: "Optional — a line about what's in it" %>
+          </div>
+
+          <div class="field">
+            <%= form.label :privacy, "Who can see it", class: "field-label" %>
+            <%= form.select :privacy,
+                  options_for_select([
+                    [ "Private — only you", "private" ],
+                    [ "Family — everyone in your family", "family" ]
+                  ], @album.privacy),
+                  {},
+                  { class: "field-input" } %>
+          </div>
+
+          <%# --- Link sharing -------------------------------------------- %>
+          <section class="my-6 rounded-[var(--radius-card)] border border-edge-soft bg-paper-deep p-5"
+                   data-controller="toggle">
+            <h2 class="section-title mb-3">
+              <i class="fas fa-share-nodes mr-1 text-primary" aria-hidden="true"></i> Share by link
+            </h2>
+
+            <div class="check-row">
+              <%= form.check_box :allow_external_access,
+                    class: "check-input",
+                    data: { toggle_target: "checkbox", action: "change->toggle#sync" } %>
+              <div>
+                <%= form.label :allow_external_access, "Anyone with the link can view this album", class: "font-semibold text-ink" %>
+                <p class="field-hint">Useful for grandparents and friends who don't have an account here.</p>
               </div>
-            <% end %>
-
-            <div class="form-group mb-3">
-              <%= form.label :name, class: "form-label" %>
-              <%= form.text_field :name, class: "form-control", placeholder: "Enter album name" %>
             </div>
 
-            <div class="form-group mb-3">
-              <%= form.label :description, class: "form-label" %>
-              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe your album (optional)" %>
-            </div>
-
-            <div class="form-group mb-4">
-              <%= form.label :privacy, "Privacy Setting", class: "form-label" %>
-              <%= form.select :privacy, 
-                              options_for_select([
-                                ['Private - Only you can see this album', 'private'],
-                                ['Family - Family members can see this album', 'family']
-                              ], @album.privacy), 
-                              {}, 
-                              { class: "form-control" } %>
-            </div>
-
-            <!-- External Sharing Section -->
-            <div class="external-sharing-section mb-4">
-              <h5 class="mb-3">
-                <i class="fas fa-share-alt"></i> External Sharing
-              </h5>
-              
-              <div class="form-check mb-3">
-                <%= form.check_box :allow_external_access, 
-                                   class: "form-check-input", 
-                                   id: "allow_external_access" %>
-                <%= form.label :allow_external_access, 
-                               "Allow guest access with password", 
-                               class: "form-check-label" %>
-                <div class="form-text">Enable password-protected sharing for people without accounts</div>
-              </div>
-              
-              <div id="external-sharing-options" style="<%= 'display: none;' unless @album.allow_external_access? %>">
-                <div class="form-group mb-3">
-                  <%= form.label :password, "Album Password", class: "form-label" %>
-                  <%= form.password_field :password, 
-                                          class: "form-control", 
-                                          placeholder: "Enter a password for guest access",
-                                          autocomplete: "new-password" %>
-                  <div class="form-text">Minimum 6 characters. Leave blank to keep current password.</div>
-                  <% if @album.external_password.present? %>
-                    <div class="alert alert-warning mt-2">
-                      <small>Current password: <strong><%= @album.external_password %></strong></small>
-                    </div>
+            <div class="mt-4 rounded-[12px] border border-edge-soft bg-card p-4" data-toggle-target="panel" hidden>
+              <div class="field">
+                <%= form.label :password, "Password", class: "field-label" %>
+                <%# A visible text field, prefilled: this is a password the owner has
+                    to pass on to guests, so it is no use to them hidden. A legacy
+                    bcrypt digest is never prefilled — saving it back would set the
+                    password *to* the digest and lock every guest out. %>
+                <%= form.text_field :password,
+                      value: (@album.external_password unless @album.external_password_hashed?),
+                      class: "field-input",
+                      placeholder: "At least #{Album::EXTERNAL_PASSWORD_MIN_LENGTH} characters",
+                      autocomplete: "off",
+                      autocapitalize: "none",
+                      autocorrect: "off",
+                      spellcheck: "false" %>
+                <p class="field-hint">
+                  Anyone you send the link to needs this to open the album.
+                  <% if @album.external_password_hashed? %>
+                    The current one was stored encrypted and can't be shown — type a new one to replace it.
+                  <% else %>
+                    Leave it as it is to keep the current password.
                   <% end %>
-                </div>
-                
-                <% if @album.allow_external_access? && @album.sharing_token.present? %>
-                  <div class="current-sharing-info">
-                    <div class="alert alert-info">
-                      <h6><i class="fas fa-link"></i> Share Link</h6>
-                      <div class="input-group" data-controller="clipboard">
-                        <input type="text"
-                               class="form-control"
-                               data-clipboard-target="source"
-                               aria-label="Album sharing link"
-                               value="<%= @album.sharing_url %>"
-                               readonly
-                               id="sharing-link">
-                        <button class="btn btn-outline-secondary"
-                                type="button"
-                                data-clipboard-target="button"
-                                data-action="clipboard#copy"
-                                id="copy-button">
-                          <i class="fas fa-copy" aria-hidden="true"></i> Copy
-                        </button>
-                      </div>
-                      <small class="text-muted mt-1 d-block">
-                        Share this link with people you want to give access to this album.
-                      </small>
-                    </div>
-                    
-                    <div class="qr-code-section">
-                      <div class="alert alert-light">
-                        <h6><i class="fas fa-qrcode"></i> QR Code</h6>
-                        <div class="text-center">
-                          <img src="<%= qr_code_data_url(@album.sharing_url) %>" 
-                               alt="QR Code for album sharing link" 
-                               class="qr-code-image">
-                        </div>
-                        <small class="text-muted">
-                          Scan with a smartphone camera to quickly access the album.
-                        </small>
-                      </div>
-                    </div>
-                    
-                    <div class="external-sharing-stats">
-                      <small class="text-muted">
-                        <i class="fas fa-clock"></i>
-                        Active sessions: <%= @album.album_access_sessions.active.count %>
-                        •
-                        <% if @album.album_access_sessions.any? %>
-                          Last accessed: <%= time_ago_in_words(@album.album_access_sessions.recent.first.accessed_at) %> ago
-                        <% else %>
-                          Never accessed
-                        <% end %>
-                      </small>
-                    </div>
+                </p>
+              </div>
+
+              <% if @album.allow_external_access? && @album.sharing_token.present? %>
+                <div class="mt-4 border-t border-edge-soft pt-4">
+                  <p class="field-label">Share link</p>
+                  <div class="flex flex-col gap-2 sm:flex-row" data-controller="clipboard">
+                    <input type="text"
+                           class="field-input token grow"
+                           data-clipboard-target="source"
+                           aria-label="Album sharing link"
+                           value="<%= @album.sharing_url %>"
+                           readonly>
+                    <button class="btn btn-secondary shrink-0" type="button"
+                            data-clipboard-target="button"
+                            data-action="clipboard#copy">
+                      <i class="fas fa-copy" aria-hidden="true"></i> Copy
+                    </button>
                   </div>
-                <% end %>
-              </div>
-            </div>
 
-            <% if @album.cover_photo %>
-              <div class="current-cover mb-4">
-                <h5>Current Cover Photo:</h5>
-                <div class="d-flex align-items-center">
-                  <%= image_tag @album.cover_photo.short_thumbnail_url, alt: photo_title_or_default(@album.cover_photo), 
-                                class: "img-fluid me-3", 
-                                style: "max-height: 100px; border-radius: 8px;" %>
-                  <div>
-                    <strong><%= photo_title_or_default(@album.cover_photo) %></strong>
-                    <br>
-                    <small class="text-muted">You can change this from the album view</small>
+                  <div class="mt-4 flex flex-wrap items-center gap-4">
+                    <figure class="text-center">
+                      <%= image_tag qr_code_data_url(@album.sharing_url),
+                            alt: "QR code for #{@album.name}",
+                            class: "qr-code-image h-32 w-32 rounded-lg border border-edge bg-white p-2" %>
+                      <figcaption class="meta mt-1">Scan to share</figcaption>
+                    </figure>
+
+                    <p class="meta">
+                      <%= pluralize(@album.album_access_sessions.active.count, "active guest session") %>.
+                      <% if @album.album_access_sessions.any? %>
+                        Last opened <%= time_ago_in_words(@album.album_access_sessions.recent.first.accessed_at) %> ago.
+                      <% else %>
+                        Nobody has opened it yet.
+                      <% end %>
+                    </p>
                   </div>
                 </div>
-              </div>
-            <% end %>
+              <% end %>
+            </div>
+          </section>
 
-            <div class="form-actions">
-              <%= form.submit "Update Album", class: "btn btn-primary" %>
-              <%= link_to "View Album", @album, class: "btn btn-info" %>
-              <%= link_to "Cancel", albums_path, class: "btn btn-secondary" %>
+          <% if @album.cover_photo %>
+            <div class="field">
+              <p class="field-label">Cover photo</p>
+              <div class="flex items-center gap-3">
+                <%= image_tag @album.cover_photo.short_thumbnail_url,
+                      alt: photo_title_or_default(@album.cover_photo),
+                      class: "h-20 w-20 rounded-lg object-cover" %>
+                <div>
+                  <p class="font-semibold text-ink"><%= photo_title_or_default(@album.cover_photo) %></p>
+                  <p class="meta">Change it from the album page — tap the star on any photo.</p>
+                </div>
+              </div>
             </div>
           <% end %>
-        </div>
+
+          <div class="flex flex-wrap gap-2">
+            <%= form.submit "Save changes", class: "btn btn-primary" %>
+            <%= link_to "View album", @album, class: "btn btn-secondary" %>
+            <%= link_to "Cancel", albums_path, class: "btn btn-ghost" %>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>
 </div>
-
-<script>
-  // Toggle external sharing options
-  document.getElementById('allow_external_access').addEventListener('change', function() {
-    const options = document.getElementById('external-sharing-options');
-    if (this.checked) {
-      options.style.display = 'block';
-    } else {
-      options.style.display = 'none';
-    }
-  });
-  
-  // Copying is handled by the shared clipboard Stimulus controller.
-</script>
-
-<style>
-  .external-sharing-section {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border-left: 4px solid #6b5d4f;
-  }
-  
-  .external-sharing-section h5 {
-    color: #6b5d4f;
-    font-weight: 700;
-  }
-  
-  #external-sharing-options {
-    padding: 1rem;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-    margin-top: 1rem;
-  }
-  
-  .current-sharing-info .alert {
-    margin-bottom: 1rem;
-  }
-  
-  .external-sharing-stats {
-    padding: 0.75rem;
-    background: #f8f9fa;
-    border-radius: 6px;
-    border: 1px solid #e9ecef;
-  }
-  
-  #sharing-link {
-    font-family: monospace;
-    font-size: 0.9rem;
-  }
-  
-  .form-check-input:checked {
-    background-color: #6b5d4f;
-    border-color: #6b5d4f;
-  }
-  
-  .form-check-input:focus {
-    border-color: #6b5d4f;
-    box-shadow: 0 0 0 0.25rem rgba(107, 93, 79, 0.25);
-  }
-  
-  .qr-code-image {
-    max-width: 150px;
-    height: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    padding: 10px;
-    background: white;
-  }
-</style>

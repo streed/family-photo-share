@@ -70,7 +70,7 @@ A modern, secure photo-sharing platform designed for families. Built with Ruby o
 - **Job Processing**: Sidekiq
 - **File Storage**: Active Storage (Local/S3/GCS)
 - **Image Processing**: ImageMagick + libvips
-- **Frontend**: Hotwire (Turbo + Stimulus), Bootstrap 5
+- **Frontend**: Hotwire (Turbo + Stimulus), Tailwind CSS 4 (via tailwindcss-rails)
 - **Authentication**: Devise
 - **Testing**: RSpec, FactoryBot, Capybara
 
@@ -445,7 +445,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Open source contributors
 - [ImageMagick](https://imagemagick.org/)
 - [ExifTool](https://exiftool.org/)
-- [Bootstrap](https://getbootstrap.com/)
+- [Tailwind CSS](https://tailwindcss.com/)
 
 ## Support
 

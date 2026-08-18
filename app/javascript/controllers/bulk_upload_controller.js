@@ -12,7 +12,7 @@ export default class extends Controller {
   ]
   
   connect() {
-    this.maxFileSize = 10 * 1024 * 1024; // 10MB
+    this.maxFileSize = 50 * 1024 * 1024; // 50MB — the same ceiling the Photo model enforces
     this.maxFiles = 100;
     this.validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
     
@@ -21,15 +21,10 @@ export default class extends Controller {
     this.nextPhotoId = 1;
     
     // Initialize modal (using simple show/hide instead of Bootstrap)
+    // The .modal component class owns display; `show` is the only toggle.
     this.uploadModal = {
-      show: () => {
-        this.uploadModalTarget.style.display = 'block';
-        this.uploadModalTarget.classList.add('show');
-      },
-      hide: () => {
-        this.uploadModalTarget.style.display = 'none';
-        this.uploadModalTarget.classList.remove('show');
-      }
+      show: () => this.uploadModalTarget.classList.add('show'),
+      hide: () => this.uploadModalTarget.classList.remove('show')
     };
     
     this.updateUI();
@@ -99,50 +94,43 @@ export default class extends Controller {
   
   renderStagedPhoto(photo) {
     const photoElement = document.createElement('div');
-    photoElement.className = 'staged-photo-item mb-3';
+    photoElement.className = 'staged-photo-item card';
     photoElement.dataset.photoId = photo.id;
-    
+
     photoElement.innerHTML = `
-      <div class="photo-card">
-        <div class="photo-row">
-          <div class="photo-col-4">
-            <div class="photo-preview">
-              <img src="${photo.previewUrl}" alt="${photo.title || 'Photo'}" class="staged-photo-img">
-              <button type="button" class="remove-photo-btn" 
-                      data-action="click->bulk-upload#removePhoto" 
+      <div class="flex gap-3 p-3">
+        <div class="relative shrink-0">
+          <img src="${photo.previewUrl}" alt="" class="h-24 w-24 rounded-lg object-cover">
+          <button type="button" class="icon-btn icon-btn-danger absolute -right-2 -top-2 h-7 w-7 shadow-[var(--shadow-soft)]"
+                  data-action="click->bulk-upload#removePhoto"
+                  data-photo-id="${photo.id}"
+                  aria-label="Remove this photo">
+            &times;
+          </button>
+        </div>
+        <div class="min-w-0 grow">
+          <div class="field mb-2">
+            <label class="field-label">Title</label>
+            <input type="text" class="field-input"
+                   value="${photo.title || ''}"
+                   data-action="input->bulk-upload#updatePhotoTitle"
+                   data-photo-id="${photo.id}"
+                   placeholder="Optional">
+          </div>
+          <div class="field mb-2">
+            <label class="field-label">Description</label>
+            <textarea class="field-input" rows="2"
+                      data-action="input->bulk-upload#updatePhotoDescription"
                       data-photo-id="${photo.id}"
-                      title="Remove photo">
-                ×
-              </button>
-            </div>
+                      placeholder="Optional">${photo.description}</textarea>
           </div>
-          <div class="photo-col-8">
-            <div class="photo-content">
-              <div class="form-group">
-                <label class="form-label">Title <span class="optional-text">(Optional)</span></label>
-                <input type="text" class="form-input" 
-                       value="${photo.title || ''}" 
-                       data-action="input->bulk-upload#updatePhotoTitle" 
-                       data-photo-id="${photo.id}"
-                       placeholder="Enter title...">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Description <span class="optional-text">(Optional)</span></label>
-                <textarea class="form-input" rows="2" 
-                          data-action="input->bulk-upload#updatePhotoDescription" 
-                          data-photo-id="${photo.id}"
-                          placeholder="Enter description...">${photo.description}</textarea>
-              </div>
-              <div class="file-info">
-                <div><strong>File:</strong> ${this.truncateFilename(photo.filename, 30)}</div>
-                <div><strong>Size:</strong> ${this.formatFileSize(photo.size)}</div>
-              </div>
-            </div>
-          </div>
+          <p class="meta truncate">
+            ${this.truncateFilename(photo.filename, 30)} &middot; ${this.formatFileSize(photo.size)}
+          </p>
         </div>
       </div>
     `;
-    
+
     this.stagedPhotosGridTarget.appendChild(photoElement);
   }
   
@@ -212,18 +200,15 @@ export default class extends Controller {
     // Reset button classes and apply new style
     this.confirmButtonTarget.className = `btn ${buttonStyle}`;
     
-    this.confirmModalTarget.style.display = 'block';
     this.confirmModalTarget.classList.add('show');
   }
   
   cancelConfirm() {
-    this.confirmModalTarget.style.display = 'none';
     this.confirmModalTarget.classList.remove('show');
     this.pendingConfirmAction = null;
   }
   
   acceptConfirm() {
-    this.confirmModalTarget.style.display = 'none';
     this.confirmModalTarget.classList.remove('show');
     
     if (this.pendingConfirmAction) {
@@ -350,7 +335,7 @@ export default class extends Controller {
       li.textContent = error;
       this.errorsListTarget.appendChild(li);
     });
-    this.uploadErrorsTarget.style.display = 'block';
+    this.uploadErrorsTarget.hidden = false;
   }
   
   rebuildStagingArea() {
@@ -374,19 +359,19 @@ export default class extends Controller {
     
     // Show/hide elements based on staged photos
     if (count > 0) {
-      this.stagingSummaryTarget.style.display = 'block';
-      this.stagingBadgeTarget.style.display = 'inline-block';
-      this.emptyStateTarget.style.display = 'none';
-      this.stagingContainerTarget.style.display = 'block';
+      this.stagingSummaryTarget.hidden = false;
+      this.stagingBadgeTarget.hidden = false;
+      this.emptyStateTarget.hidden = true;
+      this.stagingContainerTarget.hidden = false;
       this.uploadButtonTarget.disabled = false;
       
       // Enable bulk action buttons
       this.bulkActionsBtnTargets.forEach(btn => btn.disabled = false);
     } else {
-      this.stagingSummaryTarget.style.display = 'none';
-      this.stagingBadgeTarget.style.display = 'none';
-      this.emptyStateTarget.style.display = 'block';
-      this.stagingContainerTarget.style.display = 'none';
+      this.stagingSummaryTarget.hidden = true;
+      this.stagingBadgeTarget.hidden = true;
+      this.emptyStateTarget.hidden = false;
+      this.stagingContainerTarget.hidden = true;
       this.uploadButtonTarget.disabled = true;
       
       // Disable bulk action buttons

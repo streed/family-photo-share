@@ -25,11 +25,11 @@ RSpec.describe "Album Events", type: :request do
         get view_events_album_path(album)
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("Guest Activity for")
+        expect(response.body).to include("Guest activity")
         expect(response.body).to include(ERB::Util.html_escape(album.name))
-        expect(response.body).to include("Password Entry")
-        expect(response.body).to include("Failed Attempt")
-        expect(response.body).to include("Photo View")
+        expect(response.body).to include("Opened the album")
+        expect(response.body).to include("Wrong password")
+        expect(response.body).to include("Viewed a photo")
       end
 
       it "calculates event statistics correctly" do
@@ -84,8 +84,33 @@ RSpec.describe "Album Events", type: :request do
         get view_events_album_path(album)
 
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("No Activity Yet")
+        expect(response.body).to include("Nothing yet")
       end
+    end
+  end
+
+  describe "guest locations" do
+    let(:user) { create(:user) }
+    let(:album) { create(:album, user: user) }
+
+    before { sign_in user }
+
+    it "shows where a guest was viewing from once the IP has been resolved" do
+      create(:album_view_event, album: album, ip_address: "8.8.8.8", occurred_at: 1.hour.ago)
+      IpLocation.create!(ip_address: "8.8.8.8", status: "ok", city: "Portland",
+                         region: "Oregon", country: "United States", resolved_at: Time.current)
+
+      get view_events_album_path(album)
+
+      expect(response.body).to include("Portland, Oregon, United States")
+    end
+
+    it "queues a lookup for an address it has not seen before" do
+      create(:album_view_event, album: album, ip_address: "8.8.4.4", occurred_at: 1.hour.ago)
+
+      expect {
+        get view_events_album_path(album)
+      }.to have_enqueued_job(ResolveIpLocationJob).with("8.8.4.4")
     end
   end
 end

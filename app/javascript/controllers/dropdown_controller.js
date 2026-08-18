@@ -10,27 +10,30 @@ export default class extends Controller {
     // nothing — every open leaked another keydown listener for the page's life.
     this.boundCloseOnClickOutside = this.closeOnClickOutside.bind(this)
     this.boundCloseOnEscape = this.closeOnEscape.bind(this)
+    this.menuTarget.hidden = true
   }
 
   toggle(event) {
     event.preventDefault()
     event.stopPropagation()
     
-    if (this.menuTarget.classList.contains("show")) {
-      this.close()
-    } else {
+    if (this.menuTarget.hidden) {
       this.open()
+    } else {
+      this.close()
     }
   }
 
   open() {
-    this.menuTarget.classList.add("show")
+    this.menuTarget.hidden = false
+    this.element.querySelector("[data-dropdown-trigger]")?.setAttribute("aria-expanded", "true")
     document.addEventListener("click", this.boundCloseOnClickOutside)
     document.addEventListener("keydown", this.boundCloseOnEscape)
   }
 
   close() {
-    this.menuTarget.classList.remove("show")
+    this.menuTarget.hidden = true
+    this.element.querySelector("[data-dropdown-trigger]")?.setAttribute("aria-expanded", "false")
     document.removeEventListener("click", this.boundCloseOnClickOutside)
     document.removeEventListener("keydown", this.boundCloseOnEscape)
   }

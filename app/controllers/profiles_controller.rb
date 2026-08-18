@@ -15,6 +15,11 @@ class ProfilesController < ApplicationController
         @albums = Album.none
       end
     end
+
+    @albums = @albums.includes(cover_photo: { image_attachment: :blob }).to_a
+
+    # Each album card renders its cover; warming keeps that at one query.
+    ShortUrl.warm_for_photos(@albums.filter_map(&:cover_photo), [ :medium ])
   end
 
   def edit

@@ -1,29 +1,40 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="modal"
+//
+// Shows and hides a dialog. The dialog is a `dialog` target so the controller
+// can live on the surrounding card and still own the overlay — previously it
+// toggled the controller element itself, which meant the whole section had to
+// be the modal.
 export default class extends Controller {
+  static targets = ["dialog"]
+
   connect() {
-    this.boundCloseOnClickOutside = this.closeOnClickOutside.bind(this)
     this.boundCloseOnEscape = this.closeOnEscape.bind(this)
   }
 
+  get dialog() {
+    return this.hasDialogTarget ? this.dialogTarget : this.element
+  }
+
   open() {
-    this.element.classList.add("show")
+    this.previouslyFocused = document.activeElement
+    this.dialog.classList.add("show")
     document.body.style.overflow = "hidden"
-    document.addEventListener("click", this.boundCloseOnClickOutside)
     document.addEventListener("keydown", this.boundCloseOnEscape)
+
+    const focusable = this.dialog.querySelector("input, button, [href], select, textarea")
+    if (focusable) focusable.focus()
   }
 
   close() {
-    this.element.classList.remove("show")
+    this.dialog.classList.remove("show")
     document.body.style.overflow = ""
-    document.removeEventListener("click", this.boundCloseOnClickOutside)
     document.removeEventListener("keydown", this.boundCloseOnEscape)
-  }
 
-  closeOnClickOutside(event) {
-    if (event.target === this.element) {
-      this.close()
+    if (this.previouslyFocused && this.previouslyFocused.focus) {
+      this.previouslyFocused.focus()
+      this.previouslyFocused = null
     }
   }
 
@@ -34,7 +45,6 @@ export default class extends Controller {
   }
 
   disconnect() {
-    document.removeEventListener("click", this.boundCloseOnClickOutside)
     document.removeEventListener("keydown", this.boundCloseOnEscape)
     document.body.style.overflow = ""
   }

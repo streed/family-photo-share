@@ -15,7 +15,7 @@ RSpec.feature 'Photo Optional Title', type: :feature, js: false do
     fill_in 'photo[description]', with: 'A beautiful sunset'
     fill_in 'photo[location]', with: 'California'
 
-    click_button 'Upload Photo'
+    click_button 'Upload photo'
 
     # Should successfully create the photo
     expect(page).to have_current_path(photo_path(Photo.last))

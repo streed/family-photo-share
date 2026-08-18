@@ -15,6 +15,15 @@ class AlbumAccessSession < ApplicationRecord
   # Clean up expired sessions periodically
   scope :cleanup_expired, -> { expired.delete_all }
 
+  after_create_commit :resolve_ip_location
+
+  # Roughly where this guest is, from their IP. Nil until the lookup lands.
+  def location
+    return nil if ip_address.blank?
+
+    @location ||= IpLocation.for_ip(ip_address)
+  end
+
   def expired?
     expires_at < Time.current
   end
@@ -46,5 +55,11 @@ class AlbumAccessSession < ApplicationRecord
     return false if expired?
     extend_session!
     true
+  end
+
+  private
+
+  def resolve_ip_location
+    IpLocation.resolve_later(ip_address)
   end
 end

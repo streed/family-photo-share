@@ -17,6 +17,17 @@ class AlbumViewEvent < ApplicationRecord
 
   before_validation :set_occurred_at
 
+  # Resolving the viewer's city is a network call, so it happens in the
+  # background and only for addresses that aren't already cached.
+  after_create_commit :resolve_ip_location
+
+  # The cached location for this event's IP, if one has been resolved.
+  def location
+    return nil if ip_address.blank?
+
+    @location ||= IpLocation.for_ip(ip_address)
+  end
+
   def self.track_password_entry(album, request, session_id)
     create!(
       album: album,
@@ -58,5 +69,9 @@ class AlbumViewEvent < ApplicationRecord
 
   def set_occurred_at
     self.occurred_at ||= Time.current
+  end
+
+  def resolve_ip_location
+    IpLocation.resolve_later(ip_address)
   end
 end

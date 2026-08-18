@@ -1,0 +1,697 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Family Memories — design system
+
+   The app used to load Bootstrap from a CDN *and* a 1,700-line hand-written
+   stylesheet that redefined .navbar / .card / .btn / .badge with the same class
+   names. Bootstrap won wherever the custom rule didn't set the same property —
+   which is why the top nav rendered as a vertical stack. Everything visual now
+   comes from this file: tokens below, components in @layer components, and
+   Tailwind utilities in the views.
+
+   The look: a family photo album. Sea-glass paper, happy pastel accents,
+   prints that sit on the page with a white margin and photo-corner mounts. The
+   pastels are always fills — text and controls stay dark enough to read.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* Surfaces — sea-glass green over a warm white, the colours of a summer
+     afternoon rather than a nursery */
+  --color-paper: #f8fbf9;
+  --color-paper-deep: #e2f2ef;
+  --color-card: #ffffff;
+  --color-edge: #c8e3dd;
+  --color-edge-soft: #dfeeea;
+
+  /* Ink — pastels only stay cheerful if the words on top are properly dark.
+     Every value here clears 4.5:1 on paper; body text clears 7:1. */
+  --color-ink: #21302b;
+  --color-body: #3b4a45;
+  --color-muted: #4f5d58;
+
+  /* Brand: turquoise. Deep enough to carry white text at 5.5:1. */
+  --color-primary: #0c7b74;
+  --color-primary-deep: #075e58;
+  --color-primary-soft: #d9f1ee;
+
+  /* The pastel family. Each pair is a soft fill plus an ink that reads on it. */
+  --color-sage: #2f6b45;       /* mint */
+  --color-sage-soft: #e2f4e8;
+  --color-clay: #9c5227;       /* peach */
+  --color-clay-soft: #fdece0;
+  --color-teal: #1d5f8a;       /* sky */
+  --color-teal-soft: #e3f0fa;
+  --color-lemon: #7a5c12;      /* sunshine */
+  --color-lemon-soft: #fdf3d6;
+  --color-danger: #a3323f;     /* rose */
+  --color-danger-soft: #fde6e8;
+
+  /* Type */
+  --font-display: "Fraunces", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Figtree", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  /* Shape */
+  --radius-card: 16px;
+  --radius-tile: 12px;
+
+  /* Elevation — soft and warm, never a grey halo */
+  --shadow-soft: 0 1px 2px rgba(31, 66, 58, 0.05), 0 6px 18px rgba(31, 66, 58, 0.07);
+  --shadow-lift: 0 2px 4px rgba(31, 66, 58, 0.07), 0 14px 32px rgba(31, 66, 58, 0.13);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    background-image:
+      radial-gradient(58rem 32rem at 8% -8%, #e2f4ec 0%, transparent 60%),
+      radial-gradient(52rem 30rem at 100% 0%, #dff0f4 0%, transparent 55%),
+      radial-gradient(46rem 28rem at 50% 100%, #fbf6e4 0%, transparent 60%);
+    background-attachment: fixed;
+    color: var(--color-body);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.55;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  h1, h2, h3, h4 {
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-variation-settings: "SOFT" 0, "WONK" 1;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+
+  /* One visible focus treatment everywhere, keyboard only. */
+  :focus-visible {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* --- Page scaffolding ------------------------------------------------- */
+
+  .shell {
+    width: 100%;
+    max-width: 76rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .shell { padding-inline: 1.5rem; }
+  }
+
+  .shell-narrow {
+    width: 100%;
+    max-width: 34rem;
+    margin-inline: auto;
+    padding-inline: 1rem;
+  }
+
+  /* Page title + actions. Stacks on small screens instead of the old layout,
+     where the heading and the primary button overlapped each other. */
+  .page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
+    .page-head {
+      flex-direction: row;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.75rem, 1.3rem + 1.8vw, 2.5rem);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .page-subtitle {
+    color: var(--color-muted);
+    margin: 0.25rem 0 0;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  /* --- Buttons ---------------------------------------------------------- */
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;              /* 44px: the comfortable touch target */
+    padding: 0.5rem 1.125rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+  }
+
+  .btn:active { transform: translateY(1px); }
+
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    color: #fff;
+  }
+
+  .btn-primary:hover { background-color: var(--color-primary-deep); border-color: var(--color-primary-deep); color: #fff; }
+
+  .btn-secondary {
+    background-color: var(--color-card);
+    border-color: var(--color-edge);
+    color: var(--color-ink);
+  }
+
+  .btn-secondary:hover { background-color: var(--color-paper-deep); color: var(--color-ink); }
+
+  .btn-ghost {
+    background-color: transparent;
+    border-color: transparent;
+    color: var(--color-body);
+  }
+
+  .btn-ghost:hover { background-color: var(--color-paper-deep); color: var(--color-ink); }
+
+  .btn-danger {
+    background-color: var(--color-danger);
+    border-color: var(--color-danger);
+    color: #fff;
+  }
+
+  .btn-danger:hover { background-color: #8a2b22; color: #fff; }
+
+  .btn-danger-quiet {
+    background-color: var(--color-card);
+    border-color: var(--color-edge);
+    color: var(--color-danger);
+  }
+
+  .btn-danger-quiet:hover { background-color: var(--color-danger-soft); color: var(--color-danger); }
+
+  /* On a photo or any dark ground. */
+  .btn-on-photo {
+    background-color: rgba(20, 16, 13, 0.55);
+    border-color: rgba(255, 255, 255, 0.45);
+    color: #fff;
+    backdrop-filter: blur(6px);
+  }
+
+  .btn-on-photo:hover { background-color: rgba(20, 16, 13, 0.75); color: #fff; }
+
+  .btn-sm { min-height: 2.25rem; padding: 0.3125rem 0.875rem; font-size: 0.875rem; }
+  .btn-lg { min-height: 3.25rem; padding: 0.75rem 1.75rem; font-size: 1.0625rem; }
+  .btn-block { width: 100%; }
+
+  /* Round icon-only control — always give it an aria-label. */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid var(--color-edge);
+    border-radius: 999px;
+    background-color: var(--color-card);
+    color: var(--color-body);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .icon-btn:hover { background-color: var(--color-paper-deep); color: var(--color-ink); }
+  .icon-btn-danger:hover { background-color: var(--color-danger-soft); color: var(--color-danger); }
+
+  /* --- Cards ------------------------------------------------------------ */
+
+  .card {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-edge-soft);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
+  }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1rem 1.25rem;
+    background-color: var(--color-paper-deep);
+    border-bottom: 1px solid var(--color-edge-soft);
+  }
+
+  .card-body { padding: 1.25rem; }
+
+  .card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .card-link:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+
+  /* --- Badges ----------------------------------------------------------- */
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.625rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .badge-private { background-color: var(--color-paper-deep); color: var(--color-primary-deep); }
+  .badge-family  { background-color: var(--color-sage-soft); color: var(--color-sage); }
+  .badge-link    { background-color: var(--color-clay-soft); color: var(--color-clay); }
+  .badge-info    { background-color: var(--color-teal-soft); color: var(--color-teal); }
+  .badge-danger  { background-color: var(--color-danger-soft); color: var(--color-danger); }
+
+  /* Same badges, legible when they sit on top of a photo. */
+  .badge-on-photo {
+    background-color: rgba(20, 16, 13, 0.62);
+    color: #fff;
+    backdrop-filter: blur(6px);
+  }
+
+  /* --- Forms ------------------------------------------------------------ */
+
+  .field { display: block; margin-bottom: 1.125rem; }
+
+  .field-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  .field-input {
+    display: block;
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.625rem 0.875rem;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-edge);
+    border-radius: 10px;
+    color: var(--color-ink);
+    font-family: inherit;
+    font-size: 1rem;                  /* 16px keeps iOS from zooming on focus */
+    line-height: 1.4;
+  }
+
+  .field-input::placeholder { color: var(--color-muted); }
+
+  .field-input:focus {
+    outline: 2px solid var(--color-teal);
+    outline-offset: 1px;
+    border-color: var(--color-teal);
+  }
+
+  .field-input:disabled { background-color: var(--color-paper-deep); color: var(--color-muted); }
+
+  textarea.field-input { min-height: 7rem; resize: vertical; }
+  select.field-input { appearance: none; background-image: none; padding-right: 2.5rem; }
+
+  .field-hint { margin-top: 0.375rem; font-size: 0.875rem; color: var(--color-muted); }
+  .field-error { margin-top: 0.375rem; font-size: 0.875rem; color: var(--color-danger); font-weight: 600; }
+  .field-input-invalid { border-color: var(--color-danger); }
+
+  .check-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.25rem 0;
+  }
+
+  .check-input {
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.125rem;
+    accent-color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  /* --- Photo tiles ------------------------------------------------------ */
+
+  /* A print: white margin, warm edge, image cropped to a stable ratio so the
+     grid keeps album order readable left-to-right. */
+  .tile {
+    position: relative;
+    display: block;
+    background-color: var(--color-card);
+    border: 1px solid var(--color-edge-soft);
+    border-radius: var(--radius-tile);
+    padding: 6px;
+    box-shadow: var(--shadow-soft);
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .tile:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+
+  .tile-img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 6px;
+    background-color: var(--color-paper-deep);
+  }
+
+  .tile-img-square { aspect-ratio: 1 / 1; }
+
+  .grid-photos {
+    display: grid;
+    gap: 0.875rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 640px) { .grid-photos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; } }
+  @media (min-width: 1024px) { .grid-photos { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .grid-albums {
+    display: grid;
+    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+  }
+
+  /* The signature, used sparingly: photo corners, the way a print is mounted on
+     an album page. Drawn in an overlay so they sit *on top* of a cover photo
+     rather than behind it, and never intercept a click. */
+  .mounted,
+  .mounted-ink {
+    position: relative;
+  }
+
+  .mounted::after,
+  .mounted-ink::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-position: 0.75rem 0.75rem, right 0.75rem top 0.75rem, left 0.75rem bottom 0.75rem, right 0.75rem bottom 0.75rem;
+    background-repeat: no-repeat;
+    background-size: 1.5rem 1.5rem;
+  }
+
+  .mounted::after {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 23 L1 1 L23 1' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 1 L23 1 L23 23' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 1 L1 23 L23 23' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 1 L23 23 L1 23' fill='none' stroke='rgba(255,255,255,0.8)' stroke-width='2.5'/%3E%3C/svg%3E");
+  }
+
+  .mounted-ink::after {
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 23 L1 1 L23 1' fill='none' stroke='rgba(12,123,116,0.5)' stroke-width='2.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 1 L23 1 L23 23' fill='none' stroke='rgba(12,123,116,0.5)' stroke-width='2.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1 1 L1 23 L23 23' fill='none' stroke='rgba(12,123,116,0.5)' stroke-width='2.5'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M23 1 L23 23 L1 23' fill='none' stroke='rgba(12,123,116,0.5)' stroke-width='2.5'/%3E%3C/svg%3E");
+  }
+
+  /* --- Segmented control (album filters, sort order) -------------------- */
+
+  .segmented {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background-color: var(--color-paper-deep);
+    border-radius: 999px;
+  }
+
+  .seg-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    min-height: 2.25rem;
+    padding: 0.375rem 0.9375rem;
+    border: 0;
+    border-radius: 999px;
+    background-color: transparent;
+    color: var(--color-body);
+    font-family: inherit;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+  }
+
+  .seg-btn:hover { background-color: rgba(255, 255, 255, 0.7); color: var(--color-ink); }
+
+  .seg-btn-active,
+  .seg-btn[aria-current="true"] {
+    background-color: var(--color-card);
+    color: var(--color-ink);
+    box-shadow: var(--shadow-soft);
+  }
+
+  /* --- Notices ---------------------------------------------------------- */
+
+  .notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+  }
+
+  .notice-info    { background-color: var(--color-teal-soft); border-color: #cbe1e7; color: #16505e; }
+  .notice-success { background-color: var(--color-sage-soft); border-color: #d3e0d2; color: #2f4a33; }
+  .notice-warning { background-color: var(--color-clay-soft); border-color: #ecd6c8; color: #7a3f24; }
+  .notice-danger  { background-color: var(--color-danger-soft); border-color: #edcdc9; color: #8a2b22; }
+
+  /* --- Empty states ----------------------------------------------------- */
+
+  .empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    background-color: var(--color-card);
+    border: 1px dashed var(--color-edge);
+    border-radius: var(--radius-card);
+  }
+
+  .empty-icon { font-size: 2rem; color: var(--color-primary); }
+
+  /* --- Data list (key/value rows used by settings, stats, activity) ----- */
+
+  .rows { display: flex; flex-direction: column; }
+
+  .row-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.875rem 1.25rem;
+    border-top: 1px solid var(--color-edge-soft);
+  }
+
+  .row-item:first-child { border-top: 0; }
+
+  /* --- Odds and ends ---------------------------------------------------- */
+
+  .link {
+    color: var(--color-teal);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .link:hover { color: #16505e; }
+
+  .token {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    letter-spacing: -0.01em;
+    word-break: break-all;
+  }
+
+  .meta { font-size: 0.875rem; color: var(--color-muted); }
+
+  .sr-only-focusable:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@layer components {
+  /* --- Hooks shared with the Stimulus controllers -----------------------
+
+     These class names are queried from JavaScript (slideshow collects
+     `.photo-thumbnail`, the clipboard and pending-button controllers toggle
+     their state classes), so they stay stable even though everything else is
+     Tailwind. --------------------------------------------------------------- */
+
+  .photo-thumbnail {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    border-radius: 6px;
+    background-color: var(--color-paper-deep);
+  }
+
+  .photo-thumbnail-failed {
+    object-fit: contain;
+    padding: 1.5rem;
+    opacity: 0.5;
+  }
+
+  .photo-unavailable {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    border-radius: 6px;
+    background-color: var(--color-paper-deep);
+    color: var(--color-muted);
+    font-size: 0.8125rem;
+    text-align: center;
+  }
+
+  .photo-state-badge {
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+  }
+
+  .photo-state-badge-pending { background-color: rgba(255, 255, 255, 0.92); color: var(--color-teal); }
+  .photo-state-badge-failed  { background-color: rgba(255, 255, 255, 0.92); color: var(--color-danger); }
+
+  /* Full-screen dialog: the slideshow, and the bulk uploader's confirm step. */
+  .modal {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: none;
+  }
+
+  .modal.show { display: block; }
+
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(38, 30, 44, 0.86);
+    backdrop-filter: blur(3px);
+  }
+
+  .modal-panel {
+    position: relative;
+    z-index: 10;
+    width: min(34rem, calc(100vw - 2rem));
+    margin: 12vh auto 0;
+    background-color: var(--color-card);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-lift);
+    overflow: hidden;
+  }
+
+  /* A control that has been pressed and is waiting on the server. */
+  .btn-loading,
+  .is-pending {
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .copied { background-color: var(--color-sage-soft) !important; color: var(--color-sage) !important; }
+  .copy-failed { background-color: var(--color-danger-soft) !important; color: var(--color-danger) !important; }
+
+  /* Progress bar (bulk uploads). */
+  .progress-track {
+    height: 0.625rem;
+    width: 100%;
+    border-radius: 999px;
+    background-color: var(--color-paper-deep);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.3s ease;
+  }
+}

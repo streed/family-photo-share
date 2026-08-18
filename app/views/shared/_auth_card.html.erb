@@ -1,0 +1,19 @@
+<%# The shell every sign-in / sign-up / password screen sits in.
+    Locals: title, subtitle (optional), icon (optional Font Awesome name) %>
+<div class="shell-narrow py-4 sm:py-10">
+  <div class="card">
+    <div class="border-b border-edge-soft bg-paper-deep px-6 py-7 text-center sm:px-8">
+      <span class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-card text-xl text-primary">
+        <i class="fas <%= local_assigns.fetch(:icon, "fa-images") %>" aria-hidden="true"></i>
+      </span>
+      <h1 class="page-title text-2xl sm:text-3xl"><%= title %></h1>
+      <% if local_assigns[:subtitle].present? %>
+        <p class="page-subtitle"><%= subtitle %></p>
+      <% end %>
+    </div>
+
+    <div class="card-body p-6 sm:p-8">
+      <%= yield %>
+    </div>
+  </div>
+</div>

@@ -9,7 +9,7 @@ RSpec.describe AlbumsHelper, type: :helper do
       badge = helper.album_privacy_badge(album)
 
       expect(badge).to include("Private")
-      expect(badge).to include("privacy-private")
+      expect(badge).to include("badge-private")
       expect(badge).to include("Only you can see this album")
     end
 
@@ -18,7 +18,7 @@ RSpec.describe AlbumsHelper, type: :helper do
       badge = helper.album_privacy_badge(album)
 
       expect(badge).to include("Family")
-      expect(badge).to include("privacy-family")
+      expect(badge).to include("badge-family")
     end
 
     it "names how many people a family album actually reaches" do

@@ -17,11 +17,11 @@ RSpec.feature 'QR Code Positioning', type: :feature, js: false do
     visit album_path(album)
 
     # Should show QR code elements (either header or simple version)
-    expect(page).to have_css('.qr-code-image-header, .qr-code-image-simple')
+    expect(page).to have_css('.qr-code-image')
     expect(page).to have_content('Scan to share')
 
-    # Should have the appropriate CSS classes for positioning (header version since first photo becomes cover)
-    expect(page).to have_css('.qr-code-container-header')
+    # It lives in the sharing card, next to the link it encodes.
+    expect(page).to have_content('Share by link')
   end
 
   scenario 'QR code does not appear when external sharing is disabled' do
@@ -29,7 +29,7 @@ RSpec.feature 'QR Code Positioning', type: :feature, js: false do
     visit album_path(album)
 
     # Should not show QR code
-    expect(page).not_to have_css('.qr-code-image-header, .qr-code-image-simple')
+    expect(page).not_to have_css('.qr-code-image')
     expect(page).not_to have_content('Scan to share')
   end
 
@@ -40,7 +40,7 @@ RSpec.feature 'QR Code Positioning', type: :feature, js: false do
     visit album_path(album)
 
     # Should not show QR code because no photos exist
-    expect(page).not_to have_css('.qr-code-image-header, .qr-code-image-simple')
+    expect(page).not_to have_css('.qr-code-image')
     expect(page).not_to have_content('Scan to share')
   end
 end

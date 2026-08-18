@@ -1,243 +1,57 @@
-<div class="profile-header">
-  <div class="profile-avatar">
-    <% if @user.avatar_url.present? %>
-      <%= image_tag @user.avatar_url, alt: @user.display_name_or_full_name, class: "avatar-large" %>
-    <% else %>
-      <div class="avatar-placeholder avatar-large">
-        <%= @user.display_name_or_full_name.first.upcase %>
+<% content_for :title, "#{@user.display_name_or_full_name} — Family Memories" %>
+<% is_self = @user == current_user %>
+
+<div class="shell">
+  <header class="card mb-8">
+    <div class="card-body flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:p-8">
+      <%= render "shared/avatar", user: @user, size: :lg %>
+
+      <div class="min-w-0 grow">
+        <h1 class="page-title"><%= @user.display_name_or_full_name %></h1>
+        <% if @user.bio.present? %>
+          <div class="mt-2 max-w-2xl text-body"><%= simple_format(@user.bio) %></div>
+        <% end %>
+        <p class="meta mt-2">
+          Here since <%= @user.created_at.strftime("%B %Y") %>
+          <% if @user.phone_number.present? && is_self %>
+            · <%= @user.phone_number %>
+          <% end %>
+        </p>
       </div>
-    <% end %>
-  </div>
 
-  <div class="profile-info">
-    <h1><%= @user.display_name_or_full_name %></h1>
-    
-    <% if @user.bio.present? %>
-      <p class="bio"><%= simple_format(@user.bio) %></p>
-    <% end %>
+      <% if is_self %>
+        <%= link_to "Settings", settings_path, class: "btn btn-secondary shrink-0" %>
+      <% end %>
+    </div>
+  </header>
 
-    <div class="profile-meta">
-      <p><strong>Member since:</strong> <%= @user.created_at.strftime("%B %Y") %></p>
-      
-      <% if @user.phone_number.present? && @user == current_user %>
-        <p><strong>Phone:</strong> <%= @user.phone_number %></p>
+  <section>
+    <div class="mb-4 flex items-baseline justify-between gap-4">
+      <h2 class="section-title text-2xl">Albums</h2>
+      <% if is_self && @albums.any? %>
+        <%= link_to "All albums", albums_path, class: "link" %>
       <% end %>
     </div>
 
-    <% if @user == current_user %>
-      <div class="profile-actions">
-        <%= link_to "⚙️ Settings", settings_path, class: "btn btn-primary" %>
-      </div>
-    <% end %>
-  </div>
-</div>
-
-<div class="profile-content">
-  <div class="profile-albums">
-    <div class="section-header">
-      <h3>Albums</h3>
-      <% if @user == current_user && @albums.any? %>
-        <%= link_to "View All", albums_path, class: "btn btn-outline-primary btn-sm" %>
-      <% end %>
-    </div>
-    
     <% if @albums.any? %>
-      <div class="albums-grid">
-        <% @albums.each do |album| %>
-          <div class="album-card">
-            <%= link_to album_path(album), class: "album-link" do %>
-              <div class="album-cover">
-                <% if album.cover_photo %>
-                  <%= image_tag album.cover_photo.short_thumbnail_url, alt: album.name, class: "album-cover-image" %>
-                <% else %>
-                  <div class="album-cover-placeholder">
-                    <i class="fas fa-images"></i>
-                  </div>
-                <% end %>
-              </div>
-              <div class="album-details">
-                <h4 class="album-title"><%= truncate(album.name, length: 30) %></h4>
-                <div class="album-meta">
-                  <span class="photo-count"><%= pluralize(album.photo_count, 'photo') %></span>
-                  <%= album_privacy_badge(album) %>
-                </div>
-              </div>
-            <% end %>
-          </div>
-        <% end %>
+      <div class="grid-albums">
+        <%= render partial: "albums/album_card", collection: @albums, as: :album, locals: { owned: false } %>
       </div>
-      
+
       <% if @user.albums.count > 12 %>
-        <div class="text-center mt-3">
-          <small class="text-muted">Showing 12 of <%= @user.albums.count %> albums</small>
-        </div>
+        <p class="meta mt-4 text-center">Showing 12 of <%= @user.albums.count %> albums.</p>
       <% end %>
     <% else %>
-      <div class="empty-state">
-        <div class="empty-icon">
-          <i class="fas fa-images"></i>
-        </div>
-        <h4>No albums yet</h4>
-        <% if @user == current_user %>
-          <p>Create your first album to start organizing your photos.</p>
-          <%= link_to "Create Album", new_album_path, class: "btn btn-primary" %>
+      <div class="empty">
+        <i class="fas fa-book-open empty-icon" aria-hidden="true"></i>
+        <h3 class="section-title">No albums yet</h3>
+        <% if is_self %>
+          <p class="meta">Create one to start grouping your photos.</p>
+          <%= link_to "Create an album", new_album_path, class: "btn btn-primary" %>
         <% else %>
-          <p><%= @user.display_name_or_full_name %> hasn't shared any family albums yet.</p>
+          <p class="meta"><%= @user.display_name_or_full_name %> hasn't shared any albums with the family yet.</p>
         <% end %>
       </div>
     <% end %>
-  </div>
+  </section>
 </div>
-
-<style>
-  .profile-content {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-  }
-
-  .section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid #e9ecef;
-  }
-
-  .section-header h3 {
-    margin: 0;
-    color: #495057;
-    font-weight: 700;
-  }
-
-  .albums-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-  }
-
-  .album-card {
-    position: relative;
-    overflow: hidden;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    background: white;
-    border: 1px solid #e9ecef;
-  }
-
-  .album-card:hover {
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  }
-
-  .album-link {
-    display: block;
-    width: 100%;
-    text-decoration: none;
-    color: inherit;
-  }
-
-  .album-cover {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 1;
-    overflow: hidden;
-  }
-
-  .album-cover-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-
-  .album-card:hover .album-cover-image {
-    transform: scale(1.05);
-  }
-
-  .album-cover-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    color: #6c757d;
-    font-size: 3rem;
-  }
-
-  .album-details {
-    padding: 1rem;
-    background: white;
-  }
-
-  .album-title {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.1rem;
-    font-weight: 600;
-    line-height: 1.2;
-    color: #495057;
-  }
-
-  .album-meta {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.85rem;
-  }
-
-  .photo-count {
-    opacity: 0.9;
-  }
-
-  /* .privacy-badge styling is centralized in application.css */
-
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #6c757d;
-  }
-
-  .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
-  }
-
-  .empty-state h4 {
-    margin-bottom: 0.5rem;
-    color: #495057;
-  }
-
-  .empty-state p {
-    margin-bottom: 1.5rem;
-    max-width: 400px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .albums-grid {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-    }
-    
-    .section-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 0.5rem;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .albums-grid {
-      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-      gap: 0.75rem;
-    }
-  }
-</style>

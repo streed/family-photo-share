@@ -8,13 +8,13 @@ RSpec.feature 'User Authentication', type: :feature do
   scenario 'User signs up successfully' do
     visit new_user_registration_path
 
-    fill_in 'First Name', with: 'John'
-    fill_in 'Last Name', with: 'Doe'
-    fill_in 'Email Address', with: 'john@example.com'
+    fill_in 'First name', with: 'John'
+    fill_in 'Last name', with: 'Doe'
+    fill_in 'Email address', with: 'john@example.com'
     fill_in 'Password', with: 'password123'
-    fill_in 'Confirm Password', with: 'password123'
+    fill_in 'Confirm password', with: 'password123'
 
-    click_button 'Create Account'
+    click_button 'Create account'
 
     # No :confirmable module — a new account is signed in immediately.
     expect(User.find_by(email: 'john@example.com')).to be_present
@@ -26,10 +26,10 @@ RSpec.feature 'User Authentication', type: :feature do
 
     visit new_user_session_path
 
-    fill_in 'Email Address', with: 'john@example.com'
+    fill_in 'Email address', with: 'john@example.com'
     fill_in 'Password', with: 'password123'
 
-    click_button 'Sign In'
+    click_button 'Sign in'
 
     expect(page).to have_content("You've signed in successfully")
   end
@@ -39,10 +39,10 @@ RSpec.feature 'User Authentication', type: :feature do
 
     visit new_user_session_path
 
-    fill_in 'Email Address', with: 'john@example.com'
+    fill_in 'Email address', with: 'john@example.com'
     fill_in 'Password', with: 'nope-wrong-password'
 
-    click_button 'Sign In'
+    click_button 'Sign in'
 
     expect(page).to have_content('Invalid email or password')
   end

@@ -15,7 +15,7 @@ module PhotosHelper
   end
 
   def photo_tag(photo, variant = :medium, **options)
-    return content_tag(:div, "No image", class: "no-image") unless photo&.image&.attached?
+    return content_tag(:div, "No image", class: "photo-unavailable") unless photo&.image&.attached?
 
     options[:alt] ||= photo.title
     options[:class] = [ options[:class], "photo-image", "photo-#{variant}" ].compact.join(" ")

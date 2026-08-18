@@ -1,176 +1,121 @@
-<div class="container">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<% content_for :title, "Members of #{@family.name} — Family Memories" %>
+<% is_admin = @family.admin?(current_user) %>
+
+<div class="shell">
+  <div class="page-head">
     <div>
-      <h1>Manage Family Members</h1>
-      <p class="text-muted">Family: <%= @family.name %></p>
+      <h1 class="page-title">Members</h1>
+      <p class="page-subtitle"><%= @family.name %></p>
     </div>
-    
-    <div class="family-actions">
-      <%= link_to "Back to Family", family_path(@family), class: "btn btn-secondary" %>
-      <% if @family.admin?(current_user) %>
-        <%= link_to "Edit Family", edit_family_path(@family), class: "btn btn-outline-primary" %>
-        <%= link_to "Invite Members", new_family_invitation_path(@family), class: "btn btn-success" %>
+
+    <div class="flex flex-wrap gap-2">
+      <%= link_to "Back to family", family_path(@family), class: "btn btn-ghost btn-sm" %>
+      <% if is_admin %>
+        <%= link_to "Edit family", edit_family_path(@family), class: "btn btn-secondary btn-sm" %>
+        <%= link_to new_family_invitation_path(@family), class: "btn btn-primary btn-sm" do %>
+          <i class="fas fa-user-plus" aria-hidden="true"></i> Invite someone
+        <% end %>
       <% end %>
     </div>
   </div>
 
-  <div class="row">
-    <div class="col-lg-8">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Family Members (<%= @members.count %>)</h5>
-        </div>
-        <div class="card-body">
-          <% if @members.any? %>
-            <% @members.each do |membership| %>
-              <div class="member-item d-flex align-items-center p-3 border-bottom">
-                <% if membership.user.avatar_url.present? %>
-                  <%= image_tag membership.user.avatar_url, class: "avatar-medium me-3" %>
-                <% else %>
-                  <span class="avatar-placeholder avatar-medium me-3">
-                    <%= membership.user.display_name_or_full_name.first.upcase %>
-                  </span>
-                <% end %>
-                
-                <div class="flex-grow-1">
-                  <div class="d-flex align-items-center">
-                    <h6 class="mb-1 me-2"><%= membership.user.display_name_or_full_name %></h6>
-                    <% if membership.admin? %>
-                      <span class="badge bg-warning text-dark">
-                        <i class="fas fa-crown"></i> Admin
-                      </span>
-                    <% else %>
-                      <span class="badge bg-secondary">Member</span>
-                    <% end %>
-                  </div>
-                  <div class="text-muted small">
-                    <div><%= membership.user.email %></div>
-                    <div>Joined <%= time_ago_in_words(membership.joined_at) %> ago</div>
-                  </div>
-                </div>
-                
-                <div class="member-actions">
-                  <% if @family.admin?(current_user) && membership.user != current_user %>
-                    <div class="btn-group">
-                      <% unless membership.admin? %>
-                        <%= link_to "Make Admin", "#", 
-                                    class: "btn btn-sm btn-outline-warning",
-                                    title: "Promote to admin" %>
-                      <% else %>
-                        <%= link_to "Remove Admin", "#", 
-                                    class: "btn btn-sm btn-outline-secondary",
-                                    title: "Remove admin privileges" %>
-                      <% end %>
-                      <%= link_to "Remove", "#", 
-                                  method: :delete,
-                                  class: "btn btn-sm btn-outline-danger",
-                                  data: { turbo_confirm: "Are you sure you want to remove #{membership.user.display_name_or_full_name} from the family?" },
-                                  title: "Remove from family" %>
-                    </div>
-                  <% elsif membership.user == current_user %>
-                    <span class="text-muted small">You</span>
+  <div class="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+    <section class="card">
+      <div class="card-head">
+        <h2 class="section-title">In this family (<%= @members.count %>)</h2>
+      </div>
+
+      <% if @members.any? %>
+        <div class="rows">
+          <% @members.each do |membership| %>
+            <div class="row-item">
+              <div class="flex min-w-0 items-center gap-3">
+                <%= render "shared/avatar", user: membership.user, size: :md %>
+                <div class="min-w-0">
+                  <p class="truncate font-semibold text-ink">
+                    <%= membership.user.display_name_or_full_name %>
+                    <% if membership.user == current_user %><span class="meta">(you)</span><% end %>
+                  </p>
+                  <p class="meta truncate"><%= membership.user.email %></p>
+                  <% if membership.joined_at %>
+                    <p class="meta">Joined <%= time_ago_in_words(membership.joined_at) %> ago</p>
                   <% end %>
                 </div>
               </div>
-            <% end %>
-          <% else %>
-            <div class="text-center py-4">
-              <i class="fas fa-users text-muted mb-3" style="font-size: 2rem;"></i>
-              <p class="text-muted">No family members found</p>
+              <span class="badge <%= membership.admin? ? "badge-link" : "badge-private" %>">
+                <%= membership.admin? ? "Admin" : "Member" %>
+              </span>
             </div>
           <% end %>
         </div>
-      </div>
-    </div>
-
-    <div class="col-lg-4">
-      <div class="card">
-        <div class="card-header">
-          <h5 class="mb-0">Pending Invitations</h5>
-        </div>
+      <% else %>
         <div class="card-body">
-          <% if @pending_invitations.any? %>
+          <p class="meta">No members yet.</p>
+        </div>
+      <% end %>
+    </section>
+
+    <aside class="space-y-6">
+      <section class="card">
+        <div class="card-head"><h2 class="section-title">Invited</h2></div>
+
+        <% if @pending_invitations.any? %>
+          <div class="rows">
             <% @pending_invitations.each do |invitation| %>
-              <div class="invitation-item d-flex align-items-center justify-content-between p-2 border-bottom">
-                <div>
-                  <div class="fw-bold"><%= invitation.email %></div>
-                  <div class="text-muted small">
-                    Invited <%= time_ago_in_words(invitation.created_at) %> ago
+              <div class="row-item">
+                <div class="min-w-0">
+                  <p class="truncate font-semibold text-ink"><%= invitation.email %></p>
+                  <p class="meta">
+                    <%= time_ago_in_words(invitation.created_at) %> ago
                     by <%= invitation.inviter.display_name_or_full_name %>
-                  </div>
+                  </p>
                 </div>
-                <div>
-                  <%= link_to family_invitation_path(@family, invitation), 
-                              method: :delete,
-                              class: "btn btn-sm btn-outline-danger",
-                              data: { turbo_confirm: "Cancel invitation to #{invitation.email}?", "turbo-method": :delete },
-                              title: "Cancel invitation" do %>
-                    <i class="fas fa-times"></i>
+                <% if is_admin %>
+                  <%= button_to family_invitation_path(@family, invitation), method: :delete,
+                        class: "icon-btn icon-btn-danger h-9 w-9",
+                        form_class: "contents",
+                        aria: { label: "Cancel invitation to #{invitation.email}" },
+                        data: { turbo_confirm: "Cancel the invitation to #{invitation.email}?" } do %>
+                    <i class="fas fa-xmark" aria-hidden="true"></i>
                   <% end %>
-                </div>
+                <% end %>
               </div>
             <% end %>
-          <% else %>
-            <div class="text-center py-3">
-              <i class="fas fa-envelope text-muted mb-2" style="font-size: 1.5rem;"></i>
-              <p class="text-muted small">No pending invitations</p>
-            </div>
-          <% end %>
-        </div>
-        <div class="card-footer">
-          <%= link_to "Send New Invitation", new_family_invitation_path(@family), 
-                      class: "btn btn-success btn-sm w-100" %>
-        </div>
-      </div>
+          </div>
+        <% else %>
+          <div class="card-body">
+            <p class="meta">Nobody is waiting on an invitation.</p>
+          </div>
+        <% end %>
 
-      <div class="card mt-3">
-        <div class="card-header">
-          <h5 class="mb-0">Family Stats</h5>
+        <% if is_admin %>
+          <div class="border-t border-edge-soft p-4">
+            <%= link_to "Send an invitation", new_family_invitation_path(@family), class: "btn btn-primary btn-block btn-sm" %>
+          </div>
+        <% end %>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2 class="section-title">At a glance</h2></div>
+        <div class="rows">
+          <div class="row-item">
+            <span class="meta">Members</span>
+            <strong class="text-ink"><%= @family.member_count %></strong>
+          </div>
+          <div class="row-item">
+            <span class="meta">Admins</span>
+            <strong class="text-ink"><%= @family.family_memberships.admins.count %></strong>
+          </div>
+          <div class="row-item">
+            <span class="meta">Invitations out</span>
+            <strong class="text-ink"><%= @pending_invitations.count %></strong>
+          </div>
+          <div class="row-item">
+            <span class="meta">Photos shared</span>
+            <strong class="text-ink"><%= @family.shared_photos.count %></strong>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="stat-item mb-2">
-            <strong><%= pluralize(@family.member_count, 'member') %></strong>
-          </div>
-          <div class="stat-item mb-2">
-            <strong><%= @family.family_memberships.admins.count %></strong> admin(s)
-          </div>
-          <div class="stat-item mb-2">
-            <strong><%= @pending_invitations.count %></strong> pending invitation(s)
-          </div>
-          <div class="stat-item">
-            <strong><%= pluralize(@family.shared_photos.count, 'photo') %></strong> shared
-          </div>
-        </div>
-      </div>
-    </div>
+      </section>
+    </aside>
   </div>
 </div>
-
-<style>
-  .member-item:last-child {
-    border-bottom: none !important;
-  }
-  
-  .invitation-item:last-child {
-    border-bottom: none !important;
-  }
-  
-  .avatar-medium {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  
-  .avatar-placeholder.avatar-medium {
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #6b5d4f;
-    color: white;
-    font-weight: bold;
-    font-size: 1.2rem;
-  }
-</style>

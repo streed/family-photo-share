@@ -13,7 +13,12 @@ class FamiliesController < ApplicationController
   end
 
   def show
-    @recent_photos = @family.recent_photos(12)
+    @recent_photos = @family.recent_photos(12).includes(:user).to_a
+
+    # One short URL per tile in the grid below; warming avoids a lookup and an
+    # insert per photo on every visit.
+    ShortUrl.warm_for_photos(@recent_photos, [ :thumbnail ])
+
     @members = @family.family_memberships.includes(:user).recent
     @pending_invitations = @family.family_invitations.pending.recent
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
+ActiveRecord::Schema[8.0].define(version: 2026_08_18_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -181,6 +181,25 @@ ActiveRecord::Schema[8.0].define(version: 2026_08_17_000002) do
     t.index ["family_id"], name: "index_family_memberships_on_family_id"
     t.index ["joined_at"], name: "index_family_memberships_on_joined_at"
     t.index ["user_id"], name: "index_family_memberships_on_user_id", unique: true
+  end
+
+  create_table "ip_locations", force: :cascade do |t|
+    t.string "ip_address", null: false
+    t.string "status", default: "pending", null: false
+    t.string "city"
+    t.string "region"
+    t.string "country"
+    t.string "country_code"
+    t.string "postal_code"
+    t.string "timezone"
+    t.decimal "latitude", precision: 9, scale: 6
+    t.decimal "longitude", precision: 9, scale: 6
+    t.string "provider"
+    t.datetime "resolved_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ip_address"], name: "index_ip_locations_on_ip_address", unique: true
+    t.index ["resolved_at"], name: "index_ip_locations_on_resolved_at"
   end
 
   create_table "photos", force: :cascade do |t|

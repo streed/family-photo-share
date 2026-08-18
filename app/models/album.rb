@@ -7,6 +7,11 @@ class Album < ApplicationRecord
   has_many :album_access_sessions, dependent: :destroy
   has_many :album_view_events, dependent: :destroy
 
+  # The password guests type to open a shared album. Deliberately short and
+  # stored in the clear: the owner reads it out over the phone, and it guards
+  # family photos rather than an account.
+  EXTERNAL_PASSWORD_MIN_LENGTH = 3
+
   # Virtual attribute for password
   attr_accessor :password
 
@@ -18,7 +23,8 @@ class Album < ApplicationRecord
   validates :description, length: { maximum: 1000 }
   validates :privacy, presence: true, inclusion: { in: %w[private family] }
   validates :name, uniqueness: { scope: :user_id }
-  validates :password, length: { minimum: 6 }, if: -> { allow_external_access? && password.present? }
+  validates :password, length: { minimum: EXTERNAL_PASSWORD_MIN_LENGTH },
+                       if: -> { allow_external_access? && password.present? }
   validates :sharing_token, uniqueness: true, allow_nil: true
 
   # Scopes

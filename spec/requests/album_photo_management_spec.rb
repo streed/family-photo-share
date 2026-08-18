@@ -108,7 +108,7 @@ RSpec.describe "Album photo management", type: :request do
     it "offers an upload route instead of a dead end when the library is empty" do
       get album_path(album)
 
-      expect(response.body).to include("You haven't uploaded any photos yet")
+      expect(response.body).to include("You haven't uploaded any photos")
       expect(response.body).to include(new_photo_path)
     end
   end

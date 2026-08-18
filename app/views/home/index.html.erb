@@ -1,73 +1,117 @@
-<div class="welcome-section">
-  <% if user_signed_in? %>
-    <h1>Welcome back, <%= current_user.display_name_or_full_name %>!</h1>
-    
-    <div class="dashboard-stats-compact d-flex flex-wrap gap-3 mt-3">
-      <div class="stat-item">
-        <span class="stat-number"><%= current_user.photo_count %></span>
-        <span class="stat-label">Photos</span>
-        <%= link_to "View", photos_path, class: "stat-link-compact" %>
+<% if user_signed_in? %>
+  <div class="shell">
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Welcome back, <%= current_user.display_name_or_full_name %></h1>
+        <p class="page-subtitle">Everything you've shared with the family, in one place.</p>
       </div>
-      
-      <div class="stat-item">
-        <span class="stat-number"><%= current_user.album_count %></span>
-        <span class="stat-label">Albums</span>
-        <%= link_to "View", albums_path, class: "stat-link-compact" %>
-      </div>
-      
-      <div class="stat-item">
-        <span class="stat-number"><%= current_user.has_family? ? 1 : 0 %></span>
-        <span class="stat-label">Family</span>
-        <% if current_user.has_family? %>
-          <%= link_to "View", family_path(current_user.family), class: "stat-link-compact" %>
-        <% else %>
-          <%= link_to "Join", families_path, class: "stat-link-compact" %>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to new_photo_path, class: "btn btn-primary" do %>
+          <i class="fas fa-arrow-up-from-bracket" aria-hidden="true"></i> Upload photos
         <% end %>
+        <%= link_to "New album", new_album_path, class: "btn btn-secondary" %>
       </div>
-      
-      <% if current_user.pending_invitations.count > 0 %>
-        <div class="stat-item">
-          <span class="stat-number"><%= current_user.pending_invitations.count %></span>
-          <span class="stat-label">Pending Invites</span>
-          <%= link_to "View", families_path, class: "stat-link-compact" %>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <%= link_to photos_path, class: "card card-link p-4" do %>
+        <span class="block font-display text-3xl font-semibold text-ink"><%= current_user.photo_count %></span>
+        <span class="meta"><%= "photo".pluralize(current_user.photo_count) %></span>
+      <% end %>
+
+      <%= link_to albums_path, class: "card card-link p-4" do %>
+        <span class="block font-display text-3xl font-semibold text-ink"><%= current_user.album_count %></span>
+        <span class="meta"><%= "album".pluralize(current_user.album_count) %></span>
+      <% end %>
+
+      <% if current_user.has_family? %>
+        <%= link_to family_path(current_user.family), class: "card card-link p-4" do %>
+          <span class="block font-display text-3xl font-semibold text-ink"><%= current_user.family.members.count %></span>
+          <span class="meta">in <%= current_user.family.name %></span>
+        <% end %>
+      <% else %>
+        <%= link_to families_path, class: "card card-link p-4" do %>
+          <span class="block font-display text-lg font-semibold text-ink">Join a family</span>
+          <span class="meta">Share photos with the people in it</span>
+        <% end %>
+      <% end %>
+
+      <% pending = current_user.pending_invitations.count %>
+      <% if pending > 0 %>
+        <%= link_to families_path, class: "card card-link p-4" do %>
+          <span class="block font-display text-3xl font-semibold text-clay"><%= pending %></span>
+          <span class="meta"><%= "invitation".pluralize(pending) %> waiting</span>
+        <% end %>
+      <% else %>
+        <%= link_to new_bulk_upload_path, class: "card card-link p-4" do %>
+          <span class="block font-display text-lg font-semibold text-ink">Upload a batch</span>
+          <span class="meta">Many photos at once</span>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if @recent_photos.any? %>
+      <section class="mt-10">
+        <div class="mb-4 flex items-baseline justify-between gap-4">
+          <h2 class="section-title">Recently added</h2>
+          <%= link_to "All photos", photos_path, class: "link" %>
         </div>
-      <% end %>
+
+        <div class="grid-photos">
+          <% @recent_photos.each do |photo| %>
+            <%= link_to photo_path(photo), class: "tile" do %>
+              <%= image_tag photo.short_thumbnail_url,
+                    alt: photo_title_or_default(photo),
+                    loading: "lazy",
+                    class: "tile-img" %>
+            <% end %>
+          <% end %>
+        </div>
+      </section>
+    <% else %>
+      <div class="empty mt-10">
+        <i class="fas fa-images empty-icon" aria-hidden="true"></i>
+        <h2 class="section-title">No photos yet</h2>
+        <p class="meta max-w-sm">Add the first one and it'll show up here, ready to drop into an album.</p>
+        <%= link_to "Upload a photo", new_photo_path, class: "btn btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+
+<% else %>
+  <div class="shell">
+    <div class="mx-auto max-w-2xl py-10 text-center sm:py-16">
+      <p class="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-clay">Private family albums</p>
+      <h1 class="font-display text-4xl font-semibold text-ink sm:text-6xl">
+        The photos worth keeping, kept together.
+      </h1>
+      <p class="mx-auto mt-5 max-w-lg text-lg text-body">
+        Upload once, sort into albums, and share a link with the people who should see them —
+        no accounts required on their end, no strangers browsing past.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <%= link_to "Sign in", new_user_session_path, class: "btn btn-primary btn-lg" %>
+        <%= link_to "Create an account", new_user_registration_path, class: "btn btn-secondary btn-lg" %>
+      </div>
     </div>
 
-    <div class="quick-actions mt-4">
-      <%= link_to "Upload Photo", new_photo_path, class: "btn btn-primary me-2" %>
-      <%= link_to "Bulk Upload", new_bulk_upload_path, class: "btn btn-success me-2" %>
-      <%= link_to "Create Album", new_album_path, class: "btn btn-secondary me-2" %>
-      <% if current_user.can_create_family? %>
-        <%= link_to "Create Family", new_family_path, class: "btn btn-secondary" %>
-      <% elsif current_user.has_family? %>
-        <%= link_to "View My Family", family_path(current_user.family), class: "btn btn-secondary" %>
-      <% end %>
-    </div>
-
-    <% if current_user.recent_photos(6).any? %>
-      <div class="recent-photos mt-5">
-        <h3>Recent Photos</h3>
-        <div class="row">
-          <% current_user.recent_photos(6).each do |photo| %>
-            <div class="col-md-2 col-sm-4 col-6 mb-3">
-              <%= link_to photo_path(photo) do %>
-                <%= image_tag photo.short_thumbnail_url, alt: photo_title_or_default(photo), 
-                              class: "img-fluid rounded recent-photo" %>
-              <% end %>
+    <%# The signature, used once: a print mounted on an album page. %>
+    <div class="mx-auto mt-4 max-w-3xl">
+      <div class="mounted-ink rounded-[18px] bg-paper-deep p-5 sm:p-8">
+        <div class="grid grid-cols-3 gap-3 sm:gap-5">
+          <% [
+               { icon: "fa-arrow-up-from-bracket", title: "Upload", copy: "Drag in a whole camera roll at once." },
+               { icon: "fa-book-open", title: "Arrange", copy: "Albums stay in the order you set." },
+               { icon: "fa-link", title: "Share", copy: "One link, password optional." }
+             ].each do |step| %>
+            <div class="rounded-[10px] border border-edge-soft bg-card p-3 text-center sm:p-5">
+              <i class="fas <%= step[:icon] %> text-xl text-primary sm:text-2xl" aria-hidden="true"></i>
+              <h2 class="mt-2 font-display text-base font-semibold text-ink sm:text-lg"><%= step[:title] %></h2>
+              <p class="mt-1 hidden text-sm text-muted sm:block"><%= step[:copy] %></p>
             </div>
           <% end %>
         </div>
-        <%= link_to "View All Photos →", photos_path, class: "text-decoration-none" %>
       </div>
-    <% end %>
-
-  <% else %>
-    <h1>📸 Share Your Memories</h1>
-    <p class="lead">A cozy place for your photos</p>
-    <div class="auth-actions">
-      <%= link_to "Sign In", new_user_session_path, class: "btn btn-primary btn-lg me-3" %>
-      <%= link_to "Sign Up", new_user_registration_path, class: "btn btn-outline-primary btn-lg" %>
     </div>
-  <% end %>
-</div>
+  </div>
+<% end %>

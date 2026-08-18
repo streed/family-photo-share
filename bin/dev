@@ -1,18 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 
-# Development startup script
-echo "Starting Family Photo Share development environment..."
-
-# Check if Docker containers are running
-if ! docker ps | grep -q "postgres"; then
-  echo "Starting Docker containers..."
-  docker-compose up -d
+if ! gem list foreman -i --silent; then
+  echo "Installing foreman..."
+  gem install foreman
 fi
 
-# Wait for services to be ready
-echo "Waiting for services to be ready..."
-sleep 3
+# Default to port 3000 if not specified
+export PORT="${PORT:-3000}"
 
-# Start Rails server
-echo "Starting Rails server..."
-rails server
+exec foreman start -f Procfile.dev "$@"

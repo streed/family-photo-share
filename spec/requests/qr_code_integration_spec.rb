@@ -30,7 +30,7 @@ RSpec.describe "QR Code Integration", type: :request do
 
       # The QR code should be generated from the sharing URL
       expect(album.sharing_url).to be_present
-      expect(response.body).to include('QR Code for')
+      expect(response.body).to include('QR code for')
       expect(response.body).to include(ERB::Util.html_escape(album.name))
     end
   end

@@ -17,6 +17,36 @@ RSpec.describe Album, type: :model do
     it { should validate_presence_of(:privacy) }
     it { should validate_inclusion_of(:privacy).in_array(%w[private family]) }
     it { should validate_uniqueness_of(:name).scoped_to(:user_id) }
+
+    describe 'the guest password' do
+      subject(:album) { build(:album, allow_external_access: true) }
+
+      it 'accepts a short one — it gets read out loud, not typed into a bank' do
+        album.password = 'abc'
+
+        expect(album).to be_valid
+      end
+
+      it 'rejects one shorter than the minimum' do
+        album.password = 'ab'
+
+        expect(album).not_to be_valid
+        expect(album.errors[:password].join).to match(/too short/i)
+      end
+
+      it 'is optional' do
+        album.password = nil
+
+        expect(album).to be_valid
+      end
+
+      it 'stores what the owner typed, so they can read it back and share it' do
+        album.password = 'abc'
+        album.save!
+
+        expect(album.reload.external_password).to eq('abc')
+      end
+    end
   end
 
   describe 'instance methods' do

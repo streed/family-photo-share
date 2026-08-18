@@ -1,254 +1,114 @@
-<div class="container">
-  <% if flash[:alert] %>
-    <div class="alert alert-danger alert-dismissible" role="alert">
-      <i class="fas fa-exclamation-circle"></i>
-      <%= flash[:alert] %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  <% end %>
-  
-  <% if flash[:notice] %>
-    <div class="alert alert-success alert-dismissible" role="alert">
-      <i class="fas fa-check-circle"></i>
-      <%= flash[:notice] %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  <% end %>
+<% content_for :title, "Guest sessions — #{@album.name}" %>
 
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<div class="shell">
+  <div class="page-head">
     <div>
-      <h1>Guest Sessions</h1>
-      <p class="text-muted">Manage guest access sessions for "<%= @album.name %>"</p>
+      <h1 class="page-title">Guest sessions</h1>
+      <p class="page-subtitle">Who currently has “<%= @album.name %>” open.</p>
     </div>
-    <div>
-      <%= link_to "Back to Album", @album, class: "btn btn-secondary" %>
-    </div>
-  </div>
-
-  <!-- Summary Cards -->
-  <div class="row mb-4">
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-success"><%= @active_sessions.count %></h3>
-          <p class="text-muted mb-0">Active Sessions</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-warning"><%= @expired_sessions.count %></h3>
-          <p class="text-muted mb-0">Recently Expired</p>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-body text-center">
-          <h3 class="text-info"><%= @total_sessions_count %></h3>
-          <p class="text-muted mb-0">Total Sessions</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Active Sessions -->
-  <div class="card mb-4">
-    <div class="card-header">
-      <h3>Active Guest Sessions</h3>
-      <p class="text-muted mb-0">Sessions that are currently valid and can access the album</p>
-    </div>
-    <div class="card-body">
-      <% if @active_sessions.any? %>
-        <div class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>IP Address</th>
-                <th>Created</th>
-                <th>Last Accessed</th>
-                <th>Expires</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% @active_sessions.each do |session| %>
-                <tr>
-                  <td>
-                    <code><%= session.ip_address %></code>
-                  </td>
-                  <td>
-                    <small><%= time_ago_in_words(session.created_at) %> ago</small>
-                    <br>
-                    <span class="text-muted"><%= session.created_at.strftime("%Y-%m-%d %H:%M") %></span>
-                  </td>
-                  <td>
-                    <small><%= time_ago_in_words(session.accessed_at) %> ago</small>
-                    <br>
-                    <span class="text-muted"><%= session.accessed_at.strftime("%Y-%m-%d %H:%M") %></span>
-                  </td>
-                  <td>
-                    <% if session.expired? %>
-                      <span class="badge bg-danger">Expired</span>
-                    <% else %>
-                      <small>in <%= pluralize(session.expires_in_minutes.ceil, 'minute') %></small>
-                      <br>
-                      <span class="text-muted"><%= session.expires_at.strftime("%H:%M") %></span>
-                    <% end %>
-                  </td>
-                  <td>
-                    <% if session.expired? %>
-                      <span class="badge bg-danger">Expired</span>
-                    <% else %>
-                      <span class="badge bg-success">Active</span>
-                    <% end %>
-                  </td>
-                  <td>
-                    <% unless session.expired? %>
-                      <%= link_to "Revoke", 
-                                  revoke_guest_session_album_path(@album, session_token: session.session_token), 
-                                  method: :delete,
-                                  data: { 
-                                    data: { turbo_confirm: "Are you sure you want to revoke this guest session? The user will lose access immediately." },
-                                    turbo_method: :delete
-                                  },
-                                  class: "btn btn-sm btn-outline-danger" %>
-                    <% else %>
-                      <span class="text-muted">-</span>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        </div>
-        
-        <div class="mt-3">
-          <%= link_to "Revoke All Active Sessions", 
-                      revoke_all_guest_sessions_album_path(@album), 
-                      method: :patch,
-                      data: { 
-                        data: { turbo_confirm: "Are you sure you want to revoke ALL active guest sessions? All current guest users will lose access immediately." },
-                        turbo_method: :patch
-                      },
-                      class: "btn btn-outline-danger" %>
-        </div>
-      <% else %>
-        <div class="text-center py-4">
-          <i class="fas fa-users text-muted" style="font-size: 3rem;"></i>
-          <h5 class="text-muted mt-3">No Active Guest Sessions</h5>
-          <p class="text-muted">No guests are currently accessing this album.</p>
-        </div>
+    <div class="flex flex-wrap gap-2">
+      <%= link_to view_events_album_path(@album), class: "btn btn-secondary btn-sm" do %>
+        <i class="fas fa-chart-line" aria-hidden="true"></i> Guest activity
+      <% end %>
+      <%= link_to @album, class: "btn btn-ghost btn-sm" do %>
+        <i class="fas fa-chevron-left" aria-hidden="true"></i> Back to album
       <% end %>
     </div>
   </div>
 
-  <!-- Recently Expired Sessions -->
-  <% if @expired_sessions.any? %>
-    <div class="card">
-      <div class="card-header">
-        <h3>Recently Expired Sessions</h3>
-        <p class="text-muted mb-0">Sessions that have recently expired (last 20 shown)</p>
+  <div class="mb-8 grid grid-cols-3 gap-3 sm:gap-4">
+    <div class="card p-4">
+      <span class="block font-display text-3xl font-semibold text-sage"><%= @active_sessions.count %></span>
+      <span class="meta">open now</span>
+    </div>
+    <div class="card p-4">
+      <span class="block font-display text-3xl font-semibold text-ink"><%= @expired_sessions.count %></span>
+      <span class="meta">recently ended</span>
+    </div>
+    <div class="card p-4">
+      <span class="block font-display text-3xl font-semibold text-ink"><%= @total_sessions_count %></span>
+      <span class="meta">since you shared it</span>
+    </div>
+  </div>
+
+  <section class="card mb-6">
+    <div class="card-head">
+      <div>
+        <h2 class="section-title">Open now</h2>
+        <p class="meta">A session ends after 10 minutes without activity.</p>
       </div>
-      <div class="card-body">
-        <div class="table-responsive">
-          <table class="table table-striped">
-            <thead>
-              <tr>
-                <th>IP Address</th>
-                <th>Created</th>
-                <th>Last Accessed</th>
-                <th>Expired</th>
-                <th>Session Duration</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% @expired_sessions.each do |session| %>
-                <tr class="text-muted">
-                  <td>
-                    <code><%= session.ip_address %></code>
-                  </td>
-                  <td>
-                    <small><%= time_ago_in_words(session.created_at) %> ago</small>
-                    <br>
-                    <span class="text-muted small"><%= session.created_at.strftime("%m/%d %H:%M") %></span>
-                  </td>
-                  <td>
-                    <small><%= time_ago_in_words(session.accessed_at) %> ago</small>
-                    <br>
-                    <span class="text-muted small"><%= session.accessed_at.strftime("%m/%d %H:%M") %></span>
-                  </td>
-                  <td>
-                    <small><%= time_ago_in_words(session.expires_at) %> ago</small>
-                    <br>
-                    <span class="text-muted small"><%= session.expires_at.strftime("%m/%d %H:%M") %></span>
-                  </td>
-                  <td>
-                    <% duration = (session.accessed_at - session.created_at) / 1.minute %>
-                    <small><%= pluralize(duration.round, 'minute') %></small>
-                  </td>
-                </tr>
+      <% if @active_sessions.any? %>
+        <%= button_to revoke_all_guest_sessions_album_path(@album), method: :patch,
+              class: "btn btn-danger-quiet btn-sm",
+              form_class: "contents",
+              data: { turbo_confirm: "End every open guest session? Anyone viewing right now will have to enter the password again." } do %>
+          End all sessions
+        <% end %>
+      <% end %>
+    </div>
+
+    <% if @active_sessions.any? %>
+      <div class="rows">
+        <% @active_sessions.each do |session| %>
+          <div class="row-item">
+            <div class="min-w-0">
+              <p class="font-semibold text-ink"><%= ip_location_label(session.ip_address, @ip_locations) %></p>
+              <p class="meta token"><%= session.ip_address %></p>
+              <p class="meta">
+                Started <%= time_ago_in_words(session.created_at) %> ago ·
+                last seen <%= time_ago_in_words(session.accessed_at) %> ago ·
+                ends in <%= pluralize(session.expires_in_minutes.ceil, "minute") %>
+              </p>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span class="badge badge-family">Open</span>
+              <%= button_to revoke_guest_session_album_path(@album, session_token: session.session_token),
+                    method: :delete,
+                    class: "btn btn-danger-quiet btn-sm",
+                    form_class: "contents",
+                    data: { turbo_confirm: "End this session? They'll have to enter the password again." } do %>
+                End
               <% end %>
-            </tbody>
-          </table>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="card-body">
+        <div class="empty border-0 bg-transparent">
+          <i class="fas fa-users empty-icon" aria-hidden="true"></i>
+          <h3 class="section-title">Nobody's viewing right now</h3>
+          <p class="meta">Guests appear here while they have the album open.</p>
         </div>
       </div>
-    </div>
+    <% end %>
+  </section>
+
+  <% if @expired_sessions.any? %>
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 class="section-title">Recently ended</h2>
+          <p class="meta">The last 20 sessions that have closed.</p>
+        </div>
+      </div>
+
+      <div class="rows">
+        <% @expired_sessions.each do |session| %>
+          <div class="row-item">
+            <div class="min-w-0">
+              <p class="font-semibold text-ink"><%= ip_location_label(session.ip_address, @ip_locations) %></p>
+              <p class="meta token"><%= session.ip_address %></p>
+              <p class="meta">
+                Started <%= time_ago_in_words(session.created_at) %> ago ·
+                lasted <%= distance_of_time_in_words(session.created_at, session.accessed_at) %>
+              </p>
+            </div>
+            <span class="badge badge-private">Ended</span>
+          </div>
+        <% end %>
+      </div>
+    </section>
   <% end %>
 </div>
-
-<style>
-  .table th {
-    border-top: none;
-    font-weight: 600;
-    color: #495057;
-    background-color: #f8f9fa;
-  }
-  
-  .card {
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  }
-  
-  .card-header {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-bottom: 1px solid #dee2e6;
-    border-radius: 12px 12px 0 0 !important;
-  }
-  
-  .badge {
-    font-size: 0.75rem;
-  }
-  
-  code {
-    background-color: #f8f9fa;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-size: 0.9rem;
-  }
-  
-  .btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
-  }
-  
-  /* Alert and .btn-close styling is centralized in application.css */
-
-
-  .alert-danger {
-    background: linear-gradient(135deg, #fee5e5 0%, #fdd8d8 100%);
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-  }
-
-  .alert-success {
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-    color: #155724;
-    border: 1px solid #c3e6cb;
-  }
-
-
-
-</style>

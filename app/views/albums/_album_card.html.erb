@@ -1,0 +1,59 @@
+<%# One album in a grid.
+
+    Locals:
+      album  - the album
+      owned  - true when the signed-in user owns it (shows edit/delete)
+%>
+<div class="group relative">
+  <%= link_to album_path(album), class: "card card-link h-full" do %>
+    <div class="relative">
+      <% if album.cover_photo&.image&.attached? %>
+        <%= image_tag album.cover_photo.short_medium_url,
+              alt: "",
+              loading: "lazy",
+              class: "aspect-[4/3] w-full object-cover" %>
+      <% else %>
+        <div class="flex aspect-[4/3] w-full items-center justify-center bg-paper-deep text-primary">
+          <i class="fas fa-images text-3xl" aria-hidden="true"></i>
+        </div>
+      <% end %>
+
+      <span class="badge badge-on-photo absolute bottom-2 left-2">
+        <i class="fas fa-images" aria-hidden="true"></i>
+        <%= album.photo_count %>
+      </span>
+    </div>
+
+    <div class="p-4">
+      <h3 class="font-display text-lg font-semibold text-ink"><%= album.name %></h3>
+
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        <%= album_privacy_badge(album, detailed: owned) %>
+        <%= album_link_sharing_badge(album) if owned %>
+      </div>
+
+      <p class="meta mt-2">
+        <% unless owned %>by <%= album.user.display_name_or_full_name %> · <% end %>
+        <%= pluralize(album.photo_count, "photo") %> ·
+        updated <%= time_ago_in_words(album.updated_at) %> ago
+      </p>
+    </div>
+  <% end %>
+
+  <% if owned %>
+    <div class="absolute right-3 top-3 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+      <%= link_to edit_album_path(album),
+            class: "icon-btn h-9 w-9 shadow-[var(--shadow-soft)]",
+            aria: { label: "Edit #{album.name}" } do %>
+        <i class="fas fa-pen" aria-hidden="true"></i>
+      <% end %>
+      <%= button_to album_path(album), method: :delete,
+            class: "icon-btn icon-btn-danger h-9 w-9 shadow-[var(--shadow-soft)]",
+            form_class: "contents",
+            aria: { label: "Delete #{album.name}" },
+            data: { turbo_confirm: "Delete “#{album.name}”? The photos in it stay in your library." } do %>
+        <i class="fas fa-trash-can" aria-hidden="true"></i>
+      <% end %>
+    </div>
+  <% end %>
+</div>

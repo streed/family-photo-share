@@ -9,13 +9,13 @@
   Locals: album, pickable_photos, addable_photo_count, editable
 %>
 <% if editable && addable_photo_count.to_i > 0 %>
-  <div class="add-photos-section mt-5">
-    <h4>Add Photos to Album</h4>
-    <p class="text-muted">Click on any photo below to add it to this album.</p>
+  <section class="mt-10 rounded-[var(--radius-card)] border border-edge-soft bg-paper-deep p-5 sm:p-6">
+    <h2 class="section-title">Add photos to this album</h2>
+    <p class="meta mb-4">Tap a photo to add it. It stays in your library either way.</p>
 
-    <div class="add-photos-grid">
+    <div class="grid-photos">
       <% pickable_photos.each do |photo| %>
-        <div class="add-photo-tile" id="<%= dom_id(photo, :addable) %>"
+        <div id="<%= dom_id(photo, :addable) %>"
              data-controller="pending-button"
              data-pending-button-pending-class="is-pending">
           <%# button_to, not link_to: an <a> only responds to PATCH via Turbo, so
@@ -23,54 +23,50 @@
               silently 404'd instead of adding the photo. %>
           <%= button_to add_photo_album_path(album, photo_id: photo.id),
                         method: :patch,
-                        class: "add-photo-link",
+                        class: "tile group relative block w-full text-left",
                         title: "Add #{photo_title_or_default(photo)} to this album",
                         form: {
-                          class: "add-photo-form",
+                          class: "contents",
                           data: { action: "submit->pending-button#start" }
                         } do %>
-            <div class="add-photo-container">
-              <%= photo_thumbnail_tag photo, css_class: "add-photo-thumbnail" %>
-              <div class="add-photo-overlay">
-                <div class="add-photo-icon">
+            <span class="relative block">
+              <%= photo_thumbnail_tag photo %>
+              <span class="absolute inset-0 flex items-center justify-center rounded-md bg-primary-deep/0 opacity-0 transition group-hover:bg-primary-deep/45 group-hover:opacity-100">
+                <span class="flex h-10 w-10 items-center justify-center rounded-full bg-white text-primary-deep">
                   <i class="fas fa-plus" aria-hidden="true"></i>
-                </div>
-                <div class="add-photo-info">
-                  <div class="add-photo-title"><%= truncated_photo_title(photo, length: 20) %></div>
-                </div>
-              </div>
-            </div>
+                </span>
+              </span>
+            </span>
+            <span class="block truncate px-1 pb-1 pt-2 text-sm font-semibold text-ink">
+              <%= truncated_photo_title(photo, length: 22) %>
+            </span>
           <% end %>
         </div>
       <% end %>
     </div>
 
     <% if addable_photo_count > 20 %>
-      <div class="text-center mt-3">
-        <small class="text-muted">
-          Showing 20 of <%= addable_photo_count %> photos not yet in this album.
-          <%= link_to "Browse all your photos", photos_path %> to add more.
-        </small>
-      </div>
+      <p class="meta mt-4 text-center">
+        Showing 20 of <%= addable_photo_count %> photos not yet in this album.
+        <%= link_to "Browse all your photos", photos_path, class: "link" %> to add more.
+      </p>
     <% end %>
-  </div>
+  </section>
 <% elsif editable %>
   <%# The empty state used to tell people to "add photos from your library" while
       offering no way to do it, and no upload link anywhere on the page. %>
-  <div class="add-photos-section mt-5 text-center">
-    <% if album.photo_count.zero? %>
-      <h4>No photos yet</h4>
-      <p class="text-muted">
-        <% if album.user.photos.exists? %>
-          Every photo in your library is already in this album.
-        <% else %>
-          You haven't uploaded any photos yet.
-        <% end %>
-      </p>
+  <section class="empty mt-10">
+    <i class="fas fa-images empty-icon" aria-hidden="true"></i>
+    <% if album.photo_count.zero? && !album.user.photos.exists? %>
+      <h2 class="section-title">Nothing to add yet</h2>
+      <p class="meta">You haven't uploaded any photos.</p>
     <% else %>
-      <p class="text-muted mb-3">Every photo in your library is already in this album.</p>
+      <h2 class="section-title">Everything's already here</h2>
+      <p class="meta">Every photo in your library is in this album.</p>
     <% end %>
-    <%= link_to "Upload Photos", new_photo_path, class: "btn btn-primary" %>
-    <%= link_to "Bulk Upload", new_bulk_upload_path, class: "btn btn-outline-primary ms-2" %>
-  </div>
+    <div class="flex flex-wrap justify-center gap-2">
+      <%= link_to "Upload photos", new_photo_path, class: "btn btn-primary" %>
+      <%= link_to "Upload a batch", new_bulk_upload_path, class: "btn btn-secondary" %>
+    </div>
+  </section>
 <% end %>

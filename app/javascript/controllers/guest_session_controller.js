@@ -102,13 +102,13 @@ export default class extends Controller {
 
   showWarning() {
     if (this.hasWarningTarget) {
-      this.warningTarget.classList.remove('d-none')
+      this.warningTarget.hidden = false
     }
   }
 
   hideWarning() {
     if (this.hasWarningTarget) {
-      this.warningTarget.classList.add('d-none')
+      this.warningTarget.hidden = true
     }
   }
 

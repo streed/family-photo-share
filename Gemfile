@@ -89,3 +89,5 @@ group :test do
   gem "database_cleaner-active_record"
   gem "rails-controller-testing"
 end
+
+gem "tailwindcss-rails", "~> 4.6"

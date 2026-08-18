@@ -1,0 +1,31 @@
+<%# The one and only place flash messages are rendered.
+
+    They used to be rendered here *and* again inside external_albums/show and
+    albums/guest_sessions, so every message on those pages appeared twice.
+    `flash.each` already yields flash.now entries during this render, so there
+    is no separate flash.now pass either. %>
+<div class="pointer-events-none fixed inset-x-0 top-3 z-50 flex flex-col items-center gap-2 px-4"
+     role="status"
+     aria-live="polite">
+  <% flash.each do |type, message| %>
+    <% next if message.blank? %>
+    <% kind = case type.to_s
+              when "notice", "success" then { style: "notice-success", icon: "fa-circle-check" }
+              when "alert", "error"    then { style: "notice-danger",  icon: "fa-circle-exclamation" }
+              when "warning"           then { style: "notice-warning", icon: "fa-triangle-exclamation" }
+              else                          { style: "notice-info",    icon: "fa-circle-info" }
+              end %>
+    <div class="notice <%= kind[:style] %> pointer-events-auto w-full max-w-md shadow-[0_8px_24px_rgba(62,53,44,0.16)] transition-opacity duration-300"
+         data-controller="alert"
+         data-alert-auto-dismiss-value="5000">
+      <i class="fas <%= kind[:icon] %> mt-0.5 shrink-0" aria-hidden="true"></i>
+      <div class="min-w-0 grow"><%= message %></div>
+      <button type="button"
+              class="-my-1 -mr-1 shrink-0 rounded-full px-2 py-1 text-current opacity-70 hover:opacity-100"
+              aria-label="Dismiss"
+              data-action="click->alert#dismiss">
+        <i class="fas fa-xmark" aria-hidden="true"></i>
+      </button>
+    </div>
+  <% end %>
+</div>

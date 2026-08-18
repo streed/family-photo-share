@@ -1,121 +1,85 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header text-center">
-          <h3>Family Invitation</h3>
+<% content_for :title, "Invitation to #{@invitation.family.name}" %>
+
+<div class="shell-narrow">
+  <div class="card mt-4">
+    <div class="border-b border-edge-soft bg-paper-deep px-6 py-7 text-center">
+      <span class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-card text-xl text-primary">
+        <i class="fas fa-users" aria-hidden="true"></i>
+      </span>
+      <p class="meta">You've been invited to join</p>
+      <h1 class="page-title text-2xl sm:text-3xl"><%= @invitation.family.name %></h1>
+    </div>
+
+    <div class="card-body p-6 sm:p-8">
+      <% if @invitation.family.description.present? %>
+        <p class="mb-5 text-center"><%= @invitation.family.description %></p>
+      <% end %>
+
+      <dl class="mb-6 grid grid-cols-3 gap-2 rounded-[12px] bg-paper-deep p-4 text-center">
+        <div>
+          <dt class="meta">Members</dt>
+          <dd class="font-display text-xl font-semibold text-ink"><%= @invitation.family.member_count %></dd>
         </div>
-        <div class="card-body text-center">
-          <div class="mb-4">
-            <i class="fas fa-users text-primary" style="font-size: 3rem;"></i>
-          </div>
-          
-          <h4 class="mb-3">You're invited to join</h4>
-          <h2 class="text-primary mb-4"><%= @invitation.family.name %></h2>
-          
-          <% if @invitation.family.description.present? %>
-            <p class="text-muted mb-4"><%= @invitation.family.description %></p>
-          <% end %>
-          
-          <div class="invitation-details mb-4">
-            <div class="row text-center">
-              <div class="col-4">
-                <div class="stat-item">
-                  <strong><%= @invitation.family.member_count %></strong>
-                  <div class="small text-muted">Members</div>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="stat-item">
-                  <strong><%= @invitation.family.shared_photos.count %></strong>
-                  <div class="small text-muted">Photos</div>
-                </div>
-              </div>
-              <div class="col-4">
-                <div class="stat-item">
-                  <strong><%= time_ago_in_words(@invitation.family.created_at) %></strong>
-                  <div class="small text-muted">Age</div>
-                </div>
-              </div>
+        <div>
+          <dt class="meta">Photos</dt>
+          <dd class="font-display text-xl font-semibold text-ink"><%= @invitation.family.shared_photos.count %></dd>
+        </div>
+        <div>
+          <dt class="meta">Together for</dt>
+          <dd class="font-semibold text-ink"><%= time_ago_in_words(@invitation.family.created_at) %></dd>
+        </div>
+      </dl>
+
+      <p class="meta mb-6 text-center">
+        Invited by <strong class="text-ink"><%= @invitation.inviter.display_name_or_full_name %></strong>
+        <%= time_ago_in_words(@invitation.created_at) %> ago ·
+        expires in <%= time_ago_in_words(@invitation.expires_at) %>
+      </p>
+
+      <% if user_signed_in? %>
+        <% if current_user.email == @invitation.email %>
+          <% if current_user.has_family? %>
+            <div class="notice notice-warning mb-4">
+              <i class="fas fa-triangle-exclamation mt-0.5 shrink-0" aria-hidden="true"></i>
+              <div>You're already in a family. Leave that one first to join this one.</div>
             </div>
-          </div>
-          
-          <div class="invitation-meta mb-4">
-            <p class="text-muted small">
-              Invited by <strong><%= @invitation.inviter.display_name_or_full_name %></strong>
-              <%= time_ago_in_words(@invitation.created_at) %> ago
-            </p>
-            <p class="text-muted small">
-              This invitation expires <%= time_ago_in_words(@invitation.expires_at) %> from now
-            </p>
-          </div>
-          
-          <% if user_signed_in? %>
-            <% if current_user.email == @invitation.email %>
-              <% if current_user.has_family? %>
-                <div class="alert alert-warning">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  You already belong to a family. You must leave your current family before joining a new one.
-                </div>
-                <%= link_to "Back to Home", root_path, class: "btn btn-secondary" %>
-              <% else %>
-                <div class="d-grid gap-2">
-                  <%= link_to "Accept Invitation", accept_invitation_path(@invitation.token), 
-                              method: :patch, 
-                              class: "btn btn-success btn-lg",
-                              data: { "turbo-method": :patch } %>
-                  <%= link_to "Decline", decline_invitation_path(@invitation.token), 
-                              method: :patch, 
-                              class: "btn btn-outline-danger",
-                              data: { turbo_confirm: "Are you sure you want to decline this invitation?", "turbo-method": :patch } %>
-                </div>
-              <% end %>
-            <% else %>
-              <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i>
-                This invitation is for <strong><%= @invitation.email %></strong>, 
-                but you're signed in as <strong><%= current_user.email %></strong>.
-              </div>
-              <div class="d-grid gap-2">
-                <%= link_to "Sign Out & Use Different Account", destroy_user_session_path, 
-                            method: :delete, 
-                            class: "btn btn-outline-primary",
-                            data: { "turbo-method": :delete } %>
-                <%= link_to "Back to Home", root_path, class: "btn btn-secondary" %>
-              </div>
-            <% end %>
+            <%= link_to "Back to home", root_path, class: "btn btn-secondary btn-block" %>
           <% else %>
-            <div class="alert alert-info">
-              <i class="fas fa-info-circle"></i>
-              Please sign in with the email address <strong><%= @invitation.email %></strong> to accept this invitation.
-            </div>
-            <div class="d-grid gap-2">
-              <%= link_to "Sign In to Accept", new_user_session_path, class: "btn btn-success btn-lg" %>
-              <%= link_to "Create Account", new_user_registration_path, class: "btn btn-outline-primary" %>
-              <%= link_to "Decline Invitation", decline_invitation_path(@invitation.token), 
-                          method: :patch, 
-                          class: "btn btn-outline-danger",
-                          data: { turbo_confirm: "Are you sure you want to decline this invitation?", "turbo-method": :patch } %>
+            <div class="flex flex-col gap-2">
+              <%= button_to "Accept and join", accept_invitation_path(@invitation.token), method: :patch,
+                    class: "btn btn-primary btn-lg btn-block", form_class: "contents" %>
+              <%= button_to "Decline", decline_invitation_path(@invitation.token), method: :patch,
+                    class: "btn btn-ghost btn-block", form_class: "contents",
+                    data: { turbo_confirm: "Decline this invitation?" } %>
             </div>
           <% end %>
+        <% else %>
+          <div class="notice notice-warning mb-4">
+            <i class="fas fa-triangle-exclamation mt-0.5 shrink-0" aria-hidden="true"></i>
+            <div>
+              This invitation was sent to <strong><%= @invitation.email %></strong>,
+              but you're signed in as <strong><%= current_user.email %></strong>.
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <%= button_to "Sign out and use another account", destroy_user_session_path, method: :delete,
+                  class: "btn btn-secondary btn-block", form_class: "contents" %>
+            <%= link_to "Back to home", root_path, class: "btn btn-ghost btn-block" %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="notice notice-info mb-4">
+          <i class="fas fa-circle-info mt-0.5 shrink-0" aria-hidden="true"></i>
+          <div>Sign in as <strong><%= @invitation.email %></strong> to accept.</div>
         </div>
-      </div>
+        <div class="flex flex-col gap-2">
+          <%= link_to "Sign in to accept", new_user_session_path, class: "btn btn-primary btn-lg btn-block" %>
+          <%= link_to "Create an account", new_user_registration_path, class: "btn btn-secondary btn-block" %>
+          <%= button_to "Decline", decline_invitation_path(@invitation.token), method: :patch,
+                class: "btn btn-ghost btn-block", form_class: "contents",
+                data: { turbo_confirm: "Decline this invitation?" } %>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>
-
-<style>
-  .stat-item {
-    padding: 0.5rem;
-  }
-  
-  .invitation-details {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1rem;
-  }
-  
-  .card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
-</style>

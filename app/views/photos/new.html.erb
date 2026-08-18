@@ -1,66 +1,54 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header">
-          <h2>Upload New Photo</h2>
-        </div>
-        <div class="card-body">
-          <%= form_with model: @photo, local: true, multipart: true, 
-                        class: "photo-upload-form", 
-                        data: { controller: "form", action: "submit->form#submit" } do |form| %>
-            <% if @photo.errors.any? %>
-              <div class="alert alert-danger">
-                <h4><%= pluralize(@photo.errors.count, "error") %> prohibited this photo from being saved:</h4>
-                <ul class="mb-0">
-                  <% @photo.errors.full_messages.each do |message| %>
-                    <li><%= message %></li>
-                  <% end %>
-                </ul>
-              </div>
-            <% end %>
+<% content_for :title, "Upload a photo — Family Memories" %>
 
-            <div class="form-group mb-3" data-controller="file-upload">
-              <%= form.label :image, class: "form-label" %>
-              <%= form.file_field :image, class: "form-control", accept: "image/*", required: true,
-                                  data: { "file-upload-target": "input", action: "change->file-upload#change" } %>
-              <div class="form-text">Choose a photo to upload (PNG, JPEG, or GIF format, max 50MB)</div>
-              <div data-file-upload-target="preview" class="mt-3"></div>
-            </div>
+<div class="shell">
+  <div class="mx-auto max-w-2xl">
+    <h1 class="page-title mb-6">Upload a photo</h1>
 
-            <div class="form-group mb-3">
-              <%= form.label :title, class: "form-label" %>
-              <span class="text-muted">(Optional)</span>
-              <%= form.text_field :title, class: "form-control", placeholder: "Enter a title for your photo" %>
-            </div>
+    <div class="card">
+      <div class="card-body">
+        <%= form_with model: @photo, multipart: true,
+              data: { controller: "form", action: "submit->form#submit" } do |form| %>
+          <%= render "shared/form_errors", record: @photo %>
 
-            <div class="form-group mb-3">
-              <%= form.label :description, class: "form-label" %>
-              <%= form.text_area :description, class: "form-control", rows: 3, placeholder: "Describe your photo..." %>
-            </div>
+          <div class="field" data-controller="file-upload">
+            <%= form.label :image, "Photo", class: "field-label" %>
+            <%= form.file_field :image, class: "field-input py-2", accept: "image/*", required: true,
+                  data: { "file-upload-target": "input", action: "change->file-upload#change" } %>
+            <p class="field-hint">PNG, JPEG or GIF, up to 50MB.</p>
+            <div data-file-upload-target="preview" class="mt-3"></div>
+          </div>
 
-            <div class="row">
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <%= form.label :location, class: "form-label" %>
-                  <%= form.text_field :location, class: "form-control", placeholder: "Where was this photo taken?" %>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <div class="form-group mb-3">
-                  <%= form.label :taken_at, "Date Taken", class: "form-label" %>
-                  <%= form.date_field :taken_at, class: "form-control" %>
-                </div>
-              </div>
-            </div>
+          <div class="field">
+            <%= form.label :title, class: "field-label" %>
+            <%= form.text_field :title, class: "field-input", placeholder: "Optional — untitled is fine" %>
+          </div>
 
-            <div class="form-actions">
-              <%= form.submit "Upload Photo", class: "btn btn-primary", data: { "form-target": "submit" } %>
-              <%= link_to "Cancel", photos_path, class: "btn btn-secondary" %>
+          <div class="field">
+            <%= form.label :description, class: "field-label" %>
+            <%= form.text_area :description, class: "field-input", rows: 3, placeholder: "What's happening in this photo?" %>
+          </div>
+
+          <div class="grid gap-x-5 sm:grid-cols-2">
+            <div class="field">
+              <%= form.label :location, class: "field-label" %>
+              <%= form.text_field :location, class: "field-input", placeholder: "Where was it taken?" %>
             </div>
-          <% end %>
-        </div>
+            <div class="field">
+              <%= form.label :taken_at, "Date taken", class: "field-label" %>
+              <%= form.date_field :taken_at, class: "field-input" %>
+            </div>
+          </div>
+
+          <div class="mt-2 flex flex-wrap gap-2">
+            <%= form.submit "Upload photo", class: "btn btn-primary", data: { "form-target": "submit" } %>
+            <%= link_to "Cancel", photos_path, class: "btn btn-ghost" %>
+          </div>
+        <% end %>
       </div>
     </div>
+
+    <p class="meta mt-4 text-center">
+      Adding a lot at once? <%= link_to "Use the batch uploader", new_bulk_upload_path, class: "link" %>.
+    </p>
   </div>
 </div>

@@ -153,10 +153,15 @@ class AlbumsController < ApplicationController
   end
 
   def view_events
+    # Just the photo: the thumbnails in this table render through warmed short
+    # URLs, which never touch the attachment record.
     @events = @album.album_view_events.recent
                     .includes(:photo)
                     .order(occurred_at: :desc)
                     .limit(100)
+                    .to_a
+
+    ShortUrl.warm_for_photos(@events.filter_map(&:photo), [ :thumbnail ])
 
     # Get base query for statistics
     recent_events = @album.album_view_events.recent
@@ -166,6 +171,13 @@ class AlbumsController < ApplicationController
     @unique_visitors = recent_events.distinct.count(:ip_address)
     @total_photo_views = recent_events.by_type("photo_view").count
     @password_attempts = recent_events.where(event_type: [ "password_entry", "password_attempt_failed" ]).count
+
+    # One query for every address on the page, instead of one per row.
+    @ip_locations = IpLocation.lookup_map(@events.map(&:ip_address))
+
+    # Anything not resolved yet (or never seen before) gets picked up in the
+    # background, so the table fills in on the next visit.
+    @events.map(&:ip_address).compact.uniq.each { |ip| IpLocation.resolve_later(ip) }
   end
 
   def guest_sessions
@@ -175,9 +187,14 @@ class AlbumsController < ApplicationController
       return
     end
 
-    @active_sessions = @album.album_access_sessions.active.recent
-    @expired_sessions = @album.album_access_sessions.expired.recent.limit(20)
+    @active_sessions = @album.album_access_sessions.active.recent.to_a
+    @expired_sessions = @album.album_access_sessions.expired.recent.limit(20).to_a
     @total_sessions_count = @album.album_access_sessions.count
+
+    @ip_locations = IpLocation.lookup_map((@active_sessions + @expired_sessions).map(&:ip_address))
+    (@active_sessions + @expired_sessions).map(&:ip_address).compact.uniq.each do |ip|
+      IpLocation.resolve_later(ip)
+    end
   end
 
   def revoke_guest_session

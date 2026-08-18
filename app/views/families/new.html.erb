@@ -1,50 +1,41 @@
-<div class="container">
-  <div class="row justify-content-center">
-    <div class="col-md-8">
-      <div class="card">
-        <div class="card-header">
-          <h2>Create New Family</h2>
-        </div>
-        <div class="card-body">
-          <%= form_with model: @family, local: true do |form| %>
-            <% if @family.errors.any? %>
-              <div class="alert alert-danger">
-                <h4><%= pluralize(@family.errors.count, "error") %> prohibited this family from being saved:</h4>
-                <ul class="mb-0">
-                  <% @family.errors.full_messages.each do |message| %>
-                    <li><%= message %></li>
-                  <% end %>
-                </ul>
-              </div>
-            <% end %>
+<% content_for :title, "Create a family — Family Memories" %>
 
-            <div class="form-group mb-3">
-              <%= form.label :name, class: "form-label" %>
-              <%= form.text_field :name, class: "form-control", placeholder: "Enter family name (e.g., 'The Smiths')" %>
-            </div>
+<div class="shell">
+  <div class="mx-auto max-w-2xl">
+    <h1 class="page-title mb-6">Create a family</h1>
 
-            <div class="form-group mb-4">
-              <%= form.label :description, class: "form-label" %>
-              <%= form.text_area :description, class: "form-control", rows: 4, placeholder: "Tell us about your family (optional)" %>
-              <div class="form-text">This helps family members understand what this group is for.</div>
-            </div>
+    <div class="card">
+      <div class="card-body">
+        <%= form_with model: @family do |form| %>
+          <%= render "shared/form_errors", record: @family %>
 
-            <div class="info-box p-3 mb-4 bg-light border rounded">
-              <h6><i class="fas fa-info-circle text-primary"></i> What happens next?</h6>
-              <ul class="mb-0 small">
-                <li>You'll be automatically added as the family admin</li>
-                <li>You can invite family members by email</li>
-                <li>Family members can share photos with each other</li>
-                <li>Only admins can manage family settings and members</li>
+          <div class="field">
+            <%= form.label :name, "Family name", class: "field-label" %>
+            <%= form.text_field :name, class: "field-input", placeholder: "The Lovelaces" %>
+          </div>
+
+          <div class="field">
+            <%= form.label :description, class: "field-label" %>
+            <%= form.text_area :description, class: "field-input", rows: 4, placeholder: "Optional — what this group is for" %>
+          </div>
+
+          <div class="notice notice-info mb-6">
+            <i class="fas fa-circle-info mt-0.5 shrink-0" aria-hidden="true"></i>
+            <div>
+              <p class="font-semibold">What happens next</p>
+              <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                <li>You become the family's admin</li>
+                <li>You can invite people by email</li>
+                <li>Albums you mark "Family" become visible to everyone in it</li>
               </ul>
             </div>
+          </div>
 
-            <div class="form-actions">
-              <%= form.submit "Create Family", class: "btn btn-primary" %>
-              <%= link_to "Cancel", families_path, class: "btn btn-secondary" %>
-            </div>
-          <% end %>
-        </div>
+          <div class="flex flex-wrap gap-2">
+            <%= form.submit "Create family", class: "btn btn-primary" %>
+            <%= link_to "Cancel", families_path, class: "btn btn-ghost" %>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

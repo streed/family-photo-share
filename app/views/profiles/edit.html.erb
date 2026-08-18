@@ -1,44 +1,46 @@
-<h1>Edit Profile</h1>
+<% content_for :title, "Edit profile — Family Memories" %>
 
-<%= form_with model: @user, url: profile_path(@user), method: :patch, local: true do |f| %>
-  <% if @user.errors.any? %>
-    <div class="error-messages">
-      <h4><%= pluralize(@user.errors.count, "error") %> prohibited this profile from being saved:</h4>
-      <ul>
-        <% @user.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
+<div class="shell">
+  <div class="mx-auto max-w-2xl">
+    <h1 class="page-title mb-6">Edit profile</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <%= form_with model: @user, url: profile_path(@user), method: :patch do |f| %>
+          <%= render "shared/form_errors", record: @user %>
+
+          <div class="grid gap-x-5 sm:grid-cols-2">
+            <div class="field">
+              <%= f.label :first_name, "First name", class: "field-label" %>
+              <%= f.text_field :first_name, class: "field-input" %>
+            </div>
+            <div class="field">
+              <%= f.label :last_name, "Last name", class: "field-label" %>
+              <%= f.text_field :last_name, class: "field-input" %>
+            </div>
+          </div>
+
+          <div class="field">
+            <%= f.label :display_name, "Display name", class: "field-label" %>
+            <%= f.text_field :display_name, class: "field-input", placeholder: "Leave blank to use your full name" %>
+          </div>
+
+          <div class="field">
+            <%= f.label :bio, "About you", class: "field-label" %>
+            <%= f.text_area :bio, class: "field-input", rows: 4, placeholder: "A line or two for your family" %>
+          </div>
+
+          <div class="field">
+            <%= f.label :phone_number, "Phone number", class: "field-label" %>
+            <%= f.telephone_field :phone_number, class: "field-input", placeholder: "Optional" %>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <%= f.submit "Save profile", class: "btn btn-primary" %>
+            <%= link_to "Cancel", profile_path(@user), class: "btn btn-ghost" %>
+          </div>
         <% end %>
-      </ul>
+      </div>
     </div>
-  <% end %>
-
-  <div class="form-group">
-    <%= f.label :first_name %>
-    <%= f.text_field :first_name, class: "form-control" %>
   </div>
-
-  <div class="form-group">
-    <%= f.label :last_name %>
-    <%= f.text_field :last_name, class: "form-control" %>
-  </div>
-
-  <div class="form-group">
-    <%= f.label :display_name, "Display Name (optional)" %>
-    <%= f.text_field :display_name, class: "form-control", placeholder: "Leave blank to use full name" %>
-  </div>
-
-  <div class="form-group">
-    <%= f.label :bio, "Bio (optional)" %>
-    <%= f.text_area :bio, class: "form-control", rows: 4, placeholder: "Tell others about yourself..." %>
-  </div>
-
-  <div class="form-group">
-    <%= f.label :phone_number, "Phone Number (optional)" %>
-    <%= f.telephone_field :phone_number, class: "form-control" %>
-  </div>
-
-  <div class="form-actions">
-    <%= f.submit "Update Profile", class: "btn btn-primary" %>
-    <%= link_to "Cancel", profile_path(@user), class: "btn btn-secondary" %>
-  </div>
-<% end %>
+</div>

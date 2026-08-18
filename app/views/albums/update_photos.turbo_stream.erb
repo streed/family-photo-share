@@ -11,7 +11,7 @@
 
 <%# The grid, so ordering, the cover crown and the tile set are all correct. %>
 <%= turbo_stream.replace "album_photo_grid" do %>
-  <div class="photo-grid" id="album_photo_grid">
+  <div class="grid-photos" id="album_photo_grid">
     <% @photos.each_with_index do |photo, index| %>
       <%= render "albums/photo_tile",
                  album: @album,
@@ -39,11 +39,15 @@
 <% end %>
 
 <%= turbo_stream.prepend "album_flash" do %>
-  <div class="alert alert-success alert-dismissible"
-       role="alert"
+  <div class="notice notice-success mb-4 transition-opacity duration-300"
+       role="status"
        data-controller="alert"
        data-alert-auto-dismiss-value="4000">
-    <%= notice %>
-    <button type="button" class="alert-close" aria-label="Dismiss" data-action="click->alert#dismiss">&times;</button>
+    <i class="fas fa-circle-check mt-0.5 shrink-0" aria-hidden="true"></i>
+    <div class="grow"><%= notice %></div>
+    <button type="button" class="-my-1 -mr-1 shrink-0 rounded-full px-2 py-1 opacity-70 hover:opacity-100"
+            aria-label="Dismiss" data-action="click->alert#dismiss">
+      <i class="fas fa-xmark" aria-hidden="true"></i>
+    </button>
   </div>
 <% end %>

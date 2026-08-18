@@ -1,0 +1,12 @@
+<%# Avatar, or the person's initial when they haven't set one.
+    size: :sm (32px) | :md (48px) | :lg (72px) %>
+<% dimensions = { sm: "h-8 w-8 text-sm", md: "h-12 w-12 text-base", lg: "h-[4.5rem] w-[4.5rem] text-2xl" }.fetch(size, "h-8 w-8 text-sm") %>
+<% if user.avatar_url.present? %>
+  <%= image_tag user.avatar_url,
+        alt: user.display_name_or_full_name,
+        loading: "lazy",
+        class: "#{dimensions} shrink-0 rounded-full object-cover" %>
+<% else %>
+  <span class="<%= dimensions %> flex shrink-0 items-center justify-center rounded-full bg-primary font-semibold text-white"
+        aria-hidden="true"><%= user.display_name_or_full_name.to_s.first.to_s.upcase %></span>
+<% end %>

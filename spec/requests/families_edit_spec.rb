@@ -27,7 +27,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
         it "returns success and shows the edit form" do
           get edit_family_path(family)
           expect(response).to have_http_status(:success)
-          expect(response.body).to include("Edit Family")
+          expect(response.body).to include("Edit family")
           expect(response.body).to include(ERB::Util.html_escape(family.name))
         end
       end
@@ -132,7 +132,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
 
       it "shows delete button on edit page" do
         get edit_family_path(solo_family)
-        expect(response.body).to include("Delete Family")
+        expect(response.body).to include("Delete family")
       end
 
       it "allows deletion" do
@@ -150,7 +150,7 @@ RSpec.describe "Family Edit Functionality", type: :request do
 
       it "does not show delete button on edit page" do
         get edit_family_path(family)
-        expect(response.body).not_to include("Delete Family")
+        expect(response.body).not_to include("Delete family")
       end
     end
   end

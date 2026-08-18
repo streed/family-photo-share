@@ -7,14 +7,15 @@
 
   Locals: album, photo, index, editable
 %>
-<div class="photo-tile" id="<%= dom_id(photo) %>">
-  <div class="photo-item position-relative"
+<div class="group relative" id="<%= dom_id(photo) %>">
+  <div class="tile cursor-zoom-in"
        role="button"
        tabindex="0"
+       aria-label="View <%= photo_title_or_default(photo) %>"
        data-action="click->slideshow#open keydown.enter->slideshow#open keydown.space->slideshow#open"
        data-slideshow-index-value="<%= index %>"
        data-slideshow-photo-id-value="<%= photo.id %>">
-    <div class="photo-container">
+    <div class="relative">
       <%= photo_thumbnail_tag photo,
                     data: {
                       large: photo.short_large_url,
@@ -23,48 +24,43 @@
                       user: photo.user.display_name_or_full_name
                     } %>
       <%= photo_processing_badge(photo) %>
-      <div class="photo-overlay">
-        <div class="photo-info">
-          <div class="photo-title"><%= truncated_photo_title(photo, length: 30) %></div>
-          <div class="photo-meta">by <%= photo.user.display_name_or_full_name %></div>
-        </div>
-      </div>
     </div>
 
-    <% if editable %>
-      <div class="photo-actions">
-        <div class="action-buttons">
-          <% if album.cover_photo_id == photo.id %>
-            <span class="btn btn-sm btn-warning btn-action" title="Current album cover">
-              <i class="fas fa-crown" aria-hidden="true"></i>
-              <span class="visually-hidden">Current album cover</span>
-            </span>
-          <% else %>
-            <%= button_to set_cover_album_path(album, photo_id: photo.id),
-                          method: :patch,
-                          class: "btn btn-sm btn-light btn-action",
-                          title: "Set as album cover",
-                          "aria-label": "Set as album cover",
-                          data: { turbo_confirm: "Set this as the album cover?" },
-                          form: { onclick: "event.stopPropagation();" } do %>
-              📸
-            <% end %>
-          <% end %>
-
-          <%= button_to remove_photo_album_path(album, photo_id: photo.id),
-                        method: :delete,
-                        class: "btn btn-sm btn-danger btn-action",
-                        title: "Remove photo from album",
-                        "aria-label": "Remove photo from album",
-                        data: { turbo_confirm: "Remove this photo from the album?" },
-                        form: {
-                          onclick: "event.stopPropagation();",
-                          style: "display: inline;"
-                        } do %>
-            <i class="fas fa-trash-alt" aria-hidden="true"></i>
-          <% end %>
-        </div>
-      </div>
-    <% end %>
+    <div class="px-1 pb-1 pt-2">
+      <p class="truncate font-semibold text-ink"><%= truncated_photo_title(photo, length: 30) %></p>
+      <p class="meta truncate">by <%= photo.user.display_name_or_full_name %></p>
+    </div>
   </div>
+
+  <% if editable %>
+    <div class="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100 max-md:opacity-100">
+      <% if album.cover_photo_id == photo.id %>
+        <span class="icon-btn h-9 w-9 cursor-default bg-clay-soft text-clay shadow-[var(--shadow-soft)]"
+              title="Album cover">
+          <i class="fas fa-star" aria-hidden="true"></i>
+          <span class="sr-only">Album cover</span>
+        </span>
+      <% else %>
+        <%= button_to set_cover_album_path(album, photo_id: photo.id),
+                      method: :patch,
+                      class: "icon-btn h-9 w-9 shadow-[var(--shadow-soft)]",
+                      title: "Use as album cover",
+                      "aria-label": "Use as album cover",
+                      form_class: "contents",
+                      data: { turbo_confirm: "Use this photo as the album cover?" } do %>
+          <i class="fas fa-star" aria-hidden="true"></i>
+        <% end %>
+      <% end %>
+
+      <%= button_to remove_photo_album_path(album, photo_id: photo.id),
+                    method: :delete,
+                    class: "icon-btn icon-btn-danger h-9 w-9 shadow-[var(--shadow-soft)]",
+                    title: "Remove from album",
+                    "aria-label": "Remove from album",
+                    form_class: "contents",
+                    data: { turbo_confirm: "Remove this photo from the album? It stays in your library." } do %>
+        <i class="fas fa-xmark" aria-hidden="true"></i>
+      <% end %>
+    </div>
+  <% end %>
 </div>

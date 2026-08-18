@@ -28,8 +28,8 @@ RSpec.describe 'albums/show', type: :view do
       it 'displays QR code in simple layout when album has photos' do
         render
 
-        expect(rendered).to have_css('.qr-code-container-simple')
-        expect(rendered).to have_css('.qr-code-image-simple')
+        expect(rendered).to have_css('.qr-code-image')
+        expect(rendered).to have_css('.qr-code-image')
         expect(rendered).to have_content('Scan to share')
       end
     end
@@ -44,8 +44,8 @@ RSpec.describe 'albums/show', type: :view do
       it 'does not display QR code when album is empty' do
         render
 
-        expect(rendered).not_to have_css('.qr-code-container-simple')
-        expect(rendered).not_to have_css('.qr-code-image-simple')
+        expect(rendered).not_to have_css('.qr-code-image')
+        expect(rendered).not_to have_css('.qr-code-image')
         expect(rendered).not_to have_content('Scan to share')
       end
     end
@@ -55,8 +55,8 @@ RSpec.describe 'albums/show', type: :view do
     it 'does not display QR code' do
       render
 
-      expect(rendered).not_to have_css('.album-header-qr')
-      expect(rendered).not_to have_css('.qr-code-container-simple')
+      expect(rendered).not_to have_css('.qr-code-image')
+      expect(rendered).not_to have_css('.qr-code-image')
       expect(rendered).not_to have_content('Scan to share')
     end
   end

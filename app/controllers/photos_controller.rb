@@ -17,8 +17,13 @@ class PhotosController < ApplicationController
       @photos = apply_search_filters(@photos)
       @total_count = @photos.count
       @page = [ params[:page].to_i, 1 ].max
-      @photos = @photos.recent.offset((@page - 1) * PER_PAGE).limit(PER_PAGE)
+      @photos = @photos.recent.includes(image_attachment: :blob)
+                        .offset((@page - 1) * PER_PAGE).limit(PER_PAGE).to_a
       @total_pages = (@total_count / PER_PAGE.to_f).ceil
+
+      # One short URL per tile. Warming them here keeps the grid at a couple of
+      # queries instead of one lookup-and-insert per photo.
+      ShortUrl.warm_for_photos(@photos, [ :small ])
     rescue ActiveRecord::RecordNotFound
       redirect_to photos_path, alert: "User not found."
     end
