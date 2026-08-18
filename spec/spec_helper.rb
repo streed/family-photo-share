@@ -1,19 +1,19 @@
 # Start SimpleCov before anything else
 require 'simplecov'
 SimpleCov.start 'rails' do
-  add_filter '/spec/'
-  add_filter '/config/'
-  add_filter '/vendor/'
-  add_filter '/bin/'
-  add_filter '/db/'
+  skip '/spec/'
+  skip '/config/'
+  skip '/vendor/'
+  skip '/bin/'
+  skip '/db/'
 
-  add_group 'Models', 'app/models'
-  add_group 'Controllers', 'app/controllers'
-  add_group 'Jobs', 'app/jobs'
-  add_group 'Helpers', 'app/helpers'
-  add_group 'Services', 'app/services'
-  add_group 'Mailers', 'app/mailers'
-  add_group 'Libraries', 'lib'
+  group 'Models', 'app/models'
+  group 'Controllers', 'app/controllers'
+  group 'Jobs', 'app/jobs'
+  group 'Helpers', 'app/helpers'
+  group 'Services', 'app/services'
+  group 'Mailers', 'app/mailers'
+  group 'Libraries', 'lib'
 
   minimum_coverage ENV.fetch("COVERAGE_MIN", 0).to_i
 end

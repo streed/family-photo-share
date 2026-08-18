@@ -12,7 +12,9 @@ require 'rspec/rails'
 require 'shoulda/matchers'
 require 'capybara/rspec'
 require 'database_cleaner/active_record'
-require 'sidekiq/testing'
+# Sidekiq 9 drops `require "sidekiq/testing"`; this is the replacement entry
+# point and it loads sidekiq/test_api for us (Sidekiq::Testing, Job.clear_all).
+Sidekiq.testing!(:fake)
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
 # spec/support/ and its subdirectories. Files matching `spec/**/*_spec.rb` are
