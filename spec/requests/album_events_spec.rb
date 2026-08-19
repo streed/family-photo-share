@@ -86,6 +86,18 @@ RSpec.describe "Album Events", type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Nothing yet")
       end
+
+      # The only branch of this page that builds an external_album_url, and the
+      # one an owner actually lands on: sharing switched on, nobody's visited yet.
+      it "offers the share link when link sharing is on" do
+        shared = create(:album, user: user, allow_external_access: true, password: "letmein")
+
+        get view_events_album_path(shared)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Share the album to start seeing activity")
+        expect(response.body).to include(shared.reload.sharing_token)
+      end
     end
   end
 
