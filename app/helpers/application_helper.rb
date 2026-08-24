@@ -32,6 +32,14 @@ module ApplicationHelper
     end
   end
 
+  # The one image any link preview is ever allowed to show: the app's own icon,
+  # served from public/. Never a photo, and never anything derived from one.
+  #
+  # Absolute, because Open Graph consumers do not resolve relative URLs.
+  def link_preview_image_url
+    "#{request.base_url}/icon.png"
+  end
+
   def qr_code_data_url(text, size: 5)
     require "rqrcode"
 

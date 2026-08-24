@@ -15,8 +15,15 @@ class ExternalAlbumsController < ApplicationController
   before_action :check_rate_limit, only: [ :authenticate ]
 
   def show
-    @photos = @album.ordered_photos.includes(:user)
+    # Newest first, inherited from Album#ordered_photos — a guest opening a shared
+    # link should land on the latest photos, not the ones added first.
+    @photos = @album.ordered_photos.includes(:user).to_a
     @is_external_access = true
+
+    # Every tile here asks for a short URL twice (thumbnail and the slideshow's
+    # medium). Unwarmed, that is a lookup-and-insert per photo per variant on
+    # every guest view of the album.
+    ShortUrl.warm_for_photos(@photos, [ :thumbnail, :medium ])
   end
 
   def authenticate

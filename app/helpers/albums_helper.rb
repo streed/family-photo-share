@@ -53,6 +53,14 @@ module AlbumsHelper
     end
   end
 
+  # Where you currently are in an album — which page of the grid, which sort,
+  # which page of the picker. Carried on every add/remove/cover button so that
+  # changing the album returns you to the spot you were looking at instead of
+  # bouncing back to page one.
+  def album_view_params(extra = {})
+    request.query_parameters.slice("page", "sort", "picker_page").merge(extra.stringify_keys)
+  end
+
   # Marks an album the whole family can add to, so it reads as a shared space
   # rather than one person's album that everyone happens to be able to see.
   def album_contributions_badge(album)

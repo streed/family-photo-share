@@ -6,6 +6,13 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#faf7f2">
+
+    <%# Signed-in pages redirect a crawler to the sign-in screen, but a preview
+        should never depend on that: same fixed icon, same generic wording. %>
+    <%= render "shared/link_preview",
+               title: "Family Memories",
+               description: "A private place for a family's photos." %>
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 

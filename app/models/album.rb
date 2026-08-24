@@ -74,14 +74,19 @@ class Album < ApplicationRecord
   SORT_ORDERS = %w[position date_taken].freeze
   DEFAULT_SORT_ORDER = "position".freeze
 
-  # Photos in the album, in the album's own order.
+  # Photos in the album, newest addition first.
   #
-  # This used to sort purely by photos.taken_at, which made album_photos.position
-  # dead weight and produced the app's most confusing behaviour: a photo you just
-  # added landed wherever its EXIF date fell (often buried mid-grid), and then
-  # moved *again* minutes later when ExtractPhotoMetadataJob backfilled taken_at.
-  # Ordering by position keeps a photo where the user put it; "date_taken"
-  # remains available for people who want a chronological album.
+  # Two separate decisions are baked in here. The first is ordering by
+  # album_photos.position rather than photos.taken_at: sorting by taken_at made
+  # position dead weight and produced the app's most confusing behaviour, where a
+  # photo you just added landed wherever its EXIF date fell and then moved *again*
+  # minutes later when ExtractPhotoMetadataJob backfilled taken_at. Position keeps
+  # a photo where it was put.
+  #
+  # The second is the direction: DESC, so the most recently added photo is the
+  # first thing you see. Ascending meant every album opened on the oldest photo
+  # and you had to page to the end to find what you just uploaded. "date_taken"
+  # stays available for a chronological read, and is likewise newest first.
   def ordered_photos(sort: nil)
     scope = Photo.select("photos.*, album_photos.position AS album_position")
                  .joins(:album_photos)
@@ -90,7 +95,7 @@ class Album < ApplicationRecord
     if sort_order_for(sort) == "date_taken"
       scope.order("photos.taken_at DESC NULLS LAST, photos.created_at DESC")
     else
-      scope.order("album_photos.position ASC, album_photos.added_at ASC")
+      scope.order("album_photos.position DESC, album_photos.added_at DESC")
     end
   end
 

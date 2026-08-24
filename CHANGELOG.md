@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Comprehensive Testing**: RSpec test suite with factories and system tests
 
 ### Changed
+- **Newest First**: Albums, the public shared-album page and the add-photo picker all lead with
+  the most recent photo instead of the oldest. Album ordering stays position-based (so photos
+  don't move around when EXIF dates are backfilled) — only the direction changed
+- **Paginated Album Grids**: An album's photos now page 24 at a time, and the add-photo picker
+  pages 20 at a time instead of showing the first 20 and a dead-end link to the photo library
 - **Photo Sorting**: Albums now display photos sorted by date taken instead of manual position
 - **Authentication**: Enhanced login error handling with attempt tracking
 - **Image Processing**: Improved EXIF extraction with better error handling
@@ -38,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Development Workflow**: Added comprehensive contributing guidelines
 
 ### Fixed
+- **Public Album N+1**: the shared-album page resolved short URLs one photo at a time (and wrote
+  a row per miss) on every guest view; they are now warmed in one pass like every other grid
 - **Invited Sign-Up 500**: `users/sign_up/:invitation_token` was declared outside `devise_scope`,
   so the request carried no Devise mapping and the form raised
   `undefined method 'validatable?' for nil` — the one link an invited person follows
@@ -48,6 +55,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Session Management**: Fixed session expiration and cleanup processes
 
 ### Security
+- **Link Previews Never Show Photos**: the app published no Open Graph tags, so chat apps and
+  social sites scraped the page for the largest image — pasting a shared-album link reproduced
+  one of the family's photos as the preview thumbnail. Every page now declares a fixed app-icon
+  `og:image`, a `summary` (not `summary_large_image`) Twitter card, and generic preview text
+  that names neither the album nor its owner
 - **Rate Limiting**: Added progressive lockout for failed login attempts
 - **Session Security**: Enhanced guest session management with revocation capabilities
 - **Input Validation**: Improved file upload validation and security

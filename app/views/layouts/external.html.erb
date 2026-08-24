@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
     <meta name="theme-color" content="#faf7f2">
     <meta name="robots" content="noindex, nofollow">
+
+    <%= render "shared/link_preview",
+               title: "A shared photo album",
+               description: "Someone has shared a private album with you. Open the link to view it." %>
+
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 

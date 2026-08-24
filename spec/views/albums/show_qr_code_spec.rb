@@ -12,6 +12,15 @@ RSpec.describe 'albums/show', type: :view do
     assign(:editable, true)
     assign(:contributor, false)
     assign(:can_add_photos, true)
+    # The grid and the picker are paged, so the controller hands the view where
+    # in each it currently is.
+    assign(:photo_total, 0)
+    assign(:page, 1)
+    assign(:total_pages, 1)
+    assign(:picker_page, 1)
+    assign(:picker_total_pages, 1)
+    assign(:addable_photo_count, 0)
+    assign(:pickable_photos, [])
     allow(view).to receive(:current_user).and_return(user)
   end
 

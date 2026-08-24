@@ -182,14 +182,16 @@
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <p class="meta">
       <strong id="album_photo_count" class="text-ink"><%= @album.photo_count %></strong>
-      <%= "photo".pluralize(@album.photo_count) %> in this album
+      <%= "photo".pluralize(@album.photo_count) %> in this album<%= " · page #{@page} of #{@total_pages}" if @total_pages > 1 %>
     </p>
 
-    <% if @photos.size > 1 %>
+    <% if @photo_total > 1 %>
       <div class="flex items-center gap-2">
         <span class="meta">Order</span>
         <div class="segmented">
-          <%= link_to "Album order", album_path(@album, sort: "position"),
+          <%# Changing the sort restarts at page 1 — page 3 of one ordering means
+              nothing in the other. %>
+          <%= link_to "Recently added", album_path(@album, sort: "position"),
                 class: "seg-btn #{'seg-btn-active' if @sort == 'position'}",
                 "aria-current": (@sort == "position" ? "true" : nil) %>
           <%= link_to "Date taken", album_path(@album, sort: "date_taken"),
@@ -212,6 +214,10 @@
                    editable: editable,
                    contributor: @contributor %>
       <% end %>
+    </div>
+
+    <div id="album_grid_pager">
+      <%= render "albums/grid_pager", album: @album, page: @page, total_pages: @total_pages %>
     </div>
 
     <% if @photos.empty? %>
@@ -263,6 +269,8 @@
                album: @album,
                pickable_photos: @pickable_photos,
                addable_photo_count: @addable_photo_count,
+               picker_page: @picker_page,
+               picker_total_pages: @picker_total_pages,
                can_add: @can_add_photos %>
   </div>
 </div>

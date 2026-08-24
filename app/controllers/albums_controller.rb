@@ -1,4 +1,10 @@
 class AlbumsController < ApplicationController
+  # An album grid and the picker below it are both unbounded sets. Rendering
+  # every tile of a few-hundred-photo album is a slow response and a burst of
+  # image requests; these cap each at a screenful or two.
+  PHOTOS_PER_PAGE = 24
+  PICKER_PER_PAGE = 20
+
   before_action :authenticate_user!
   before_action :set_album, only: [ :show, :edit, :update, :destroy, :add_photo, :remove_photo, :set_cover, :view_events, :guest_sessions, :revoke_guest_session, :revoke_all_guest_sessions ]
   before_action :ensure_access, only: [ :show ]
@@ -32,16 +38,9 @@ class AlbumsController < ApplicationController
   end
 
   def show
-    @sort = @album.sort_order_for(params[:sort])
-    @photos = @album.ordered_photos(sort: @sort).includes(:user, image_attachment: :blob).to_a
     load_permissions
-
-    if @can_add_photos
-      @user_photos = current_user.photos.where.not(id: @album.photo_ids).recent
-      @addable_photo_count = @user_photos.count
-      @pickable_photos = @user_photos.limit(20).includes(image_attachment: :blob).to_a
-    end
-
+    load_album_photos
+    load_picker_photos
     warm_short_urls
   end
 
@@ -248,13 +247,46 @@ class AlbumsController < ApplicationController
   # instead of updating one tile and leaving the rest stale.
   def load_album_photo_state
     @album.reload
-    @sort = @album.sort_order_for(params[:sort])
-    @photos = @album.ordered_photos(sort: @sort).includes(:user, image_attachment: :blob).to_a
     load_permissions
-    @user_photos = current_user.photos.where.not(id: @album.photo_ids).recent
-    @addable_photo_count = @user_photos.count
-    @pickable_photos = @user_photos.limit(20).includes(image_attachment: :blob).to_a
+    load_album_photos
+    load_picker_photos
     warm_short_urls
+  end
+
+  # One page of the album grid, newest addition first.
+  def load_album_photos
+    @sort = @album.sort_order_for(params[:sort])
+    @photo_total = @album.photo_count
+    @total_pages = [ (@photo_total / PHOTOS_PER_PAGE.to_f).ceil, 1 ].max
+    @page = page_param(:page, @total_pages)
+
+    @photos = @album.ordered_photos(sort: @sort)
+                    .includes(:user, image_attachment: :blob)
+                    .offset((@page - 1) * PHOTOS_PER_PAGE)
+                    .limit(PHOTOS_PER_PAGE)
+                    .to_a
+  end
+
+  # One page of the picker: your own photos that aren't in this album yet, most
+  # recently uploaded first — the ones you are nearly always reaching for.
+  def load_picker_photos
+    return unless @can_add_photos
+
+    addable = current_user.photos.where.not(id: @album.photo_ids).recent
+    @addable_photo_count = addable.count
+    @picker_total_pages = [ (@addable_photo_count / PICKER_PER_PAGE.to_f).ceil, 1 ].max
+    @picker_page = page_param(:picker_page, @picker_total_pages)
+
+    @pickable_photos = addable.offset((@picker_page - 1) * PICKER_PER_PAGE)
+                              .limit(PICKER_PER_PAGE)
+                              .includes(image_attachment: :blob)
+                              .to_a
+  end
+
+  # Missing, zero and "'; DROP TABLE" all land on page 1; anything past the end
+  # lands on the last page, so a stale link shows photos rather than a blank grid.
+  def page_param(key, total_pages)
+    params[key].to_i.clamp(1, total_pages)
   end
 
   # Resolve every short URL the page needs up front, instead of one query (and

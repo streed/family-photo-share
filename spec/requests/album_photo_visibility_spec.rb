@@ -125,13 +125,36 @@ RSpec.describe "Album photo visibility", type: :request do
   describe "the add-photo picker" do
     let!(:album) { create(:album, user: owner, privacy: "family") }
 
-    it "reports how many photos are available beyond the 20 it shows" do
+    it "pages through the photos rather than stopping at the first 20" do
       25.times { create(:photo, user: owner) }
 
       sign_in owner
       get album_path(album)
 
-      expect(response.body).to include("Showing 20 of 25 photos not yet in this album")
+      expect(response.body).to include("Page 1 of 2")
+      expect(response.body).to include(album_path(album, picker_page: 2))
+    end
+
+    it "shows the rest on the second page" do
+      photos = Array.new(25) { create(:photo, user: owner) }
+
+      sign_in owner
+      get album_path(album, picker_page: 2)
+
+      # 25 photos, newest first: page two holds the five oldest.
+      expect(response.body).to include("addable_photo_#{photos.first.id}")
+      expect(response.body).not_to include("addable_photo_#{photos.last.id}")
+    end
+
+    it "offers the newest uploads first" do
+      create(:photo, user: owner, title: "oldest upload")
+      newest = create(:photo, user: owner, title: "newest upload")
+
+      sign_in owner
+      get album_path(album)
+
+      expect(response.body.index("addable_photo_#{newest.id}"))
+        .to be < response.body.index("oldest upload")
     end
   end
 end

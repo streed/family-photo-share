@@ -23,6 +23,13 @@
   </div>
 <% end %>
 
+<%# The grid's pager: adding or removing can change how many pages there are. %>
+<%= turbo_stream.replace "album_grid_pager" do %>
+  <div id="album_grid_pager">
+    <%= render "albums/grid_pager", album: @album, page: @page, total_pages: @total_pages %>
+  </div>
+<% end %>
+
 <%# The count in the toolbar. %>
 <%= turbo_stream.replace "album_photo_count" do %>
   <strong id="album_photo_count"><%= @album.photo_count %></strong>
@@ -35,6 +42,8 @@
                album: @album,
                pickable_photos: @pickable_photos,
                addable_photo_count: @addable_photo_count,
+               picker_page: @picker_page,
+               picker_total_pages: @picker_total_pages,
                can_add: @can_add_photos %>
   </div>
 <% end %>

@@ -1,0 +1,34 @@
+<%#
+  What a chat app, Slack or a social site shows when someone pastes a link to
+  this app.
+
+  These tags are deliberately present and deliberately generic. With no og:image
+  at all, crawlers fall back to scraping the page for the largest <img> they can
+  find — and on a shared album that is one of the family's photos, republished
+  into a group chat, a channel or a timeline that was never meant to see it.
+  A fixed app icon is the only image any preview ever gets.
+
+  The title and description are generic for the same reason: a preview travels
+  everywhere the link does, including past whoever the album was shared with, so
+  it says nothing about which album this is or what is in it.
+
+  Locals: title, description
+%>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Family Memories">
+<meta property="og:title" content="<%= title %>">
+<meta property="og:description" content="<%= description %>">
+<meta property="og:url" content="<%= request.original_url %>">
+<meta property="og:image" content="<%= link_preview_image_url %>">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:alt" content="The Family Memories logo">
+
+<%# "summary", never "summary_large_image": the large card is the one that wants
+    a photo to fill it, and crawlers hunt harder for one when it is asked for. %>
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="<%= title %>">
+<meta name="twitter:description" content="<%= description %>">
+<meta name="twitter:image" content="<%= link_preview_image_url %>">
+<meta name="twitter:image:alt" content="The Family Memories logo">

@@ -7,14 +7,15 @@ RSpec.describe "Album photo management", type: :request do
   before { sign_in owner }
 
   describe "ordering" do
-    it "keeps photos in the order they were added, regardless of EXIF date" do
+    it "shows the most recently added photo first, regardless of EXIF date" do
       recent = create(:photo, user: owner, taken_at: 1.day.ago)
       ancient = create(:photo, user: owner, taken_at: 20.years.ago)
 
       album.add_photo(recent)
       album.add_photo(ancient)
 
-      expect(album.ordered_photos.map(&:id)).to eq([ recent.id, ancient.id ])
+      # ancient was added last, so it leads — the album opens on what you just put in it.
+      expect(album.ordered_photos.map(&:id)).to eq([ ancient.id, recent.id ])
     end
 
     it "does not reshuffle when the metadata job backfills taken_at later" do
@@ -37,11 +38,13 @@ RSpec.describe "Album photo management", type: :request do
       album.add_photo(recent)
       album.add_photo(ancient)
 
+      # Both orderings are newest-first; they differ in what "newest" means —
+      # when the photo was taken, versus when it was added to the album.
       expect(album.ordered_photos(sort: "date_taken").map(&:id)).to eq([ recent.id, ancient.id ])
-      expect(album.ordered_photos(sort: "position").map(&:id)).to eq([ recent.id, ancient.id ])
+      expect(album.ordered_photos(sort: "position").map(&:id)).to eq([ ancient.id, recent.id ])
 
       album.move_photo(ancient, 1)
-      expect(album.ordered_photos(sort: "position").map(&:id)).to eq([ ancient.id, recent.id ])
+      expect(album.ordered_photos(sort: "position").map(&:id)).to eq([ recent.id, ancient.id ])
     end
 
     it "ignores an unknown sort parameter rather than erroring" do
@@ -50,6 +53,59 @@ RSpec.describe "Album photo management", type: :request do
       get album_path(album, sort: "'; DROP TABLE albums; --")
 
       expect(response).to have_http_status(:success)
+    end
+  end
+
+  describe "paging the grid" do
+    # 30 photos over a 24-per-page grid: enough for a second page and no more.
+    let!(:photos) { Array.new(30) { |i| create(:photo, user: owner, title: "photo-#{i}") } }
+
+    before { photos.each { |photo| album.add_photo(photo) } }
+
+    it "shows a screenful of the most recent additions, newest first" do
+      get album_path(album)
+
+      rendered = response.body.scan(/id="photo_(\d+)"/).flatten.map(&:to_i)
+
+      expect(rendered.size).to eq(AlbumsController::PHOTOS_PER_PAGE)
+      expect(rendered.first).to eq(photos.last.id)
+      expect(rendered).to eq(rendered.sort.reverse)
+      expect(response.body).to include("page 1 of 2")
+    end
+
+    it "puts the oldest additions on the last page" do
+      get album_path(album, page: 2)
+
+      rendered = response.body.scan(/id="photo_(\d+)"/).flatten.map(&:to_i)
+
+      expect(rendered.size).to eq(6)
+      expect(rendered.last).to eq(photos.first.id)
+    end
+
+    it "keeps the whole album reachable across the pages" do
+      first_page = response_photo_ids(album_path(album))
+      second_page = response_photo_ids(album_path(album, page: 2))
+
+      expect((first_page + second_page).uniq.size).to eq(30)
+    end
+
+    it "clamps a page past the end rather than showing an empty grid" do
+      get album_path(album, page: 99)
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body.scan(/id="photo_(\d+)"/)).not_to be_empty
+    end
+
+    it "ignores a nonsense page the same way" do
+      get album_path(album, page: "'; DROP TABLE albums; --")
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("page 1 of 2")
+    end
+
+    def response_photo_ids(path)
+      get path
+      response.body.scan(/id="photo_(\d+)"/).flatten.map(&:to_i)
     end
   end
 

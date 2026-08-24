@@ -36,7 +36,7 @@ RSpec.describe "Collaborative albums", type: :request do
       album # created before the request, not lazily by the expectation below
       get albums_path
 
-      expect(response.body).to include(album.name)
+      expect(response.body).to include(ERB::Util.html_escape(album.name))
       expect(response.body).to include("Family can add")
     end
 
@@ -147,7 +147,8 @@ RSpec.describe "Collaborative albums", type: :request do
       get album_path(album)
 
       expect(response.body).to include("They can add photos, too.")
-      expect(response.body).to include(relative.display_name_or_full_name)
+      # Escaped: Faker turns up names like O'Brien, which the body HTML-escapes.
+      expect(response.body).to include(ERB::Util.html_escape(relative.display_name_or_full_name))
     end
 
     it "gets the contributions switch on the edit form" do

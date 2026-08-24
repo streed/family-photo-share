@@ -48,7 +48,7 @@
           <span class="sr-only">Album cover</span>
         </span>
       <% else %>
-        <%= button_to set_cover_album_path(album, photo_id: photo.id),
+        <%= button_to set_cover_album_path(album, album_view_params(photo_id: photo.id)),
                       method: :patch,
                       class: "icon-btn h-9 w-9 shadow-[var(--shadow-soft)]",
                       title: "Use as album cover",
@@ -59,7 +59,7 @@
         <% end %>
       <% end %>
 
-      <%= button_to remove_photo_album_path(album, photo_id: photo.id),
+      <%= button_to remove_photo_album_path(album, album_view_params(photo_id: photo.id)),
                     method: :delete,
                     class: "icon-btn icon-btn-danger h-9 w-9 shadow-[var(--shadow-soft)]",
                     title: "Remove from album",

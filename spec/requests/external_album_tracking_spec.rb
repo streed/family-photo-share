@@ -134,4 +134,20 @@ RSpec.describe "External Album Tracking", type: :request do
       expect(AlbumViewEvent.recent.count).to eq(1)
     end
   end
+
+  # A guest opening a shared link should land on the latest photos, the same way
+  # the owner does — the public album used to open on the oldest one in the album.
+  describe "the order a guest sees photos in" do
+    it "shows the most recently added photo first" do
+      later = create(:photo, user: user, title: "added later")
+      album.add_photo(later)
+
+      post external_album_authenticate_path(album.sharing_token), params: { password: 'secretpass' }
+      get external_album_path(album.sharing_token)
+
+      rendered = response.body.scan(/data-slideshow-photo-id-value="(\d+)"/).flatten.map(&:to_i)
+
+      expect(rendered).to eq([ later.id, photo.id ])
+    end
+  end
 end

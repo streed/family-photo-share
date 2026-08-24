@@ -1,0 +1,13 @@
+<%#
+  Pager for the album's photo grid.
+
+  Its own partial with its own turbo_stream target: adding or removing a photo
+  can change the number of pages, and a pager left behind by the previous render
+  offers links to a page that no longer exists.
+
+  Locals: album, page, total_pages
+%>
+<%= render "shared/pager",
+           page: page,
+           total_pages: total_pages,
+           path_for_page: ->(n) { album_path(album, album_view_params(page: n)) } %>
