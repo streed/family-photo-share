@@ -1,4 +1,6 @@
 class ShortUrlsController < ApplicationController
+  include GuestSessionTracking
+
   skip_before_action :authenticate_user!
 
   def show
@@ -123,6 +125,12 @@ class ShortUrlsController < ApplicationController
     access_session = album.album_access_sessions.find_by(session_token: token)
     return false unless access_session
     return false if access_session.expired?
+
+    # Viewing photos is activity. A guest working through the slideshow makes no
+    # page requests at all, so without this the session lapses underneath them
+    # and the rest of the album comes back 403. Only writes past the halfway
+    # mark, so a grid of tiles does not mean an UPDATE per tile.
+    write_guest_session_cookies!(access_session) if access_session.extend_if_stale!
 
     true
   end

@@ -54,7 +54,7 @@ RSpec.describe "Guest Album Error Handling", type: :request do
         expect(response).to redirect_to(external_album_path(album.sharing_token))
         follow_redirect!
         expect(response.body).to include("Welcome! You now have access to view this album")
-        expect(response.body).to include("Your session will expire in 10 minutes")
+        expect(response.body).to include("Your session will expire in #{AlbumAccessSession.duration_in_words}")
       end
     end
   end

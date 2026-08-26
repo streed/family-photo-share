@@ -9,8 +9,40 @@ fi
 # Remove a potentially pre-existing server.pid for Rails.
 rm -f /rails/tmp/pids/server.pid
 
-# If running the rails server then create or migrate existing database
-if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
+# Does this invocation boot the web server?
+#
+# This used to compare the literal last two arguments against
+# "./bin/rails server". Anything else -- a start command carrying flags
+# ("./bin/rails server -b 0.0.0.0 -p $PORT"), a different path to the binary
+# ("bin/rails server", "bundle exec rails server"), or booting Puma directly --
+# fell through the check, so db:prepare never ran. The container still started
+# normally, against a database missing whatever the deploy had just added, and
+# the first page touching a new column died with an undefined-method error far
+# away from the real cause. Match the whole command line instead.
+boots_web_server() {
+  local previous=""
+  local argument
+
+  for argument in "$@"; do
+    case "$previous" in
+      rails|*/rails)
+        if [ "$argument" = "server" ] || [ "$argument" = "s" ]; then
+          return 0
+        fi
+        ;;
+    esac
+
+    case "$argument" in
+      puma|*/puma) return 0 ;;
+    esac
+
+    previous="$argument"
+  done
+
+  return 1
+}
+
+if boots_web_server "${@}"; then
   echo "Starting Family Photo Share web server..."
   
   # Wait for the database SERVER to accept connections if DATABASE_URL is set.
@@ -37,6 +69,17 @@ if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   
   echo "Preparing database..."
   ./bin/rails db:prepare
+
+  # Refuse to serve traffic against a schema the code has outgrown.
+  #
+  # db:prepare exiting non-zero already stops the boot (set -e), but a schema
+  # that is merely behind is silent: the app starts, and only the pages using a
+  # column the deploy expected fail, with an error naming the view rather than
+  # the migration. Check explicitly so a bad deploy is obvious at boot.
+  if ! ./bin/rails db:abort_if_pending_migrations; then
+    echo "Database has migrations that did not apply; refusing to start." >&2
+    exit 1
+  fi
   
   # Create default admin user if no users exist and ADMIN_EMAIL is set
   if [ -n "$ADMIN_EMAIL" ] && [ -n "$ADMIN_PASSWORD" ]; then

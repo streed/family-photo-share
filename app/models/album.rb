@@ -270,7 +270,6 @@ class Album < ApplicationRecord
 
   def create_access_session(ip_address)
     token = SecureRandom.urlsafe_base64(32)
-    # Guest sessions expire after 10 minutes
     expires_at = AlbumAccessSession::SESSION_DURATION.from_now
 
     album_access_sessions.create!(

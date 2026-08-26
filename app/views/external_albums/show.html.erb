@@ -2,7 +2,7 @@
 
 <div class="shell"
      data-controller="guest-session"
-     data-guest-session-expires-at-value="<%= @current_guest_session&.expires_at&.to_i * 1000 || (Time.current + 10.minutes).to_i * 1000 %>">
+     data-guest-session-expires-at-value="<%= (@current_guest_session&.expires_at || AlbumAccessSession::SESSION_DURATION.from_now).to_i * 1000 %>">
 
   <%# Session warning. Hidden until the guest-session controller shows it —
       flash messages themselves are rendered once, by the layout. %>

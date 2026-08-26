@@ -30,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Comprehensive Testing**: RSpec test suite with factories and system tests
 
 ### Changed
+- **Longer Guest Sessions**: a shared-album session now lasts 30 minutes of inactivity rather
+  than 10, and every message and countdown quoting a duration derives from the one constant
+- **App Icon**: replaced the default Rails red circle with a photo-stack mark in the app's
+  teal palette, served as a multi-resolution `favicon.ico` alongside SVG, PWA and maskable
+  variants
 - **Newest First**: Albums, the public shared-album page and the add-photo picker all lead with
   the most recent photo instead of the oldest. Album ordering stays position-based (so photos
   don't move around when EXIF dates are backfilled) — only the direction changed
@@ -43,6 +48,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Development Workflow**: Added comprehensive contributing guidelines
 
 ### Fixed
+- **Guest Album Photos Turning Into 403s**: the signed cookie authorizing a guest's photo
+  requests was issued once at sign-in and never re-issued, while the database session went on
+  being extended. Access therefore lapsed at a fixed wall-clock time no matter how actively the
+  guest was browsing, and because a photo tile cannot follow a redirect the album filled up with
+  403s. The cookie now moves with the session, and viewing photos counts as activity, so a
+  slideshow no longer expires underneath the person watching it
+- **Missing Migrations On Deploy**: the container entrypoint only ran `db:prepare` when the
+  start command's last two arguments were literally `./bin/rails server`, so any start command
+  carrying flags booted the app against an unmigrated database. It now detects the server across
+  argument forms and refuses to start when migrations are still pending
 - **Public Album N+1**: the shared-album page resolved short URLs one photo at a time (and wrote
   a row per miss) on every guest view; they are now warmed in one pass like every other grid
 - **Invited Sign-Up 500**: `users/sign_up/:invitation_token` was declared outside `devise_scope`,

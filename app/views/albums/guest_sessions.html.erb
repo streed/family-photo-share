@@ -35,7 +35,7 @@
     <div class="card-head">
       <div>
         <h2 class="section-title">Open now</h2>
-        <p class="meta">A session ends after 10 minutes without activity.</p>
+        <p class="meta">A session ends after <%= AlbumAccessSession.duration_in_words %> without activity.</p>
       </div>
       <% if @active_sessions.any? %>
         <%= button_to revoke_all_guest_sessions_album_path(@album), method: :patch,

@@ -44,7 +44,9 @@ class ExternalAlbumsController < ApplicationController
       # Clear failed attempts
       clear_failed_attempts unless Rails.env.development?
 
-      redirect_to external_album_path(@album.sharing_token), notice: "Welcome! You now have access to view this album. Your session will expire in 10 minutes."
+      redirect_to external_album_path(@album.sharing_token),
+                  notice: "Welcome! You now have access to view this album. " \
+                          "Your session will expire in #{AlbumAccessSession.duration_in_words}."
     else
       # Track failed attempt
       track_failed_attempt unless Rails.env.development?
@@ -120,23 +122,7 @@ class ExternalAlbumsController < ApplicationController
 
     AlbumViewEvent.track_password_entry(@album, request, access_session.session_token)
 
-    cookies.signed[:album_access] = {
-      value: {
-        "token" => access_session.session_token,
-        "album_id" => @album.id
-      },
-      expires: access_session.expires_at,
-      httponly: true,
-      secure: Rails.env.production?,
-      same_site: :lax
-    }
-
-    # Expiration info for the JavaScript countdown
-    cookies[:guest_session_expires_at] = {
-      value: access_session.expires_at.to_i.to_s,
-      expires: access_session.expires_at,
-      httponly: false # Allow JavaScript access
-    }
+    write_guest_session_cookies!(access_session)
 
     @current_guest_session = access_session
   end
@@ -161,7 +147,13 @@ class ExternalAlbumsController < ApplicationController
     @current_guest_session = access_session
 
     # Check if session is still valid (this will also extend it if valid)
-    access_session.valid_with_activity_check!
+    return false unless access_session.valid_with_activity_check!
+
+    # The session just moved its expiry forward. Move the cookies with it, or
+    # they expire on the original schedule and the guest loses access — photos
+    # first — while still actively browsing.
+    write_guest_session_cookies!(access_session)
+    true
   end
 
   def check_rate_limit

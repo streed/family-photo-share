@@ -1,3 +1,29 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="256" cy="256" r="256" fill="red"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Family Memories">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e8a82"/>
+      <stop offset="1" stop-color="#075e58"/>
+    </linearGradient>
+    <clipPath id="card">
+      <rect x="146" y="150" width="252" height="252" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <rect width="512" height="512" rx="112" fill="url(#tile)"/>
+
+  <g transform="translate(254 259) scale(1.19) translate(-254 -259)">
+    <!-- The photo behind, peeking out: two of them means a shared album. -->
+    <g transform="rotate(-11 244 230)">
+      <rect x="118" y="104" width="252" height="252" rx="28" fill="#9bd9d1"/>
+    </g>
+
+    <!-- The photo on top, holding the picture. -->
+    <g transform="rotate(7 272 276)">
+      <rect x="146" y="150" width="252" height="252" rx="28" fill="#ffffff"/>
+      <g clip-path="url(#card)">
+        <circle cx="332" cy="214" r="28" fill="#f7c948"/>
+        <path d="M146 402 L146 344 Q 196 286 246 336 Q 292 382 330 346 Q 368 310 398 340 L398 402 Z" fill="#74c194"/>
+      </g>
+    </g>
+  </g>
 </svg>
