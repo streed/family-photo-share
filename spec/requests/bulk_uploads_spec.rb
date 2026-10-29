@@ -18,6 +18,18 @@ RSpec.describe "BulkUploads", type: :request do
       get new_bulk_upload_path
       expect(assigns(:bulk_upload)).to be_a_new(BulkUpload)
     end
+
+    it "preselects the album from ?album_id=" do
+      get new_bulk_upload_path(album_id: album.id)
+      expect(response.body).to match(/<option value="#{album.id}"\s+selected/)
+    end
+
+    it "ignores an album the user can't add to" do
+      stranger_album = create(:album, user: create(:user))
+      get new_bulk_upload_path(album_id: stranger_album.id)
+      expect(response.body).not_to include(%(value="#{stranger_album.id}"))
+      expect(response.body).not_to match(/<option[^>]*selected/)
+    end
   end
 
   describe "GET /bulk_uploads" do

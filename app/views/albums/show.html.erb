@@ -31,13 +31,16 @@
           </div>
         </div>
 
-        <% if editable %>
+        <% if @can_add_photos %>
           <div class="absolute right-4 top-4 flex gap-2">
-            <%= link_to "Edit", edit_album_path(@album), class: "btn btn-sm btn-on-photo" %>
-            <%= button_to "Delete", album_path(@album), method: :delete,
-                  class: "btn btn-sm btn-on-photo",
-                  form_class: "contents",
-                  data: { turbo_confirm: "Delete “#{@album.name}”? The photos in it stay in your library." } %>
+            <%= link_to "Upload photos", new_bulk_upload_path(album_id: @album.id), class: "btn btn-sm btn-on-photo" %>
+            <% if editable %>
+              <%= link_to "Edit", edit_album_path(@album), class: "btn btn-sm btn-on-photo" %>
+              <%= button_to "Delete", album_path(@album), method: :delete,
+                    class: "btn btn-sm btn-on-photo",
+                    form_class: "contents",
+                    data: { turbo_confirm: "Delete “#{@album.name}”? The photos in it stay in your library." } %>
+            <% end %>
           </div>
         <% end %>
       </div>
@@ -59,13 +62,16 @@
           </div>
         </div>
 
-        <% if editable %>
+        <% if @can_add_photos %>
           <div class="flex gap-2">
-            <%= link_to "Edit album", edit_album_path(@album), class: "btn btn-secondary btn-sm" %>
-            <%= button_to "Delete", album_path(@album), method: :delete,
-                  class: "btn btn-danger-quiet btn-sm",
-                  form_class: "contents",
-                  data: { turbo_confirm: "Delete “#{@album.name}”? The photos in it stay in your library." } %>
+            <%= link_to "Upload photos", new_bulk_upload_path(album_id: @album.id), class: "btn btn-primary btn-sm" %>
+            <% if editable %>
+              <%= link_to "Edit album", edit_album_path(@album), class: "btn btn-secondary btn-sm" %>
+              <%= button_to "Delete", album_path(@album), method: :delete,
+                    class: "btn btn-danger-quiet btn-sm",
+                    form_class: "contents",
+                    data: { turbo_confirm: "Delete “#{@album.name}”? The photos in it stay in your library." } %>
+            <% end %>
           </div>
         <% end %>
       </div>
@@ -224,7 +230,7 @@
       <div class="empty">
         <i class="fas fa-images empty-icon" aria-hidden="true"></i>
         <h2 class="section-title">No photos in this album yet</h2>
-        <p class="meta"><%= @can_add_photos ? "Pick one from your library below." : "This album is empty." %></p>
+        <p class="meta"><%= @can_add_photos ? "Upload some, or pick from your library below." : "This album is empty." %></p>
       </div>
     <% end %>
 

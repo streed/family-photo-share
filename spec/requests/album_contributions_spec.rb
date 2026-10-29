@@ -20,6 +20,35 @@ RSpec.describe "Collaborative albums", type: :request do
     [ owner, relative ].each(&:reload)
   end
 
+  describe "the Upload photos button" do
+    let(:upload_path) { new_bulk_upload_path(album_id: album.id) }
+
+    it "is shown to the owner" do
+      sign_in owner
+      get album_path(album)
+      expect(response.body).to include(upload_path)
+    end
+
+    it "is shown to a contributing family member" do
+      sign_in relative
+      get album_path(album)
+      expect(response.body).to include(upload_path)
+    end
+
+    it "is not shown when the album is closed to contributions" do
+      closed = create(:album, user: owner, privacy: "family", allow_contributions: false)
+      sign_in relative
+      get album_path(closed)
+      expect(response.body).not_to include(new_bulk_upload_path(album_id: closed.id))
+    end
+
+    it "lets a contributor preselect the shared album in the uploader" do
+      sign_in relative
+      get new_bulk_upload_path(album_id: album.id)
+      expect(response.body).to match(/<option value="#{album.id}"\s+selected/)
+    end
+  end
+
   describe "a family member adding to an open album" do
     let!(:photo) { create(:photo, user: relative) }
 

@@ -75,8 +75,7 @@
       <p class="meta">Every photo in your library is in this album.</p>
     <% end %>
     <div class="flex flex-wrap justify-center gap-2">
-      <%= link_to "Upload photos", new_photo_path, class: "btn btn-primary" %>
-      <%= link_to "Upload a batch", new_bulk_upload_path, class: "btn btn-secondary" %>
+      <%= link_to "Upload photos", new_bulk_upload_path(album_id: album.id), class: "btn btn-primary" %>
     </div>
   </section>
 <% end %>

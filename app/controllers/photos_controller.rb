@@ -87,6 +87,31 @@ class PhotosController < ApplicationController
   end
 
 
+  # The batch uploader sends each photo up as it is picked, so titles and the
+  # album are only settled once the user is done. This applies them in the order
+  # given, which is what gives the album its photo positions.
+  def finalize
+    entries = Array(params[:photos]).map { |entry| entry.permit(:id, :title, :description) }
+    photos = current_user.photos.where(id: entries.map { |e| e[:id] }).index_by { |photo| photo.id.to_s }
+
+    album = nil
+    if params[:album_id].present?
+      album = Album.addable_by(current_user).find_by(id: params[:album_id])
+      return render json: { error: "You can't add photos to that album" }, status: :unprocessable_content unless album
+    end
+
+    failed = []
+    entries.each do |entry|
+      photo = photos[entry[:id].to_s]
+      next failed << entry[:id].to_i unless photo
+
+      photo.update(title: entry[:title].to_s, description: entry[:description].presence) || failed << photo.id
+      album&.add_photo(photo)
+    end
+
+    render json: { status: failed.empty? ? "success" : "partial", failed: failed }
+  end
+
   def update
     if @photo.update(photo_params)
       redirect_to @photo, notice: "Photo was successfully updated!"
@@ -103,6 +128,10 @@ class PhotosController < ApplicationController
 
       @photo.destroy!
 
+      # The batch uploader deletes mistakes through fetch; a redirect would be
+      # followed as another DELETE, so answer it directly.
+      return head :no_content if request.format.json?
+
       if album_count > 0
         album_text = album_count == 1 ? "album" : "albums"
         if album_count <= 3
@@ -116,6 +145,8 @@ class PhotosController < ApplicationController
       end
     rescue ActiveRecord::RecordNotDestroyed => e
       Rails.logger.error "Failed to delete photo #{@photo.id}: #{e.message}"
+      return render json: { error: "Unable to delete photo" }, status: :unprocessable_content if request.format.json?
+
       redirect_to @photo, alert: "Unable to delete photo. Please try again."
     end
   end
@@ -127,7 +158,12 @@ class PhotosController < ApplicationController
   end
 
   def ensure_owner
-    redirect_to photos_path, alert: "You can only manage your own photos." unless @photo.user == current_user
+    return if @photo.user == current_user
+
+    respond_to do |format|
+      format.html { redirect_to photos_path, alert: "You can only manage your own photos." }
+      format.json { render json: { error: "forbidden" }, status: :forbidden }
+    end
   end
 
   def ensure_viewable

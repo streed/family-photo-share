@@ -24,7 +24,7 @@
                    accept="image/*"
                    data-bulk-upload-target="multipleFileInput"
                    data-action="change->bulk-upload#addMultiplePhotos" />
-            <p class="field-hint">JPEG, PNG or GIF, up to 50MB each, 100 at a time.</p>
+            <p class="field-hint">JPEG, PNG or GIF, up to 50MB each. Photos start uploading as soon as you pick them.</p>
           </div>
 
           <div class="field">
@@ -32,14 +32,14 @@
             <select class="field-input" id="bulk-album" data-bulk-upload-target="albumSelect">
               <option value="">Don't add to an album</option>
               <% @own_albums.each do |album| %>
-                <option value="<%= album.id %>"><%= album.name %></option>
+                <option value="<%= album.id %>" <%= "selected" if album.id == @selected_album_id %>><%= album.name %></option>
               <% end %>
               <%# Family albums opened up for contributions — grouped separately so
                   it's obvious you're dropping photos into someone else's album. %>
               <% if @shared_albums.any? %>
                 <optgroup label="Shared with your family">
                   <% @shared_albums.each do |album| %>
-                    <option value="<%= album.id %>">
+                    <option value="<%= album.id %>" <%= "selected" if album.id == @selected_album_id %>>
                       <%= album.name %> — <%= album.user.display_name_or_full_name %>
                     </option>
                   <% end %>
@@ -63,7 +63,7 @@
                     data-bulk-upload-target="uploadButton"
                     data-action="click->bulk-upload#startBulkUpload"
                     disabled>
-              Upload <span data-bulk-upload-target="uploadCount">0</span> photos
+              Save <span data-bulk-upload-target="uploadCount">0</span> photos
             </button>
             <button type="button"
                     class="btn btn-danger-quiet btn-lg"
@@ -79,10 +79,10 @@
         <div class="card-head"><h2 class="section-title">How it works</h2></div>
         <div class="card-body">
           <ol class="list-decimal space-y-1 pl-5">
-            <li>Choose your photos — the whole selection at once is fine</li>
-            <li>Give any of them a title or description</li>
-            <li>Pick an album if you want them grouped</li>
-            <li>Hit upload and leave the page open until it finishes</li>
+            <li>Choose your photos — they upload in the background right away</li>
+            <li>Picked one by accident? Hit &times; to cancel or delete it</li>
+            <li>Give any of them a title or description, and pick an album if you like</li>
+            <li>Hit save once they're all done</li>
           </ol>
         </div>
       </section>
@@ -116,7 +116,7 @@
     <div class="modal-overlay"></div>
     <div class="modal-panel">
       <div class="card-head">
-        <h2 class="section-title" id="upload-progress-title">Uploading your photos</h2>
+        <h2 class="section-title" id="upload-progress-title">Saving your photos</h2>
       </div>
 
       <div class="card-body">
@@ -125,7 +125,7 @@
         </div>
         <p class="mb-1 text-center font-semibold text-ink"><span data-bulk-upload-target="progressText">0%</span></p>
         <p class="meta mb-1 text-center">
-          Sending <span data-bulk-upload-target="currentFileName">…</span>
+          Finishing <span data-bulk-upload-target="currentFileName">…</span>
         </p>
         <p class="meta text-center">
           <span data-bulk-upload-target="uploadedCount">0</span> of

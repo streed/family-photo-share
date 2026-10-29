@@ -138,4 +138,63 @@ RSpec.describe "Photos", type: :request do
       end
     end
   end
+
+  describe "DELETE /photos/:id as JSON (batch uploader)" do
+    it "deletes your photo and answers 204 instead of redirecting" do
+      sign_in user
+      photo
+      expect { delete photo_path(photo), as: :json }.to change(Photo, :count).by(-1)
+      expect(response).to have_http_status(:no_content)
+    end
+
+    it "refuses someone else's photo with 403" do
+      sign_in create(:user)
+      photo
+      expect { delete photo_path(photo), as: :json }.not_to change(Photo, :count)
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
+
+  describe "POST /photos/finalize" do
+    let(:album) { create(:album, user: user) }
+    let(:first) { create(:photo, user: user) }
+    let(:second) { create(:photo, user: user) }
+
+    before { sign_in user }
+
+    it "applies titles and adds the photos to the album in the order given" do
+      post finalize_photos_path, params: {
+        album_id: album.id,
+        photos: [
+          { id: second.id, title: "Second", description: "" },
+          { id: first.id, title: "First", description: "Hi" }
+        ]
+      }, as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(first.reload.title).to eq("First")
+      expect(first.description).to eq("Hi")
+      expect(album.album_photos.ordered.pluck(:photo_id)).to eq([ second.id, first.id ])
+    end
+
+    it "works without an album" do
+      post finalize_photos_path, params: { photos: [ { id: first.id, title: "Solo" } ] }, as: :json
+      expect(response).to have_http_status(:ok)
+      expect(first.reload.title).to eq("Solo")
+    end
+
+    it "reports photos that aren't yours instead of touching them" do
+      stranger = create(:photo, user: create(:user), title: "Theirs")
+      post finalize_photos_path, params: { album_id: album.id, photos: [ { id: stranger.id, title: "Mine now" } ] }, as: :json
+
+      expect(response.parsed_body["failed"]).to eq([ stranger.id ])
+      expect(stranger.reload.title).to eq("Theirs")
+      expect(album.album_photos).to be_empty
+    end
+
+    it "refuses an album the user can't add to" do
+      post finalize_photos_path, params: { album_id: create(:album).id, photos: [ { id: first.id, title: "x" } ] }, as: :json
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+  end
 end

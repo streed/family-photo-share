@@ -13,85 +13,77 @@ export default class extends Controller {
   
   connect() {
     this.maxFileSize = 50 * 1024 * 1024; // 50MB — the same ceiling the Photo model enforces
-    this.maxFiles = 100;
+    this.maxConcurrentUploads = 3;
     this.validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-    
-    // Store staged photos in memory with their file data
+
+    // Photos start uploading the moment they are added, so each one tracks its
+    // own request: uploadStatus is queued, uploading, uploaded or failed.
     this.stagedPhotos = [];
     this.nextPhotoId = 1;
-    
-    // Initialize modal (using simple show/hide instead of Bootstrap)
+    this.finishing = false;
+
+    // Photos that already reached the server are only half-saved until Finish.
+    this.beforeUnload = (event) => {
+      if (this.stagedPhotos.some(p => p.uploadStatus !== 'failed') && !this.finishing) {
+        event.preventDefault();
+        event.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', this.beforeUnload);
+
     // The .modal component class owns display; `show` is the only toggle.
     this.uploadModal = {
       show: () => this.uploadModalTarget.classList.add('show'),
       hide: () => this.uploadModalTarget.classList.remove('show')
     };
-    
+
     this.updateUI();
   }
-  
-  
+
+  disconnect() {
+    window.removeEventListener('beforeunload', this.beforeUnload);
+  }
+
   addMultiplePhotos(event) {
     const files = Array.from(event.target.files);
     if (!files.length) {
       return;
     }
-    
-    // Check if adding these files would exceed the limit
-    if (this.stagedPhotos.length + files.length > this.maxFiles) {
-      alert(`You can only stage up to ${this.maxFiles} photos total. You currently have ${this.stagedPhotos.length} staged.`);
-      this.multipleFileInputTarget.value = '';
-      return;
-    }
-    
-    // Filter valid files
+
     const validFiles = files.filter(file => this.isValidFile(file));
-    const invalidFiles = files.filter(file => !this.isValidFile(file));
-    
-    if (invalidFiles.length > 0) {
-      alert(`${invalidFiles.length} files were skipped (invalid format or too large).`);
+    const skipped = files.length - validFiles.length;
+
+    if (skipped > 0) {
+      alert(`${skipped} file${skipped === 1 ? ' was' : 's were'} skipped (invalid format or too large).`);
     }
-    
-    if (validFiles.length === 0) {
-      this.multipleFileInputTarget.value = '';
-      return;
-    }
-    
-    // Add all valid files to staging
+
     validFiles.forEach(file => this.addFileToStaging(file));
     this.multipleFileInputTarget.value = ''; // Clear input
+    this.pumpUploads();
   }
-  
+
   addFileToStaging(file) {
-    const photoId = `photo-${this.nextPhotoId++}`;
-    
-    // Create staged photo object with file data in memory
     const stagedPhoto = {
-      id: photoId,
+      id: `photo-${this.nextPhotoId++}`,
       file: file,
       filename: file.name,
       size: file.size,
       title: this.extractTitleFromFilename(file.name),
       description: '',
-      previewUrl: null, // Will be set when FileReader completes
-      uploadStatus: 'staged' // staged, uploading, uploaded, failed
+      // An object URL, not a data URL: with no cap on the batch, holding every
+      // preview as a base64 string would balloon memory.
+      previewUrl: URL.createObjectURL(file),
+      uploadStatus: 'queued',
+      serverId: null,
+      xhr: null,
+      removed: false
     };
-    
-    // Read file data for preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      stagedPhoto.previewUrl = e.target.result;
-      this.renderStagedPhoto(stagedPhoto);
-    };
-    reader.onerror = (e) => {
-      // FileReader error occurred
-    };
-    reader.readAsDataURL(file);
-    
+
     this.stagedPhotos.push(stagedPhoto);
+    this.renderStagedPhoto(stagedPhoto);
     this.updateUI();
   }
-  
+
   renderStagedPhoto(photo) {
     const photoElement = document.createElement('div');
     photoElement.className = 'staged-photo-item card';
@@ -112,7 +104,7 @@ export default class extends Controller {
           <div class="field mb-2">
             <label class="field-label">Title</label>
             <input type="text" class="field-input"
-                   value="${photo.title || ''}"
+                   data-photo-field="title"
                    data-action="input->bulk-upload#updatePhotoTitle"
                    data-photo-id="${photo.id}"
                    placeholder="Optional">
@@ -120,233 +112,371 @@ export default class extends Controller {
           <div class="field mb-2">
             <label class="field-label">Description</label>
             <textarea class="field-input" rows="2"
+                      data-photo-field="description"
                       data-action="input->bulk-upload#updatePhotoDescription"
                       data-photo-id="${photo.id}"
-                      placeholder="Optional">${photo.description}</textarea>
+                      placeholder="Optional"></textarea>
           </div>
-          <p class="meta truncate">
-            ${this.truncateFilename(photo.filename, 30)} &middot; ${this.formatFileSize(photo.size)}
-          </p>
+          <p class="meta truncate"></p>
+          <div class="progress-track mt-2">
+            <div class="progress-fill bg-primary" data-photo-progress style="width: 0%"></div>
+          </div>
+          <p class="meta mt-1 flex items-center gap-2" data-photo-status></p>
         </div>
       </div>
     `;
 
+    // Values go in through the DOM so a quote in a title can't break the markup.
+    photoElement.querySelector('[data-photo-field="title"]').value = photo.title || '';
+    photoElement.querySelector('[data-photo-field="description"]').value = photo.description || '';
+    photoElement.querySelector('p.meta').textContent =
+      `${this.truncateFilename(photo.filename, 30)} · ${this.formatFileSize(photo.size)}`;
+
     this.stagedPhotosGridTarget.appendChild(photoElement);
+    this.renderPhotoStatus(photo);
   }
-  
+
+  // Updates one tile's progress and status line in place, so typing in its
+  // title field is never interrupted by a re-render.
+  renderPhotoStatus(photo, percent = null) {
+    const element = this.photoElement(photo.id);
+    if (!element) return;
+
+    const bar = element.querySelector('[data-photo-progress]');
+    const status = element.querySelector('[data-photo-status]');
+    const labels = {
+      queued: 'Waiting to upload…',
+      uploading: 'Uploading…',
+      uploaded: 'Uploaded',
+      failed: photo.error || 'Upload failed'
+    };
+
+    if (percent !== null) {
+      bar.style.width = `${percent}%`;
+    } else if (photo.uploadStatus === 'uploaded') {
+      bar.style.width = '100%';
+    } else if (photo.uploadStatus === 'failed' || photo.uploadStatus === 'queued') {
+      bar.style.width = '0%';
+    }
+
+    status.textContent = labels[photo.uploadStatus];
+    if (photo.uploadStatus === 'failed') {
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'btn btn-ghost btn-sm';
+      retry.textContent = 'Retry';
+      retry.dataset.action = 'click->bulk-upload#retryPhoto';
+      retry.dataset.photoId = photo.id;
+      status.appendChild(retry);
+    }
+  }
+
+  photoElement(photoId) {
+    return this.stagedPhotosGridTarget.querySelector(`[data-photo-id="${photoId}"].staged-photo-item`);
+  }
+
   updatePhotoTitle(event) {
-    const photoId = event.target.dataset.photoId;
-    const photo = this.stagedPhotos.find(p => p.id === photoId);
+    const photo = this.stagedPhotos.find(p => p.id === event.target.dataset.photoId);
     if (photo) {
       photo.title = event.target.value;
     }
   }
-  
+
   updatePhotoDescription(event) {
-    const photoId = event.target.dataset.photoId;
-    const photo = this.stagedPhotos.find(p => p.id === photoId);
+    const photo = this.stagedPhotos.find(p => p.id === event.target.dataset.photoId);
     if (photo) {
       photo.description = event.target.value;
     }
   }
-  
+
+  // ---- Background uploads ------------------------------------------------
+
+  pumpUploads() {
+    let active = this.stagedPhotos.filter(p => p.uploadStatus === 'uploading').length;
+
+    for (const photo of this.stagedPhotos) {
+      if (active >= this.maxConcurrentUploads) break;
+      if (photo.uploadStatus !== 'queued') continue;
+
+      active++;
+      this.uploadPhoto(photo);
+    }
+  }
+
+  uploadPhoto(photo) {
+    photo.uploadStatus = 'uploading';
+    photo.error = null;
+    this.renderPhotoStatus(photo, 0);
+    this.updateUI();
+
+    const formData = new FormData();
+    formData.append('photo[image]', photo.file);
+    formData.append('photo[title]', photo.title || '');
+
+    // Plain XHR rather than fetch: it reports upload progress and abort()
+    // cancels the transfer, which is what removing an in-flight photo needs.
+    const xhr = new XMLHttpRequest();
+    photo.xhr = xhr;
+    xhr.open('POST', '/photos');
+    xhr.setRequestHeader('X-CSRF-Token', document.querySelector('meta[name="csrf-token"]').content);
+    xhr.setRequestHeader('Accept', 'application/json');
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        this.renderPhotoStatus(photo, (event.loaded / event.total) * 100);
+      }
+    };
+    xhr.onload = () => {
+      photo.xhr = null;
+      if (xhr.status >= 200 && xhr.status < 300) {
+        photo.serverId = JSON.parse(xhr.responseText).id;
+        photo.uploadStatus = 'uploaded';
+        // Removed after the bytes were already on their way: the abort lost the
+        // race, so the photo exists server-side and has to be deleted there.
+        if (photo.removed) this.deleteFromServer(photo);
+      } else {
+        photo.uploadStatus = 'failed';
+        photo.error = this.errorFromResponse(xhr);
+      }
+      this.uploadSettled(photo);
+    };
+    xhr.onerror = () => {
+      photo.xhr = null;
+      photo.uploadStatus = 'failed';
+      photo.error = 'Network error';
+      this.uploadSettled(photo);
+    };
+    xhr.onabort = () => {
+      photo.xhr = null;
+    };
+
+    xhr.send(formData);
+  }
+
+  uploadSettled(photo) {
+    if (!photo.removed) this.renderPhotoStatus(photo);
+    this.updateUI();
+    this.pumpUploads();
+  }
+
+  errorFromResponse(xhr) {
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (data.errors) return data.errors.join(', ');
+    } catch {
+      // fall through to the generic message
+    }
+    return `HTTP ${xhr.status}: ${xhr.statusText}`;
+  }
+
+  retryPhoto(event) {
+    const photo = this.stagedPhotos.find(p => p.id === event.target.dataset.photoId);
+    if (!photo || photo.uploadStatus !== 'failed') return;
+
+    photo.uploadStatus = 'queued';
+    this.renderPhotoStatus(photo);
+    this.updateUI();
+    this.pumpUploads();
+  }
+
+  async deleteFromServer(photo) {
+    const response = await fetch(`/photos/${photo.serverId}`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+        'Accept': 'application/json'
+      }
+    });
+    return response.ok;
+  }
+
+  // ---- Removing photos ---------------------------------------------------
+
   removePhoto(event) {
-    const photoId = event.target.dataset.photoId;
+    const photoId = event.currentTarget.dataset.photoId;
     const photo = this.stagedPhotos.find(p => p.id === photoId);
-    const photoName = photo ? photo.filename : 'this photo';
-    
+    if (!photo) return;
+
+    // Anything not yet on the server can just be dropped. A finished upload is
+    // a real photo in the library, so deleting it gets a confirmation.
+    if (photo.uploadStatus !== 'uploaded') {
+      this.discardPhoto(photo);
+      return;
+    }
+
     this.showConfirmation(
       'Remove Photo',
-      `Remove "${photoName}" from selection?`,
-      'Remove',
-      () => {
-        // Remove from staged photos array
-        this.stagedPhotos = this.stagedPhotos.filter(p => p.id !== photoId);
-        
-        // Remove from DOM
-        const photoElement = this.stagedPhotosGridTarget.querySelector(`[data-photo-id="${photoId}"]`);
-        if (photoElement) {
-          photoElement.remove();
-        }
-        
-        this.updateUI();
-      },
+      `"${photo.filename}" is already uploaded. Delete it?`,
+      'Delete',
+      () => this.discardPhoto(photo),
       'btn-danger'
     );
   }
-  
-  
+
+  async discardPhoto(photo) {
+    photo.removed = true;
+
+    if (photo.uploadStatus === 'uploading' && photo.xhr) {
+      photo.xhr.abort();
+    }
+
+    if (photo.uploadStatus === 'uploaded') {
+      const status = this.photoElement(photo.id)?.querySelector('[data-photo-status]');
+      if (status) status.textContent = 'Deleting…';
+
+      if (!await this.deleteFromServer(photo)) {
+        // Still on the server, so keep it in the list rather than pretend.
+        photo.removed = false;
+        if (status) status.textContent = "Couldn't delete this photo. Try again.";
+        return;
+      }
+    }
+
+    this.stagedPhotos = this.stagedPhotos.filter(p => p !== photo);
+    this.photoElement(photo.id)?.remove();
+    URL.revokeObjectURL(photo.previewUrl);
+    this.updateUI();
+    this.pumpUploads();
+  }
+
   clearAllStaged() {
+    const uploaded = this.stagedPhotos.filter(p => p.uploadStatus === 'uploaded').length;
+    const message = uploaded > 0
+      ? `Remove all selected photos? ${uploaded} already uploaded will be deleted. This cannot be undone.`
+      : 'Remove all selected photos? This cannot be undone.';
+
     this.showConfirmation(
       'Clear Selected Photos',
-      'Remove all selected photos? This cannot be undone.',
+      message,
       'Clear All',
-      () => {
-        this.stagedPhotos = [];
-        this.stagedPhotosGridTarget.innerHTML = '';
-        this.updateUI();
-      },
+      () => [...this.stagedPhotos].forEach(photo => this.discardPhoto(photo)),
       'btn-danger'
     );
   }
-  
+
   // Confirmation modal methods
   showConfirmation(title, message, buttonText, confirmAction, buttonStyle = 'btn-primary') {
     this.confirmTitleTarget.textContent = title;
     this.confirmMessageTarget.textContent = message;
     this.confirmButtonTarget.textContent = buttonText;
     this.pendingConfirmAction = confirmAction;
-    
+
     // Reset button classes and apply new style
     this.confirmButtonTarget.className = `btn ${buttonStyle}`;
-    
+
     this.confirmModalTarget.classList.add('show');
   }
-  
+
   cancelConfirm() {
     this.confirmModalTarget.classList.remove('show');
     this.pendingConfirmAction = null;
   }
-  
+
   acceptConfirm() {
     this.confirmModalTarget.classList.remove('show');
-    
+
     if (this.pendingConfirmAction) {
       this.pendingConfirmAction();
       this.pendingConfirmAction = null;
     }
   }
-  
-  async startBulkUpload() {
+
+  // ---- Finishing ---------------------------------------------------------
+
+  startBulkUpload() {
     if (this.stagedPhotos.length === 0) {
       alert('No photos to upload. Please select some photos first.');
       return;
     }
-    
+
+    const failed = this.stagedPhotos.filter(p => p.uploadStatus === 'failed').length;
+    const count = this.stagedPhotos.length - failed;
+    const note = failed > 0 ? ` ${failed} that failed to upload will be left out.` : '';
+
     this.showConfirmation(
-      'Upload Photos',
-      `Upload ${this.stagedPhotos.length} photo${this.stagedPhotos.length === 1 ? '' : 's'}?`,
-      'Upload',
-      () => this.performBulkUpload(),
+      'Finish Upload',
+      `Save ${count} photo${count === 1 ? '' : 's'}?${note}`,
+      'Save',
+      () => this.finish(),
       'btn-success'
     );
   }
-  
-  async performBulkUpload() {
-    
+
+  async finish() {
+    this.finishing = true;
     this.uploadModal.show();
-    
-    const albumId = this.albumSelectTarget.value;
-    let uploadedCount = 0;
-    let failedUploads = [];
-    
-    this.totalUploadCountTarget.textContent = this.stagedPhotos.length;
-    this.uploadedCountTarget.textContent = '0';
-    
-    // Upload photos one by one
-    for (let i = 0; i < this.stagedPhotos.length; i++) {
-      const photo = this.stagedPhotos[i];
-      
-      try {
-        // Update UI
-        this.currentFileNameTarget.textContent = photo.filename;
-        const progress = ((i + 1) / this.stagedPhotos.length) * 100;
-        this.updateProgress(progress);
-        
-        // Upload individual photo
-        await this.uploadSinglePhoto(photo, albumId);
-        
-        uploadedCount++;
-        this.uploadedCountTarget.textContent = uploadedCount;
-        photo.uploadStatus = 'uploaded';
-        
-      } catch (error) {
-        // Upload failed
-        failedUploads.push(`${photo.filename}: ${error.message}`);
-        photo.uploadStatus = 'failed';
-      }
-    }
-    
-    // Show completion or errors
-    if (failedUploads.length > 0) {
-      this.showUploadErrors(failedUploads);
-    }
-    
-    // Complete the upload process
-    setTimeout(() => {
+    this.currentFileNameTarget.textContent = 'the last few photos';
+    this.totalUploadCountTarget.textContent = this.stagedPhotos.filter(p => p.uploadStatus !== 'failed').length;
+
+    // Uploads started when the photos were added; wait for whatever is left.
+    await this.waitForUploads();
+
+    const photos = this.stagedPhotos.filter(p => p.uploadStatus === 'uploaded');
+    this.uploadedCountTarget.textContent = photos.length;
+    this.updateProgress(100);
+
+    try {
+      const response = await fetch('/photos/finalize', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          album_id: this.albumSelectTarget.value || null,
+          photos: photos.map(p => ({ id: p.serverId, title: p.title, description: p.description }))
+        })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || `HTTP ${response.status}`);
+      if (result.failed.length > 0) throw new Error(`${result.failed.length} photos could not be saved`);
+    } catch (error) {
+      this.finishing = false;
       this.uploadModal.hide();
-      if (uploadedCount > 0) {
-        // Clear staged photos that were successfully uploaded
-        this.stagedPhotos = this.stagedPhotos.filter(p => p.uploadStatus !== 'uploaded');
-        this.rebuildStagingArea();
-        this.updateUI();
-        
-        if (this.stagedPhotos.length === 0) {
-          alert(`Successfully uploaded ${uploadedCount} photos!`);
-          window.location.href = '/photos'; // Redirect to photos page
+      alert(`Something went wrong saving your photos: ${error.message}. They're uploaded, so you can try Save again.`);
+      return;
+    }
+
+    this.uploadModal.hide();
+    const failedLeft = this.stagedPhotos.filter(p => p.uploadStatus === 'failed');
+    photos.forEach(photo => {
+      this.photoElement(photo.id)?.remove();
+      URL.revokeObjectURL(photo.previewUrl);
+    });
+    this.stagedPhotos = failedLeft;
+    this.updateUI();
+
+    if (failedLeft.length === 0) {
+      // Land where the photos went: the album if one was chosen, else the library.
+      const albumId = this.albumSelectTarget.value;
+      window.location.href = albumId ? `/albums/${albumId}` : '/photos';
+    } else {
+      this.finishing = false;
+      alert(`Saved ${photos.length} photos. ${failedLeft.length} failed to upload — retry them or remove them.`);
+    }
+  }
+
+  waitForUploads() {
+    const pending = () => this.stagedPhotos.some(p => p.uploadStatus === 'queued' || p.uploadStatus === 'uploading');
+
+    return new Promise(resolve => {
+      const check = () => {
+        const done = this.stagedPhotos.filter(p => p.uploadStatus === 'uploaded').length;
+        this.uploadedCountTarget.textContent = done;
+        const total = this.stagedPhotos.filter(p => p.uploadStatus !== 'failed').length;
+        this.updateProgress(total ? (done / total) * 100 : 100);
+
+        if (pending()) {
+          setTimeout(check, 300);
         } else {
-          alert(`Uploaded ${uploadedCount} photos. ${failedUploads.length} failed.`);
+          resolve();
         }
-      }
-    }, 1000);
-  }
-  
-  async uploadSinglePhoto(photo, albumId) {
-    const formData = new FormData();
-    formData.append('photo[image]', photo.file);
-    formData.append('photo[title]', photo.title || '');
-    formData.append('photo[description]', photo.description || '');
-    
-    // Add to album if specified
-    if (albumId) {
-      formData.append('photo[album_id]', albumId);
-    }
-    
-    const response = await fetch('/photos', {
-      method: 'POST',
-      body: formData,
-      headers: {
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
-        'Accept': 'application/json'
-      }
-    });
-    
-    if (!response.ok) {
-      const responseText = await response.text();
-      
-      let errorMessage;
-      try {
-        const errorData = JSON.parse(responseText);
-        errorMessage = errorData.errors ? errorData.errors.join(', ') : 'Upload failed';
-      } catch {
-        errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-      }
-      throw new Error(errorMessage);
-    }
-    
-    const result = await response.json();
-    return result;
-  }
-  
-  showUploadErrors(errors) {
-    this.errorsListTarget.innerHTML = '';
-    errors.forEach(error => {
-      const li = document.createElement('li');
-      li.textContent = error;
-      this.errorsListTarget.appendChild(li);
-    });
-    this.uploadErrorsTarget.hidden = false;
-  }
-  
-  rebuildStagingArea() {
-    this.stagedPhotosGridTarget.innerHTML = '';
-    this.stagedPhotos.forEach(photo => {
-      if (photo.previewUrl) {
-        this.renderStagedPhoto(photo);
-      }
+      };
+      check();
     });
   }
-  
+
   updateUI() {
     const count = this.stagedPhotos.length;
     const totalSize = this.stagedPhotos.reduce((sum, photo) => sum + photo.size, 0);

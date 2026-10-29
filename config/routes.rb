@@ -36,6 +36,9 @@ Rails.application.routes.draw do
   end
   # Photo routes
   resources :photos do
+    collection do
+      post :finalize
+    end
     member do
       get :processing_status
       patch :retry_processing

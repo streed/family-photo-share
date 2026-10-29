@@ -11,6 +11,10 @@ class BulkUploadsController < ApplicationController
   def new
     @bulk_upload = BulkUpload.new
     load_album_choices
+    # ?album_id= comes from an album page's "Upload photos" button. It is only
+    # honoured for an album the user can add to; anything else is ignored.
+    @selected_album_id = params[:album_id].presence&.to_i
+    @selected_album_id = nil unless Album.addable_by(current_user).exists?(id: @selected_album_id)
   end
 
   def create
