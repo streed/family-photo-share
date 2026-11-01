@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="slideshow"
 export default class extends Controller {
-  static targets = ["modal", "image", "title", "description", "user", "counter", "takenAt"]
+  static targets = ["modal", "image", "title", "description", "user", "counter", "total", "takenAt"]
   static values = { trackUrl: String }
 
   connect() {
@@ -127,6 +127,10 @@ export default class extends Controller {
     
     if (this.hasCounterTarget) {
       this.counterTarget.textContent = index + 1
+    }
+
+    if (this.hasTotalTarget) {
+      this.totalTarget.textContent = this.photos.length
     }
     
     if (this.hasTakenAtTarget) {

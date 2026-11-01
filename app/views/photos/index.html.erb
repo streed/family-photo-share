@@ -4,8 +4,7 @@
       <h1 class="page-title">My Photos</h1>
       <% if @photos.any? %>
         <p class="page-subtitle">
-          Showing <%= @photos.size %> of <%= @total_count %>
-          <%= "photo".pluralize(@total_count) %><%= " · page #{@page} of #{@total_pages}" if @total_pages > 1 %>
+          <%= pluralize(@total_count, "photo") %>
         </p>
       <% end %>
     </div>
@@ -18,9 +17,9 @@
   </div>
 
   <% if @photos.any? %>
-    <div class="grid-photos">
+    <div class="grid-photos" id="photo_grid">
       <% @photos.each do |photo| %>
-        <div class="group relative">
+        <div class="group relative" id="<%= dom_id(photo) %>">
           <%= link_to photo_path(photo), class: "tile block" do %>
             <% if photo.image.attached? %>
               <%= image_tag photo.short_small_url,
@@ -65,9 +64,10 @@
       <% end %>
     </div>
 
-    <%= render "shared/pager",
+    <%= render "shared/infinite_scroll",
                page: @page,
                total_pages: @total_pages,
+               container: "#photo_grid",
                path_for_page: ->(n) { photos_path(request.query_parameters.merge(page: n)) } %>
   <% else %>
     <div class="empty">

@@ -1,0 +1,23 @@
+<%#
+  Sentinel for infinite scroll. Renders nothing on the last page; otherwise a
+  "Load more" link that infinite_scroll_controller.js triggers automatically as
+  it nears the viewport (and that still works as a plain link without JS).
+
+  Locals:
+    page          - current 1-based page
+    total_pages   - total number of pages
+    path_for_page - lambda taking a page number and returning a URL
+    container     - CSS selector of the grid the next tiles are appended to
+%>
+<% if page < total_pages %>
+  <% next_url = path_for_page.call(page + 1) %>
+  <div class="mt-8 flex justify-center"
+       data-controller="infinite-scroll"
+       data-infinite-scroll-url-value="<%= next_url %>"
+       data-infinite-scroll-container-value="<%= container %>">
+    <%= link_to next_url, class: "btn btn-secondary", rel: "next",
+          data: { action: "infinite-scroll#load" } do %>
+      <i class="fas fa-spinner" aria-hidden="true"></i> Load more photos
+    <% end %>
+  </div>
+<% end %>

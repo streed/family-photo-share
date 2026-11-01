@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe "Photo library paging", type: :request do
+RSpec.describe "Photo library infinite scroll", type: :request do
   let(:user) { create(:user) }
 
   before { sign_in user }
@@ -11,17 +11,17 @@ RSpec.describe "Photo library paging", type: :request do
 
       get photos_path
 
-      expect(response.body).to include("Showing 3 of 3")
+      expect(response.body).to include("3 photos")
     end
 
-    it "pages instead of silently truncating a large library" do
+    it "loads a large library a page at a time via infinite scroll" do
       create_list(:photo, PhotosController::PER_PAGE + 5, user: user)
       total = PhotosController::PER_PAGE + 5
 
       get photos_path
 
-      expect(response.body).to include("Showing #{PhotosController::PER_PAGE} of #{total}")
-      expect(response.body).to include("Page 1 of 2")
+      expect(response.body).to include("#{total} photos")
+      expect(response.body).to include('data-controller="infinite-scroll"')
       expect(response.body).to include(photos_path(page: 2))
     end
 
@@ -31,7 +31,7 @@ RSpec.describe "Photo library paging", type: :request do
       get photos_path(page: 2)
 
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("Page 2 of 2")
+      expect(response.body).not_to include('data-controller="infinite-scroll"')
     end
 
     it "does not blow up on a page beyond the end" do
@@ -49,7 +49,6 @@ RSpec.describe "Photo library paging", type: :request do
 
       get photos_path(location: "Lisbon")
 
-      expect(response.body).to include("Showing #{PhotosController::PER_PAGE} of #{PhotosController::PER_PAGE + 2}")
       expect(response.body).to include("location=Lisbon")
     end
   end

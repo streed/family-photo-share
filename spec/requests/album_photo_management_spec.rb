@@ -70,7 +70,7 @@ RSpec.describe "Album photo management", type: :request do
       expect(rendered.size).to eq(AlbumsController::PHOTOS_PER_PAGE)
       expect(rendered.first).to eq(photos.last.id)
       expect(rendered).to eq(rendered.sort.reverse)
-      expect(response.body).to include("page 1 of 2")
+      expect(response.body).to include(%q(data-controller="infinite-scroll"))
     end
 
     it "puts the oldest additions on the last page" do
@@ -100,7 +100,7 @@ RSpec.describe "Album photo management", type: :request do
       get album_path(album, page: "'; DROP TABLE albums; --")
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("page 1 of 2")
+      expect(response.body).to include(%q(data-controller="infinite-scroll"))
     end
 
     def response_photo_ids(path)

@@ -1,13 +1,14 @@
 <%#
-  Pager for the album's photo grid.
+  Infinite-scroll sentinel for the album's photo grid.
 
   Its own partial with its own turbo_stream target: adding or removing a photo
-  can change the number of pages, and a pager left behind by the previous render
-  offers links to a page that no longer exists.
+  can change the number of pages, and a sentinel left behind by the previous
+  render would point at a page that no longer exists.
 
   Locals: album, page, total_pages
 %>
-<%= render "shared/pager",
+<%= render "shared/infinite_scroll",
            page: page,
            total_pages: total_pages,
+           container: "#album_photo_grid",
            path_for_page: ->(n) { album_path(album, album_view_params(page: n)) } %>

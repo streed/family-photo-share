@@ -182,7 +182,7 @@
   <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
     <p class="meta">
       <strong id="album_photo_count" class="text-ink"><%= @album.photo_count %></strong>
-      <%= "photo".pluralize(@album.photo_count) %> in this album<%= " · page #{@page} of #{@total_pages}" if @total_pages > 1 %>
+      <%= "photo".pluralize(@album.photo_count) %> in this album
     </p>
 
     <% if @photo_total > 1 %>
@@ -202,7 +202,7 @@
     <% end %>
   </div>
 
-  <div data-controller="slideshow">
+  <div data-controller="slideshow" data-action="infinite-scroll:loaded->slideshow#collectPhotos">
     <%# The grid container renders unconditionally so turbo_stream always has a
         stable target, even when the album is empty. %>
     <div class="grid-photos" id="album_photo_grid">
@@ -251,7 +251,7 @@
           <h3 class="font-display text-xl font-semibold text-white" data-slideshow-target="title"></h3>
           <p class="mt-1 text-white/85" data-slideshow-target="description"></p>
           <p class="mt-1 text-sm text-white/70">
-            Photo <span data-slideshow-target="counter"></span> of <%= @photos.size %>
+            Photo <span data-slideshow-target="counter"></span> of <span data-slideshow-target="total"><%= @photo_total %></span>
             · by <span data-slideshow-target="user"></span>
           </p>
         </div>
